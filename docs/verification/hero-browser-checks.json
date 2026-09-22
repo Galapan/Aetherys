@@ -1,0 +1,258 @@
+{
+  "results": [
+    {
+      "width": 390,
+      "height": 844,
+      "lang": "es",
+      "info": {
+        "lang": "es",
+        "title": "Aetherys — Software a medida",
+        "heading": "Tecnología a la medida de lo que imaginas.",
+        "width": 390,
+        "scrollWidth": 390,
+        "overlap": false,
+        "opacity": "1",
+        "buttonSizes": [
+          {
+            "width": 44,
+            "height": 44
+          },
+          {
+            "width": 44,
+            "height": 44
+          }
+        ],
+        "bodyHeight": 844
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "lang": "en",
+      "info": {
+        "lang": "en",
+        "title": "Aetherys — Custom software",
+        "heading": "Technology tailored to what you imagine.",
+        "width": 390,
+        "scrollWidth": 390,
+        "overlap": false,
+        "opacity": "1",
+        "buttonSizes": [
+          {
+            "width": 44,
+            "height": 44
+          },
+          {
+            "width": 44,
+            "height": 44
+          }
+        ],
+        "bodyHeight": 844
+      }
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "lang": "es",
+      "info": {
+        "lang": "es",
+        "title": "Aetherys — Software a medida",
+        "heading": "Tecnología a la medida de lo que imaginas.",
+        "width": 768,
+        "scrollWidth": 768,
+        "overlap": false,
+        "opacity": "1",
+        "buttonSizes": [
+          {
+            "width": 44,
+            "height": 44
+          },
+          {
+            "width": 44,
+            "height": 44
+          }
+        ],
+        "bodyHeight": 1024
+      }
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "lang": "en",
+      "info": {
+        "lang": "en",
+        "title": "Aetherys — Custom software",
+        "heading": "Technology tailored to what you imagine.",
+        "width": 768,
+        "scrollWidth": 768,
+        "overlap": false,
+        "opacity": "1",
+        "buttonSizes": [
+          {
+            "width": 44,
+            "height": 44
+          },
+          {
+            "width": 44,
+            "height": 44
+          }
+        ],
+        "bodyHeight": 1024
+      }
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "lang": "es",
+      "info": {
+        "lang": "es",
+        "title": "Aetherys — Software a medida",
+        "heading": "Tecnología a la medida de lo que imaginas.",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overlap": false,
+        "opacity": "1",
+        "buttonSizes": [
+          {
+            "width": 44,
+            "height": 44
+          },
+          {
+            "width": 44,
+            "height": 44
+          }
+        ],
+        "bodyHeight": 900
+      }
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "lang": "en",
+      "info": {
+        "lang": "en",
+        "title": "Aetherys — Custom software",
+        "heading": "Technology tailored to what you imagine.",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overlap": false,
+        "opacity": "1",
+        "buttonSizes": [
+          {
+            "width": 44,
+            "height": 44
+          },
+          {
+            "width": 44,
+            "height": 44
+          }
+        ],
+        "bodyHeight": 900
+      }
+    },
+    {
+      "switchLocale": {
+        "url": "http://127.0.0.1:5174/?campaign=test&lang=es#inicio",
+        "lang": "es",
+        "pressed": ["true", "false"]
+      }
+    },
+    {
+      "back": {
+        "url": "http://127.0.0.1:5174/?campaign=test&lang=en#inicio",
+        "lang": "en"
+      }
+    },
+    {
+      "forward": {
+        "url": "http://127.0.0.1:5174/?campaign=test&lang=es#inicio",
+        "lang": "es"
+      }
+    },
+    {
+      "invalid": "es"
+    },
+    {
+      "keyboard": {
+        "focused": "Ir al contenido",
+        "outline": "2px",
+        "position": 16
+      }
+    },
+    {
+      "skip": "main"
+    },
+    {
+      "reduced": {
+        "opacity": "1",
+        "transform": "none"
+      }
+    },
+    {
+      "dynamicReduced": {
+        "opacity": "1",
+        "transform": "none"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "method": "Network.responseReceived",
+      "params": {
+        "requestId": "67973.19",
+        "loaderId": "E5A7A0DA66C15A15A8DA51A6AE45E1E4",
+        "timestamp": 5560.751526,
+        "type": "Other",
+        "response": {
+          "url": "http://127.0.0.1:5174/favicon.ico",
+          "status": 404,
+          "statusText": "Not Found",
+          "headers": {
+            "Keep-Alive": "timeout=5",
+            "Content-Length": "0",
+            "Date": "Tue, 22 Sep 2026 02:31:24 GMT",
+            "Vary": "Origin",
+            "Connection": "keep-alive"
+          },
+          "mimeType": "text/plain",
+          "charset": "",
+          "connectionReused": true,
+          "connectionId": 347,
+          "remoteIPAddress": "127.0.0.1",
+          "remotePort": 5174,
+          "fromDiskCache": false,
+          "fromServiceWorker": false,
+          "fromPrefetchCache": false,
+          "encodedDataLength": 143,
+          "timing": {
+            "requestTime": 5560.749711,
+            "proxyStart": -1,
+            "proxyEnd": -1,
+            "dnsStart": -1,
+            "dnsEnd": -1,
+            "connectStart": -1,
+            "connectEnd": -1,
+            "sslStart": -1,
+            "sslEnd": -1,
+            "workerStart": -1,
+            "workerReady": -1,
+            "workerFetchStart": -1,
+            "workerRespondWithSettled": -1,
+            "sendStart": 0.211,
+            "sendEnd": 0.252,
+            "pushStart": 0,
+            "pushEnd": 0,
+            "receiveHeadersStart": 1.078,
+            "receiveHeadersEnd": 1.132
+          },
+          "responseTime": 1790044284424.36,
+          "protocol": "http/1.1",
+          "alternateProtocolUsage": "unspecifiedReason",
+          "securityState": "secure"
+        },
+        "hasExtraInfo": true,
+        "frameId": "6B057625407038B849B746B0A6DD4585"
+      }
+    }
+  ]
+}

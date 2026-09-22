@@ -1,5 +1,9 @@
 # Aetherys — contrato de trabajo para agentes
 
+## Preferencia vigente del propietario — 22 de septiembre de 2026
+
+Por solicitud explícita posterior, usar **Framer Motion para todas las animaciones** (entrada, menú, transiciones y hovers). Esta decisión sustituye las restricciones anteriores de GSAP/CSS y la prohibición de Framer Motion en §5/8. `framer-motion` está instalado y autorizado. No añadir animaciones con GSAP ni reintroducir transiciones CSS; la entrada está en `docs/plans/004-motion-recordings.md` y el Navbar independiente en `docs/plans/005-navbar-portfolio.md`. El menú reserva espacio para secciones y proyectos; contacto y 3D quedan fuera de esta entrega.
+
 ## 1. Lectura, autoridad y alcance
 
 - Leer este archivo al iniciar la sesión. Es la fuente de contexto compartido para OpenCode y otros agentes que admitan AGENTS.md.
