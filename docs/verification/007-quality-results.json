@@ -1,0 +1,41 @@
+{
+  "viewports": [
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "css": [
+        480,
+        432
+      ],
+      "buffer": [
+        480,
+        432
+      ],
+      "overflow": false,
+      "labels": [
+        466.484375,
+        380.328125,
+        507.03125,
+        16.796875
+      ],
+      "phrases": [
+        "Software a medida",
+        "Integración de IA",
+        "Acompañamiento cercano"
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "triangles": 12020,
+      "antialias": true
+    }
+  ],
+  "errors": [],
+  "failures": [
+    "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(Math.abs(metrics.buffer[1]-Math.min(1080,metrics.css[1]*3))<=1)\n\n    at file:///tmp/aetherys-verify.mjs:49:12"
+  ]
+}

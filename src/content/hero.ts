@@ -26,6 +26,7 @@ export interface HeroContent {
   es: string
   en: string
   eyebrow: string
+  highlights: [string, string, string]
   heading: string
   description: string
   title: string
@@ -52,6 +53,7 @@ export const content: Record<Locale, HeroContent> = {
     es: 'ES',
     en: 'EN',
     eyebrow: 'Desarrollo de software a medida',
+    highlights: ['Software a medida', 'Integración de IA', 'Acompañamiento cercano'],
     heading: 'Tecnología a la medida de lo que imaginas.',
     description:
       'Diseñamos y desarrollamos sitios web, plataformas y soluciones con IA. Te acompañamos desde la primera idea hasta su puesta en marcha.',
@@ -77,6 +79,7 @@ export const content: Record<Locale, HeroContent> = {
     es: 'ES',
     en: 'EN',
     eyebrow: 'Custom software development',
+    highlights: ['Custom software', 'AI integration', 'Guidance at every step'],
     heading: 'Technology tailored to what you imagine.',
     description:
       'We design and build websites, platforms, and AI solutions. We work with you from the first idea through launch.',

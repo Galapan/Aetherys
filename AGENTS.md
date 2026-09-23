@@ -1,8 +1,8 @@
 # Aetherys — contrato de trabajo para agentes
 
-## Preferencia vigente del propietario — 22 de septiembre de 2026
+## Decisión vigente: animación con Framer Motion
 
-Por solicitud explícita posterior, usar **Framer Motion para todas las animaciones** (entrada, menú, transiciones y hovers). Esta decisión sustituye las restricciones anteriores de GSAP/CSS y la prohibición de Framer Motion en §5/8. `framer-motion` está instalado y autorizado. No añadir animaciones con GSAP ni reintroducir transiciones CSS; la entrada está en `docs/plans/004-motion-recordings.md` y el Navbar independiente en `docs/plans/005-navbar-portfolio.md`. El menú reserva espacio para secciones y proyectos; contacto y 3D quedan fuera de esta entrega.
+Usar **Framer Motion** para toda animación de UI (entrada, menú, transiciones y hovers). `framer-motion` está instalado y autorizado; sustituye el contrato GSAP/CSS anterior. No añadir animaciones con GSAP ni reintroducir transiciones CSS. Las especificaciones de movimiento viven en `docs/plans/004-motion-recordings.md` (entrada) y `docs/plans/005-navbar-portfolio.md` (navbar); §8 resume el contrato vigente.
 
 ## 1. Lectura, autoridad y alcance
 
@@ -31,7 +31,7 @@ Solo estos cuatro colores base están autorizados:
 
 | Token CSS | Valor | Uso |
 | --- | --- | --- |
-| --color-graphite | #101014 | Fondo principal y material del símbolo |
+| --color-graphite | #101014 | Fondo principal |
 | --color-dark-gray | #1B1B23 | Superficies, bloques y tarjetas |
 | --color-burgundy | #800020 | Acentos, fondos de botones y luz secundaria |
 | --color-warm-white | #F4F1F6 | Texto, logo, iconos y reflejos |
@@ -40,11 +40,12 @@ Solo estos cuatro colores base están autorizados:
 - Se permiten transparencias y mezclas de los cuatro colores; no añadir nuevos colores de marca. Las fotografías de proyectos reales pueden conservar sus colores.
 - Texto secundario: blanco cálido al 78%; bordes al 14%; retícula al 6%. Comprobar contraste sobre el fondo efectivo.
 - Borgoña es rojo oscuro, no negro metálico. El acabado metálico se obtiene con iluminación/material, no cambiando la paleta.
+- Material del símbolo 3D (decisión 006): grafito teñido de borgoña — mezcla de tokens (`lerp` grafito→borgoña 0.45) permitida arriba; acabado metálico-vítreo por material e iluminación. El borgoña conserva su rol de luz secundaria en reflejos.
 - No usar borgoña para texto pequeño sobre grafito. Botón principal: fondo borgoña, texto blanco cálido y borde blanco cálido al 35%; foco blanco cálido de 2px con separación de 4px.
 - Logo: una A estilizada de trazos blancos continuos, curvas superiores y huecos internos, según imagen entregada. Conservar su geometría; no sustituirla por una A tipográfica ni rediseñarla.
 - La imagen adjunta tenía fondo azul oscuro: ese fondo NO pertenece a la nueva paleta.
-- Fuente original aportada en la conversación: `/tmp/codex-clipboard-d6b8d88b-856e-4211-87e8-36e9a47919b2.png`. Es temporal, no una dependencia válida del sitio. Verificar existencia antes de usarla.
-- Pendiente: SVG original o reconstrucción vectorial revisada por el propietario. No asumir que src/assets/hero.png sea el logo correcto sin inspección.
+- Logo en uso: `public/brand/aetherys-mark.svg`; su path trazado desde el raster del propietario vive en `content/hero.ts` (`heroMark.path`). No asumir que `src/assets/hero.png` sea el logo correcto sin inspección.
+- Pendiente: el vector original del propietario, si desea sustituir la traza actual.
 
 ## 4. Referencia y adaptación
 
@@ -60,17 +61,19 @@ Instaladas en package.json al crear este documento:
 
 - Vite 8 + React 19 + TypeScript 6.
 - Tailwind CSS 4 y @tailwindcss/vite.
-- GSAP 3 (ScrollTrigger incluido) y Lenis 1.
+- Framer Motion 13 (`framer-motion`): motor de animación de UI vigente.
 - Three.js 0.186, @react-three/fiber 9, @react-three/drei 10 y @types/three.
 - ESLint 10 con plugins React/TypeScript; Prettier 3.
 - pnpm con pnpm-lock.yaml; Git.
+
+GSAP 3 y Lenis 1 siguen en package.json pero no se importan en `src/`; no reintroducirlos sin solicitud explícita.
 
 package.json y el lockfile son la autoridad sobre versiones exactas. No actualizar por iniciativa propia.
 
 - Scripts existentes: dev, build, lint, preview. Build ejecuta `tsc -b && vite build`.
 - No existe todavía script de tests o formato; no reportarlos como disponibles.
-- vite.config.ts debe importar únicamente los plugins/configuración usados. GSAP y Lenis pertenecen a src, no a la configuración de Vite.
-- Usar CSS para hovers; GSAP para secuencias/scroll; R3F/Three para 3D. No añadir Framer Motion, ScrollSmoother, otra librería de scroll ni otro motor 3D.
+- vite.config.ts debe importar únicamente los plugins/configuración usados. Framer Motion y R3F pertenecen a src, no a la configuración de Vite.
+- Framer Motion para animaciones de UI; R3F/Three para 3D, con `useSpring` de Motion dentro de la escena. No añadir otra librería de scroll ni otro motor 3D sin solicitud explícita.
 - No se necesitan inicialmente CMS, base de datos, autenticación ni backend propio.
 - No instalar router, biblioteca de iconos o traducción por comodidad; cualquier dependencia nueva requiere justificación en el plan y autorización del propietario.
 
@@ -113,41 +116,35 @@ Todo texto visible, etiquetas accesibles y metadatos debe estar en diccionarios 
 
 Primera versión: una página; idioma persistido mediante `?lang=es|en`, conservando otros parámetros/hash; valor inválido => es. Actualizar document.documentElement.lang. Rutas indexables /es/ y /en/ y prerenderizado quedan para una tarea SEO específica antes de lanzamiento si se requieren; no afirmar que metatags en cliente equivalen a HTML prerenderizado.
 
-## 8. Contrato de animación
+## 8. Contrato de animación (Framer Motion)
 
-| Elemento | Implementación exacta inicial |
+Resumen vigente; las especificaciones exactas por elemento viven en los planes y no se duplican aquí.
+
+| Elemento | Implementación vigente |
 | --- | --- |
-| Aparición del hero | GSAP: y 24px → 0, opacity 0 → 1, 0.7s, power2.out; stagger 0.1s entre H1/descripción/CTA |
-| Entrada de secciones | ScrollTrigger start `top 85%`, una vez; y 24px → 0 y opacity 0 → 1, 0.6s, power2.out; stagger máximo 0.08s |
-| Scroll suave | Una instancia Lenis, duration 1.0, smoothWheel true, syncTouch false; solo escritorio con pointer:fine y sin reduced-motion |
-| Hero al salir | ScrollTrigger desde `top top` hasta `bottom top`, scrub 0.6; grupo del modelo scale 1 → 0.90, rotation.y 0 → 0.20rad. Sin fijar/pin en MVP |
-| Movimiento ambiental | Grupo hijo del modelo: y = sin(t * 0.8) * 0.04 unidades; giro Y = sin(t * 0.35) * 0.06rad. Sin vueltas completas |
-| Respuesta al puntero | Solo escena visible y pointer:fine; rotación X/Y adicional limitada a ±0.08rad; amortiguación independiente del frame rate |
-| Botones | CSS 180ms ease-out: translateY(-2px) en hover; regreso al salir. Foco visible sin depender de hover |
-| Tarjetas de servicios | CSS 220ms ease-out: borde blanco 14% → 35%; sin movimiento 3D ni cambios de altura |
-| Tarjetas de proyectos futuras | Imagen scale 1 → 1.06; clip-path inset(0 round 8px) → inset(12px round 8px); 650ms cubic-bezier(.22,1,.36,1). Metadatos y 12px → 0, 300ms. Información esencial siempre visible |
-| Menú móvil | opacity y translateY(-8px → 0), 180ms; aria-expanded, Escape, retorno de foco; si es modal, foco contenido e inert en el fondo |
+| Entrada del hero | Secuencia de ~5.4s: letras `Aetherys` enmascaradas, título legible, compresión al centro, cruz decorativa que gira y desaparece, y cortinas que abren del centro a los extremos. 8 columnas en escritorio/tablet, 4 en móvil. Detalle en `docs/plans/004-motion-recordings.md`. |
+| Navbar / menú | Compactación de la superficie (scale, y, blur) y panel modal warm-white con filas reveladas desde abajo; cabecera móvil y cierre a juego. Detalle en `docs/plans/005-navbar-portfolio.md`. |
+| Hovers | Framer Motion: botones `y -2` en 0.18s; enlaces de menú `x 8` en 0.22s solo con pointer fino/hover. |
+| 3D | `useSpring` de Framer Motion para la respuesta al puntero en `HeroScene.tsx`; el resto del 3D usa R3F. |
 
-- Integración Lenis/GSAP: un único conductor RAF para Lenis (ticker GSAP, convirtiendo segundos a ms), `lenis.on('scroll', ScrollTrigger.update)`. No activar autoRaf además del ticker.
-- En desmontaje: quitar callbacks, destruir Lenis y revertir contextos/timelines propios. React StrictMode no debe duplicar listeners ni instancias.
-- No animar el mismo transform desde CSS y GSAP a la vez. En 3D separar grupos padre (scroll), hijo (ambiente) e hijo (puntero).
+- Reduced motion: leerlo dinámicamente con `hooks/useMotionPreferences.ts` (`useSyncExternalStore` + `matchMedia`). El hook de la versión instalada de Motion solo toma el valor inicial; no usarlo para la preferencia. Sin animaciones ligadas al scroll; contenido visible y logo estático.
+- En desmontaje: cancelar/limpiar listeners, timeouts de entrada y estado del navbar. React StrictMode no debe duplicar animaciones ni instancias.
+- No animar el mismo transform desde CSS y Motion a la vez. En 3D separar grupos padre/hijo según corresponda.
 - Actualización 3D con useFrame/refs; prohibido setState en cada frame.
-- Reduced motion: sin Lenis, parallax, flotación ni animaciones ligadas al scroll; contenido visible y logo estático. Responder a cambios de preferencia durante la sesión.
 - Touch: sin dependencia de hover; metadatos visibles, scroll nativo, logo estático en MVP.
 - Contenido visible por defecto; ocultarlo para entradas solo una vez inicializado el efecto. Fallos de animación no deben dejar texto invisible.
 - No cursor personalizado, audio automático, scroll horizontal, preloaders artificiales, showreel ni transiciones entre páginas en la primera versión.
 
 ## 9. Escena 3D y assets
 
-- Una única escena Canvas en el hero; carga diferida mediante React.lazy/Suspense y fallback estático con dimensiones reservadas.
-- Geometría de la A desde SVG aprobado o GLB verificado. Si no existe, usar el logo real estático y registrar el pendiente; no fabricar una forma supuestamente equivalente.
-- Material inicial: MeshStandardMaterial, color grafito, metalness 0.85, roughness 0.30. Fondo transparente sobre grafito.
-- Luces blancas cálidas y borgoña; reflejos mediante geometría/luces locales de Drei. Sin HDRI remoto, bloom, postprocesamiento ni sombras dinámicas en MVP.
+- Una única escena Canvas en el hero: `src/features/hero/HeroScene.tsx`. Carga diferida en `HeroMark.tsx` con `React.lazy`/`Suspense` y un `ErrorBoundary` que cae al SVG estático, con dimensiones reservadas.
+- Geometría: el path trazado del logo vive en `content/hero.ts` (`heroMark.path`) y se extruye con `SVGLoader` de three. No fabricar una forma supuestamente equivalente.
+- Material actual (006): `meshPhysicalMaterial` (metal oscuro vino, grafito→borgoña 0.45, con `clearcoat`) y `Environment`/`Lightformer` de Drei. Sin HDRI remoto, bloom, postprocesamiento ni sombras dinámicas en MVP.
 - Cámara inicial: perspective fov 35, position [0,0,5]; centrar modelo y normalizar su dimensión mayor a 2.4 unidades. Ajustar solo si el plan identifica encuadre y valores sustitutos.
 - Canvas con DPR limitado a [1,1.5]. Pausar frames cuando sale del viewport o document.hidden; render bajo demanda cuando no hay movimiento.
 - Fallback si WebGL no está disponible, falla el contexto o el asset no carga. El texto y CTA no dependen del Canvas.
 - Objetivos iniciales: modelo <=1MB, <=50k triángulos; ninguna textura >1024px sin motivo documentado. Son presupuestos a medir, no resultados garantizados.
-- Logo vectorial en public/brand/aetherys-mark.svg; fallback en public/brand/aetherys-mark.webp; modelo opcional en public/models/aetherys-mark.glb. Crear solo cuando existan assets válidos.
+- Logo vectorial real en `public/brand/aetherys-mark.svg`; el fallback estático de la escena lo usa. `public/brand/aetherys-mark.webp` y `public/models/aetherys-mark.glb` solo si el propietario los aporta.
 - No descargar ni reutilizar recursos de Metabole. No generar splash arts ni comprar assets sin tarea explícita.
 
 ## 10. Organización objetivo del código
@@ -156,22 +153,19 @@ Crear progresivamente según las tareas, no carpetas vacías en masa:
 
 ```text
 src/
-  App.tsx                     composición de página
-  main.tsx                    entrada React
-  index.css                   Tailwind, tokens y estilos base
-  components/layout/          Header, Footer, MobileMenu
-  components/ui/              Button, Container, SectionHeading
-  sections/                   Hero, Services, Process, About, Contact
-  features/hero/              HeroScene, AetherysMark, HeroFallback
-  features/projects/          solo al implementar casos reales
-  content/                    es.ts, en.ts, projects.ts, types.ts
-  hooks/                      useReducedMotion, useSmoothScroll
-  lib/                        motion.ts (constantes), locale.ts
-public/brand/
-public/models/
-docs/plans/                   especificaciones del planificador
-docs/tasks/                   contratos pequeños para ejecución
-docs/verification/            evidencia y bloqueos por entrega
+  App.tsx                        composición de página, locale y preferencias
+  main.tsx                       entrada React
+  index.css                      Tailwind, tokens y estilos base
+  components/layout/             Navbar (sustituyó a Header) y LanguageSwitch
+  components/ui/                 pendiente: Button, Container, SectionHeading
+  sections/                      Hero implementado; Services, Process, About, Contact pendientes
+  features/hero/                 HeroMark (lazy + fallback) y HeroScene (R3F)
+  content/hero.ts                diccionario ES/EN y path del logo
+  hooks/useMotionPreferences.ts  reduced-motion y hover dinámicos
+public/brand/                    aetherys-mark.svg
+docs/plans/                      especificaciones del planificador
+docs/tasks/                      contratos pequeños para ejecución
+docs/verification/               evidencia y bloqueos por entrega
 ```
 
 Una sola fuente de tokens y diccionarios. No dispersar colores literales ni copias de contenido entre componentes. Evitar abstracciones genéricas que solo tengan un consumidor salvo frontera clara como la escena diferida.
@@ -227,13 +221,13 @@ El planificador debe completar los campos aplicables y marcar explícitamente N/
 
 ## 12. Secuencia de implementación
 
-1. Confirmar asset del logo, definir SVG/fallback y cerrar el diseño de portada. Puede avanzar contenido/tokens mientras se espera el vector.
-2. Base: tokens, layout responsive, diccionarios ES/EN y navegación.
-3. Portada estática y contenido de servicios/proceso/empresa.
-4. Prototipo 3D: carga, material, encuadre y fallback. Validar antes de extender movimiento.
-5. Animaciones especificadas, accesibilidad y adaptación móvil.
-6. Contacto real, metadatos, estrategia SEO acordada y verificaciones de lanzamiento.
-7. Posteriormente: casos de estudio reales. CMS, blog, showreel o más 3D solo con alcance nuevo.
+1. Confirmar asset del logo, definir SVG/fallback y cerrar el diseño de portada. Puede avanzar contenido/tokens mientras se espera el vector. **Hecho con traza; vector original pendiente si el propietario lo aporta.**
+2. Base: tokens, layout responsive, diccionarios ES/EN y navegación. **Hecho; diccionarios en `content/hero.ts`.**
+3. Portada estática y contenido de servicios/proceso/empresa. **Hero hecho; Servicios, Proceso y Empresa pendientes.**
+4. Prototipo 3D: carga, material, encuadre y fallback. Validar antes de extender movimiento. **Implementado en `HeroScene.tsx` (extrusión SVG + material metálico-vítreo, 006).**
+5. Animaciones especificadas, accesibilidad y adaptación móvil. **Entrada y navbar en Framer Motion implementados.**
+6. Contacto real, metadatos, estrategia SEO acordada y verificaciones de lanzamiento. **Pendiente.**
+7. Posteriormente: casos de estudio reales. CMS, blog, showreel o más 3D solo con alcance nuevo. **Pendiente.**
 
 ## 13. Verificación: comandos y criterios
 
@@ -247,7 +241,7 @@ pnpm build
 git diff --check
 ```
 
-Formato: `pnpm exec prettier --check <archivos-modificados>` con rutas concretas. Prettier aún no tiene configuración propia; la primera tarea de tooling debe fijar semicolons false, singleQuote true, trailingComma all, tabWidth 2 y printWidth 100. No reformatear todo el repo por un cambio pequeño. Si se usa la configuración por defecto antes de esa tarea, informar discrepancias previas sin mezclarlas con cambios ajenos.
+Formato: `pnpm exec prettier --check <archivos-modificados>` con rutas concretas. La configuración ya existe en `.prettierrc.json` (semi false, singleQuote true, trailingComma all, tabWidth 2, printWidth 100). No reformatear todo el repo por un cambio pequeño.
 
 Para inspección visual local:
 
@@ -285,7 +279,7 @@ pnpm preview --host 127.0.0.1
 
 ## 15. Pendientes del propietario / bloqueos de publicación
 
-- SVG original o aceptación de una reconstrucción fiel del logo.
+- Vector original del logo, si se desea sustituir la traza actual en uso.
 - Correo, dominio y redes reales.
 - Integrantes/roles/fotos, si se mostrarán.
 - Alcance real del acompañamiento y soporte.

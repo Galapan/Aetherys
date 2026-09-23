@@ -273,10 +273,38 @@ a:focus-visible,
 .hero-stage {
   min-height: 144px;
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   padding-block: 48px;
+}
+.hero-stage > * {
+  grid-area: 1 / 1;
+}
+.hero-highlights {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  pointer-events: none;
+  color: var(--color-warm-white);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow:
+    0 1px 3px var(--color-graphite),
+    0 0 8px var(--color-graphite);
+}
+.hero-highlights li {
+  white-space: nowrap;
 }
 .hero-content {
   display: grid;
@@ -371,6 +399,32 @@ h1 {
 .menu-dialog::backdrop {
   background: transparent;
 }
+.language-transition {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+}
+.language-transition::backdrop {
+  background: transparent;
+}
+.language-transition-columns {
+  display: grid;
+  width: 100%;
+  height: 100%;
+}
+.language-transition-columns > span {
+  width: calc(100% + 1px);
+  height: 100%;
+  background: var(--color-graphite);
+}
 .menu-panel {
   position: absolute;
   isolation: isolate;
@@ -463,6 +517,22 @@ h1 {
   font-size: 24px;
   color: var(--color-burgundy);
 }
+.menu-link-label {
+  display: block;
+  height: 1.1em;
+  overflow: hidden;
+}
+.menu-link-roll {
+  display: flex;
+  flex-direction: column;
+}
+.menu-link-roll > span {
+  display: block;
+  line-height: 1.1;
+}
+.menu-link-roll-accent {
+  color: var(--color-burgundy);
+}
 .menu-dialog .language-switch button[aria-pressed='true'] {
   color: var(--color-graphite);
 }
@@ -496,6 +566,14 @@ h1 {
   }
   .hero-stage {
     min-height: 192px;
+  }
+  .hero-highlights {
+    flex-direction: row;
+    gap: 12px;
+  }
+  .hero-highlights li + li::before {
+    content: '·';
+    margin-right: 12px;
   }
   .hero-content {
     gap: 32px var(--grid-gap);

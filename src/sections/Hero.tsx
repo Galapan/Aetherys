@@ -121,10 +121,15 @@ export function Hero({ content, reducedMotion }: HeroProps) {
         <span />
         <span />
       </div>
-      <div className="hero-stage" aria-hidden="true">
+      <div className="hero-stage">
         <motion.div className="hero-mark-reveal" {...reveal(3.8)}>
           <HeroMark />
         </motion.div>
+        <motion.ul className="hero-highlights" {...reveal(4.1)}>
+          {content.highlights.map((phrase) => (
+            <li key={phrase}>{phrase}</li>
+          ))}
+        </motion.ul>
       </div>
       <div className="hero-content">
         <motion.h1 id="hero-heading" {...reveal(4)}>

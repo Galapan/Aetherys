@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { LanguageSwitch, type NavigationProps } from './LanguageSwitch'
+import { LanguageTransition } from './LanguageTransition'
+import type { Locale } from '../../content/hero'
 
 interface NavbarProps extends NavigationProps {
   children: ReactNode
@@ -25,6 +27,8 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
   const canHover = props.canHover && !reducedMotion
   const [expanded, setExpanded] = useState(false)
   const [snapshot, setSnapshot] = useState<PageSnapshot | null>(null)
+  const [pendingLocale, setPendingLocale] = useState<Locale | null>(null)
+  const [hoveredLink, setHoveredLink] = useState<number | null>(null)
   const page = useRef<HTMLDivElement>(null)
   const header = useRef<HTMLElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
@@ -74,6 +78,7 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
 
   function openMenu() {
     if (mounted) return
+    setHoveredLink(null)
     const brand = header.current?.querySelector('.brand')?.getBoundingClientRect()
     const button = trigger.current?.getBoundingClientRect()
     restoreScroll.current = window.scrollY
@@ -117,8 +122,8 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
   }
 
   const sceneTransition = {
-    duration: reducedMotion ? 0 : sceneDuration,
-    delay: expanded || reducedMotion ? 0 : 0.12,
+    duration: reducedMotion || pendingLocale !== null ? 0 : sceneDuration,
+    delay: expanded || reducedMotion || pendingLocale !== null ? 0 : 0.12,
     ease: expoOut,
   }
   function reveal(delay: number, masked = false) {
@@ -176,7 +181,6 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
                 {content.brand}
               </a>
               <div className="header-actions">
-                <LanguageSwitch {...props} canHover={canHover} />
                 <motion.button
                   ref={trigger}
                   className="menu-toggle"
@@ -322,9 +326,28 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
                             if (link.id) closeMenu(link.id)
                           }}
                           {...reveal(0.35 + index * 0.075, true)}
-                          whileHover={canHover ? { x: 8 } : undefined}
+                          onHoverStart={() => {
+                            if (canHover) setHoveredLink(index)
+                          }}
+                          onHoverEnd={() => setHoveredLink(null)}
                         >
-                          <span>{link.label}</span>
+                          <span className="menu-link-label">
+                            <motion.span
+                              className="menu-link-roll"
+                              animate={{
+                                y: canHover && expanded && hoveredLink === index ? '-50%' : '0%',
+                              }}
+                              transition={{
+                                duration: reducedMotion ? 0 : 0.4,
+                                ease: [0.22, 1, 0.36, 1],
+                              }}
+                            >
+                              <span>{link.label}</span>
+                              <span className="menu-link-roll-accent" aria-hidden="true">
+                                {link.label}
+                              </span>
+                            </motion.span>
+                          </span>
                           <span className="menu-link-arrow" aria-hidden="true">
                             ↗
                           </span>
@@ -337,13 +360,35 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
                   </motion.div>
                 </div>
                 <motion.div className="menu-language" {...reveal(0.7)}>
-                  <LanguageSwitch {...props} canHover={canHover} />
+                  <LanguageSwitch
+                    {...props}
+                    canHover={canHover}
+                    onChange={(next) => {
+                      if (next !== props.locale && pendingLocale === null) setPendingLocale(next)
+                    }}
+                  />
                 </motion.div>
               </div>
             </motion.div>
           </>
         )}
       </dialog>
+      {pendingLocale !== null && (
+        <LanguageTransition
+          label={content.language}
+          reducedMotion={reducedMotion}
+          onCovered={() => {
+            props.onChange(pendingLocale)
+            closing.current = false
+            setExpanded(false)
+            setSnapshot(null)
+          }}
+          onFinished={() => {
+            setPendingLocale(null)
+            trigger.current?.focus({ preventScroll: true })
+          }}
+        />
+      )}
     </>
   )
 }
