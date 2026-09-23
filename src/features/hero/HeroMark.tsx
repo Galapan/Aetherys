@@ -4,7 +4,14 @@ import { heroMark } from '../../content/hero'
 const HeroScene = lazy(() => import('./HeroScene'))
 
 function Fallback() {
-  return <img className="hero-mark-fallback" src={heroMark.fallback} alt="" />
+  return (
+    <img
+      className="hero-mark-fallback"
+      src={heroMark.fallback}
+      alt=""
+      style={{ transform: `scale(${heroMark.scale})` }}
+    />
+  )
 }
 
 class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {

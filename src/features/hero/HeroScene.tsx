@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { Environment, Lightformer } from '@react-three/drei'
+import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
 import { Color, type Group } from 'three'
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
@@ -84,12 +84,10 @@ function Mark() {
     return svg.paths.flatMap((path) => SVGLoader.createShapes(path))
   }, [])
   const colors = getComputedStyle(document.documentElement)
-  const body = new Color(colors.getPropertyValue('--color-graphite').trim()).lerp(
-    new Color(colors.getPropertyValue('--color-burgundy').trim()),
-    0.45,
-  )
+  const graphite = new Color(colors.getPropertyValue('--color-graphite').trim())
+  const body = new Color(colors.getPropertyValue('--color-warm-white').trim()).lerp(graphite, 0.15)
   return (
-    <group ref={group}>
+    <group ref={group} scale={heroMark.scale}>
       <mesh scale={[0.012, -0.012, 0.012]} position={[-2.91, 2.28, -0.08]}>
         <extrudeGeometry
           args={[
@@ -105,13 +103,29 @@ function Mark() {
             },
           ]}
         />
-        <meshPhysicalMaterial
+        <MeshTransmissionMaterial
+          backside
+          resolution={512}
+          backsideResolution={512}
+          samples={4}
           color={body}
-          metalness={0.75}
-          roughness={0.26}
+          metalness={0}
+          roughness={0.04}
+          transmission={1}
+          // Thickness uses the SVG's local units, before the mesh scale.
+          thickness={13}
+          backsideThickness={2}
+          backsideEnvMapIntensity={1.2}
+          attenuationColor={graphite}
+          attenuationDistance={0.85}
+          ior={1.5}
+          chromaticAberration={0}
+          anisotropicBlur={0}
+          distortion={0}
+          temporalDistortion={0}
           clearcoat={1}
-          clearcoatRoughness={0.08}
-          envMapIntensity={2.0}
+          clearcoatRoughness={0.04}
+          envMapIntensity={1.6}
         />
       </mesh>
     </group>
@@ -158,14 +172,14 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
       fallback={fallback}
     >
       <RenderQuality onContextLost={handleContextLost} onResolutionChange={setDpr} />
-      <ambientLight color={white} intensity={0.4} />
+      <ambientLight color={white} intensity={0.25} />
       <Environment resolution={512} frames={1}>
-        <Lightformer color={white} intensity={6} position={[-4, 1, 2]} scale={[1.2, 8, 1]} />
-        <Lightformer color={white} intensity={2.5} position={[0, 4, 1]} scale={[12, 1.6, 1]} />
+        <Lightformer color={white} intensity={5} position={[-4, 1, 2]} scale={[1.2, 8, 1]} />
+        <Lightformer color={white} intensity={2} position={[0, 4, 1]} scale={[12, 1.6, 1]} />
         <Lightformer color={burgundy} intensity={5} position={[4, 0, 2]} scale={[2, 7, 1]} />
         <Lightformer color={white} intensity={1} position={[0, 0, -5]} scale={[6, 6, 1]} />
       </Environment>
-      <directionalLight color={white} position={[-3, 4, 5]} intensity={2} />
+      <directionalLight color={white} position={[-3, 4, 5]} intensity={1.5} />
       <directionalLight color={burgundy} position={[4, 2, 1]} intensity={2.5} />
       <Mark />
     </Canvas>

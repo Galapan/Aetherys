@@ -154,8 +154,16 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
             scaleX: compact ? 1 - (gap * 2) / snapshot.width : 1,
             scaleY: compact ? 1 - (gap * 2) / snapshot.height : 1,
             borderRadius: compact ? 4 : 0,
+            filter: expanded ? 'blur(20px)' : 'blur(0px)',
           }}
-          transition={sceneTransition}
+          transition={{
+            ...sceneTransition,
+            filter: {
+              duration: reducedMotion || pendingLocale !== null ? 0 : 0.2,
+              delay: 0,
+              ease: [0.42, 0, 0.58, 1],
+            },
+          }}
           onAnimationComplete={() => {
             if (closing.current) setSnapshot(null)
           }}
@@ -334,12 +342,13 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
                           <span className="menu-link-label">
                             <motion.span
                               className="menu-link-roll"
+                              initial={{ y: '0%' }}
                               animate={{
                                 y: canHover && expanded && hoveredLink === index ? '-50%' : '0%',
                               }}
                               transition={{
-                                duration: reducedMotion ? 0 : 0.4,
-                                ease: [0.22, 1, 0.36, 1],
+                                duration: reducedMotion ? 0 : 0.45,
+                                ease: [0.42, 0, 0.58, 1],
                               }}
                             >
                               <span>{link.label}</span>

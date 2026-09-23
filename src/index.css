@@ -437,8 +437,25 @@ h1 {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--color-warm-white);
+  background: color-mix(in srgb, var(--color-warm-white) 90%, transparent);
   pointer-events: none;
+}
+.menu-panel-background::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(320px, 60vmin, 720px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-burgundy) 18%, transparent) 0%,
+    color-mix(in srgb, var(--color-burgundy) 8%, transparent) 35%,
+    transparent 70%
+  );
+  filter: blur(48px);
 }
 .menu-moving-header {
   position: absolute;
