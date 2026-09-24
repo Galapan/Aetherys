@@ -165,7 +165,6 @@ src/
 public/brand/                    aetherys-mark.svg
 docs/plans/                      especificaciones del planificador
 docs/tasks/                      contratos pequeños para ejecución
-docs/verification/               evidencia y bloqueos por entrega
 ```
 
 Una sola fuente de tokens y diccionarios. No dispersar colores literales ni copias de contenido entre componentes. Evitar abstracciones genéricas que solo tengan un consumidor salvo frontera clara como la escena diferida.
@@ -192,7 +191,7 @@ La asignación la hace el propietario en OpenCode. Nombres como Kimi K3 y Qwen 3
 - Si falta un dato necesario, hay conflicto o la implementación exige salir del alcance: marcar BLOCKED, indicar archivo/decisión y devolver al planificador. Continuar solo subtareas independientes ya especificadas.
 - No sustituir assets faltantes por arte inventado. No ocultar errores, desactivar lint, usar ts-ignore o any para pasar verificaciones.
 - Máximo dos intentos de corregir el mismo fallo dentro del alcance; después devolver evidencia y causa probable, sin ciclos de cambios especulativos.
-- No modificar el plan para justificar divergencias propias. Registrar resultado y pruebas en la tarea/evidencia.
+- No modificar el plan para justificar divergencias propias.
 
 ### Plantilla obligatoria de tarea
 
@@ -214,7 +213,7 @@ Pasos numerados de implementación:
 Comandos y verificaciones visuales aplicables:
 Criterios de aceptación binarios:
 Condiciones de bloqueo:
-Entrega: archivos cambiados, resultado de checks, evidencia, pendientes.
+Entrega: archivos cambiados, resultado de checks, pendientes.
 ```
 
 El planificador debe completar los campos aplicables y marcar explícitamente N/A los demás. Una tarea con decisiones pendientes no puede ser READY. DONE exige cumplir los criterios, no solo terminar de editar.
@@ -252,13 +251,13 @@ pnpm preview --host 127.0.0.1
 ```
 
 - Usar la URL/puerto real que devuelve el comando. Detener solo procesos iniciados por el agente.
-- Tras cambios visuales: comprobar 390x844 y 1440x900; añadir 768x1024 cuando cambie comportamiento de tablet. Capturar una vista representativa por breakpoint relevante.
+- Tras cambios visuales: comprobar 390x844 y 1440x900; añadir 768x1024 cuando cambie comportamiento de tablet.
 - Revisar consola sin errores, assets sin 404, ausencia de overflow horizontal y contenido sin solapamientos.
 - Comprobar ES/EN, actualización de lang, navegación/anclas, menú con teclado/Escape/foco y enlaces reales.
 - Comprobar reduced-motion, touch sin hover, fallback 3D y contenido visible con fallo de la escena.
 - Texto normal: contraste mínimo 4.5:1; texto grande y controles según WCAG AA. Objetivo táctil mínimo 44x44px.
 - Al incorporar 3D: comprobar pausa fuera de pantalla, ausencia de múltiples loops tras montaje/desmontaje y rendimiento en dispositivo real cuando esté disponible.
-- Antes de publicar: medir build con Lighthouse o herramienta equivalente. Objetivos orientativos: LCP <=2.5s, CLS <=0.1; INP <=200ms requiere medición adecuada de interacciones/campo. Registrar entorno y resultados; no prometer puntuaciones ni confundir pruebas de laboratorio con datos de usuarios.
+- Antes de publicar: medir build con Lighthouse o herramienta equivalente. Objetivos orientativos: LCP <=2.5s, CLS <=0.1; INP <=200ms requiere medición adecuada de interacciones/campo. No prometer puntuaciones ni confundir pruebas de laboratorio con datos de usuarios.
 - No instalar un framework de tests para cambios de copy/estilo. Para lógica no trivial, el plan debe definir pruebas de comportamiento y herramienta antes de ejecutar.
 - Cambio solo documental: revisar exactitud, rutas y `git diff --check`; no ejecutar build/lint sin motivo.
 - Un check no ejecutado se reporta como NO EJECUTADO con causa. Un check fallido se reporta como FALLÓ. Nunca marcar como aprobado por inspección visual del código.
