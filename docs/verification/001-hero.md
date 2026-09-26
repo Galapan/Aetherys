@@ -5,7 +5,7 @@ Implementación terminada. Cierre de verificación pendiente de revalidar el fav
 ## Entrega
 
 - Hero y cabecera mínima responsive, ES/EN, URL e historial, metadatos de cliente, entrada GSAP y reduced motion dinámico.
-- Plan: ../plans/001-hero.md. Contrato: ../tasks/001-hero.md.
+- Los archivos originales de planificación y contrato se retiraron al adoptar el handoff conversacional descrito en AGENTS.md §11; esta ficha conserva la evidencia histórica de verificación.
 - Sin escena ni logo reconstruido. CTA reservado hasta que exista #empresa. Sin nuevas dependencias, commits ni publicación.
 - Preview de desarrollo iniciado por el agente: http://127.0.0.1:5174/. El puerto 5173 estaba ocupado y no se modificó su proceso.
 

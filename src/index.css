@@ -442,6 +442,8 @@ audio {
 }
 .hero-content h1 {
   grid-column: 1 / -1;
+  max-width: 18ch;
+  text-align: left;
 }
 .visually-hidden {
   position: absolute;

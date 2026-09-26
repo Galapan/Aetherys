@@ -8,7 +8,7 @@ Usar **Framer Motion** para toda animación de UI (entrada, menú, transiciones 
 
 - Leer este archivo al iniciar la sesión. Es la fuente de contexto compartido para OpenCode y otros agentes que admitan AGENTS.md.
 - Las instrucciones explícitas más recientes del propietario prevalecen. Este documento no configura automáticamente modelos, permisos ni enrutamiento en OpenCode.
-- Trabajar desde la raíz que contiene este archivo y package.json. La ruta comprobada al crearlo fue `/home/galapan/Projects/Aetherys/Aetherys/Aetherys`; no confundir con `/home/galapan/Documents/ChatGPT/Aetherys`, que era otra carpeta.
+- Trabajar desde la raíz que contiene este archivo y package.json. La raíz comprobada es `/home/galapan/Projects/Aetherys/Aetherys`; no confundir con `/home/galapan/Documents/ChatGPT/Aetherys`, que era otra carpeta.
 - Este documento especifica trabajo futuro: no significa que el sitio, los assets o las verificaciones ya estén implementados.
 - No migrar el framework, actualizar dependencias, publicar, contratar servicios ni crear infraestructura sin una tarea explícita que lo contemple.
 - Preservar los cambios del usuario. No hacer reset, sobrescribir archivos ajenos a la tarea ni realizar commits/push sin solicitud.
@@ -163,8 +163,8 @@ src/
   content/hero.ts                diccionario ES/EN y path del logo
   hooks/useMotionPreferences.ts  reduced-motion y hover dinámicos
 public/brand/                    aetherys-mark.svg
-docs/plans/                      especificaciones del planificador
-docs/tasks/                      contratos pequeños para ejecución
+docs/plans/                      decisiones y especificaciones duraderas; planes de trabajo por solicitud se entregan en conversación (§11)
+docs/verification/               evidencia histórica y referencias para el propietario; no requisito de cierre para el ejecutor
 ```
 
 Una sola fuente de tokens y diccionarios. No dispersar colores literales ni copias de contenido entre componentes. Evitar abstracciones genéricas que solo tengan un consumidor salvo frontera clara como la escena diferida.
@@ -175,48 +175,54 @@ La asignación la hace el propietario en OpenCode. Nombres como Kimi K3 y Qwen 3
 
 ### PLANIFICADOR
 
-- Modelos caros/complejos SOLO analizan y planean. Pueden leer el repo, ejecutar diagnósticos no destructivos y escribir planes/tareas. No implementan código de producción, instalan paquetes ni corrigen archivos de aplicación.
-- Leer únicamente este contrato, el estado Git y los archivos relevantes. Convertir el objetivo en tareas pequeñas, ordenadas y con dependencias explícitas.
-- Registrar decisiones en docs/plans/NNN-tema.md; contratos ejecutables en docs/tasks/NNN-tema.md. No crear estos archivos hasta que exista trabajo solicitado.
-- Resolver antes de delegar todos los detalles visuales, funcionales y técnicos relevantes. Prohibidas instrucciones como «hazlo premium», «mejora el diseño» o «usa tu criterio» sin valores y resultados verificables.
-- Especificar rutas exactas, nombres de exports/props, cadenas ES/EN, tokens, medidas por breakpoint, assets, animaciones, estados de error/carga, cleanup y criterios de aceptación.
-- Planificar una tarea normal para 1–4 archivos de aplicación. Si exige más, dividir por fronteras funcionales o justificar en el plan.
+- Modelos caros/complejos SOLO analizan y planean. Pueden leer el repo y ejecutar diagnósticos no destructivos, pero no implementan código de producción, instalan paquetes ni corrigen archivos de aplicación.
+- Idealmente, intervenir una sola vez al comienzo de cada solicitud: analizar su alcance completo y entregar en una respuesta un plan autocontenido, ordenado y suficientemente detallado para ejecutar todo el trabajo sin consultas posteriores por tarea.
+- Leer únicamente este contrato, el estado Git y los archivos relevantes. Descomponer el objetivo en tareas con orden y dependencias explícitas; indicar cuáles pueden avanzar independientemente.
+- Entregar el plan y las tareas en la conversación como handoff al ejecutor. No crear archivos de tareas, registrar estados en el repositorio ni actuar como administrador rutinario del progreso, salvo que el propietario solicite explícitamente persistirlos.
+- Resolver las decisiones visuales, funcionales y técnicas importantes que el ejecutor no pueda deducir del plan, AGENTS.md o el código relevante. El detalle debe ser proporcional a la complejidad y ambigüedad: no usar instrucciones vagas ni expandir una tarea solo para llenar una plantilla.
+- Cada tarea incluye los campos mínimos de la plantilla. Añadir copy, contratos, assets, layout, tokens, interacciones, accesibilidad, estados de error/carga, cleanup o condiciones especiales de bloqueo solo cuando aporten precisión específica a esa tarea.
+- Asumir que el ejecutor leerá AGENTS.md y el código relevante. Referenciar brevemente las reglas existentes en vez de repetirlas; repetir valores concretos solo para resolver una ambigüedad propia de la tarea.
+- Si varias tareas comparten contexto o decisiones, declararlos una sola vez en el plan y referenciarlos desde las tareas. No repetir restricciones, convenciones, comandos ni contenido ya definido en AGENTS.md, el código o el propio plan.
+- Priorizar información que resuelva una decisión importante, establezca una dependencia, precise la implementación, defina aceptación verificable o evite una interpretación incorrecta. Omitir el resto.
+- Planificar una tarea normal para 1–4 archivos de aplicación. Si exige más, dividir por fronteras funcionales o justificarlo. El plan completo debe anticipar decisiones y verificaciones de las tareas posteriores.
 
 ### EJECUTOR
 
-- Modelos económicos implementan UNA tarea cuyo estado sea READY y cuyas dependencias estén completas.
-- Leer AGENTS.md, esa tarea y los archivos necesarios. No replanificar el sitio ni navegar por referencias por iniciativa propia.
+- Leer AGENTS.md, el plan completo recibido y los archivos necesarios. No replanificar el sitio ni navegar por referencias por iniciativa propia.
+- Avanzar autónomamente, en el orden definido, por cada tarea READY cuyas dependencias estén satisfechas. Al completar una tarea, continuar con la siguiente tarea disponible sin volver al planificador. Determinar el progreso mecánicamente según el orden, las dependencias y los criterios de aceptación del plan.
+- Mantener `READY` e `IN_PROGRESS` implícitos en el contexto de ejecución; no reportar cada transición. Al cerrar un lote, informar principalmente los resultados `DONE`, `BLOCKED` o `FAILED` y los checks ejecutados. Se permite un único reporte compacto para varias tareas consecutivas; ampliar solo ante fallos, bloqueos, desviaciones relevantes o información necesaria para continuar.
 - Ejecutar exactamente el contrato: sin libertad para cambiar colores, copy, layout, librerías, nombres de componentes, assets, tiempos o arquitectura.
 - Puede tomar decisiones mecánicas locales que no cambien el contrato (por ejemplo nombres de variables internas). No puede llenar decisiones de producto ausentes.
-- Si falta un dato necesario, hay conflicto o la implementación exige salir del alcance: marcar BLOCKED, indicar archivo/decisión y devolver al planificador. Continuar solo subtareas independientes ya especificadas.
+- Resolver por cuenta propia errores de sintaxis, fallos de tests/verificaciones y ajustes locales o técnicos rutinarios siempre que pueda hacerlo respetando el plan y las reglas existentes. Ejecutar las verificaciones técnicas aplicables definidas por el proyecto y por cada tarea, incluidos tests, lint, typecheck, build u otros checks disponibles.
+- Si falta información esencial, aparece un conflicto, una dependencia/supuesto importante resulta incorrecto, el plan es técnicamente inválido, cambia sustancialmente el alcance o continuar exigiría una decisión no autorizada, marcar la tarea afectada como BLOCKED, explicar brevemente el motivo y escalar al planificador. Continuar mientras tanto con tareas independientes ya especificadas.
 - No sustituir assets faltantes por arte inventado. No ocultar errores, desactivar lint, usar ts-ignore o any para pasar verificaciones.
-- Máximo dos intentos de corregir el mismo fallo dentro del alcance; después devolver evidencia y causa probable, sin ciclos de cambios especulativos.
-- No modificar el plan para justificar divergencias propias.
+- Máximo dos intentos de corregir el mismo fallo dentro del alcance; después registrar FAILED con evidencia y causa probable. Escalar al planificador solo si hace falta una decisión o corrección del plan para continuar correctamente.
+- No modificar el plan para justificar divergencias propias. Si el plan resulta insuficiente, no improvisar una decisión importante: escalar únicamente ese bloqueo.
+
+### ESCALAMIENTO Y CIERRE
+
+- El planificador solo vuelve a intervenir por un bloqueo arquitectónico/de diseño no contemplado, invalidez técnica del plan, información esencial faltante, dependencia o supuesto importante incorrecto, cambio sustancial de alcance o una decisión importante no autorizada.
+- Problemas menores de implementación y administración rutinaria de estados, dependencias satisfechas o siguiente tarea disponible no requieren al planificador. El ejecutor proporciona un handoff conciso solo cuando necesita escalar; debe identificar la tarea, el bloqueo, la evidencia y la decisión requerida.
+- Priorizar `Usuario → Planificador (idealmente una vez) → Ejecutor(es) → Verificación → Finalización`. Usar `Ejecutor → Planificador` solo para escalar cuando el plan no permita continuar correctamente.
+- Una tarea está DONE cuando se implementó paso a paso según el plan READY, se respetaron sus límites y pasaron las verificaciones técnicas aplicables; no requiere inspección visual del agente. La validación visual corresponde al propietario.
 
 ### Plantilla obligatoria de tarea
 
 ```text
-ID / título / estado: DRAFT | READY | IN_PROGRESS | BLOCKED | DONE
-Objetivo observable:
-Dependencias y precondiciones:
-Archivos que se pueden crear/modificar:
-Archivos que hay que leer:
-Fuera de alcance:
-Contrato de datos, exports y props:
-Copy exacto ES/EN:
-Assets exactos y fallback:
-Layout por breakpoint (dimensiones/espaciado):
-Tokens y tipografía:
-Interacción (evento, estado inicial/final, tiempo, easing):
-Accesibilidad / reduced-motion / errores / cleanup:
-Pasos numerados de implementación:
-Comandos y verificaciones visuales aplicables:
-Criterios de aceptación binarios:
-Condiciones de bloqueo:
-Entrega: archivos cambiados, resultado de checks, pendientes.
+ID / orden / título:
+Objetivo:
+Dependencias:
+Archivos/áreas relevantes:
+Implementación:
+Criterios de aceptación:
+Checks:
 ```
 
-El planificador debe completar los campos aplicables y marcar explícitamente N/A los demás. Una tarea con decisiones pendientes no puede ser READY. DONE exige cumplir los criterios, no solo terminar de editar.
+Añadir únicamente cuando sean relevantes: copy ES/EN; contratos de datos, exports o props; assets y fallback; layout, dimensiones y breakpoints; tokens y tipografía; interacciones y animaciones; accesibilidad y reduced-motion; estados de error/carga y cleanup; condiciones especiales de bloqueo. No incluir campos vacíos ni escribir `N/A` o equivalentes.
+
+Cuando no existan dependencias, indicarlo como `ninguna`. Para checks comunes, referenciar AGENTS.md §13 y detallar solo los específicos de la tarea.
+
+El planificador entrega el plan completo en la conversación. Cada tarea debe tener detalle suficiente para que el ejecutor pueda realizarla autónomamente; las decisiones no resueltas impiden marcarla READY. El ejecutor determina mecánicamente qué tarea sigue y reporta el progreso según las reglas de escalamiento y cierre anteriores.
 
 ## 12. Secuencia de implementación
 
@@ -242,7 +248,7 @@ git diff --check
 
 Formato: `pnpm exec prettier --check <archivos-modificados>` con rutas concretas. La configuración ya existe en `.prettierrc.json` (semi false, singleQuote true, trailingComma all, tabWidth 2, printWidth 100). No reformatear todo el repo por un cambio pequeño.
 
-Para inspección visual local:
+Para validación visual local por parte del propietario:
 
 ```sh
 pnpm dev --host 127.0.0.1
@@ -250,17 +256,11 @@ pnpm dev --host 127.0.0.1
 pnpm preview --host 127.0.0.1
 ```
 
-- Usar la URL/puerto real que devuelve el comando. Detener solo procesos iniciados por el agente.
-- Tras cambios visuales: comprobar 390x844 y 1440x900; añadir 768x1024 cuando cambie comportamiento de tablet.
-- Revisar consola sin errores, assets sin 404, ausencia de overflow horizontal y contenido sin solapamientos.
-- Comprobar ES/EN, actualización de lang, navegación/anclas, menú con teclado/Escape/foco y enlaces reales.
-- Comprobar reduced-motion, touch sin hover, fallback 3D y contenido visible con fallo de la escena.
-- Texto normal: contraste mínimo 4.5:1; texto grande y controles según WCAG AA. Objetivo táctil mínimo 44x44px.
-- Al incorporar 3D: comprobar pausa fuera de pantalla, ausencia de múltiples loops tras montaje/desmontaje y rendimiento en dispositivo real cuando esté disponible.
+- La inspección visual y la valoración de si el diseño final es correcto corresponden al propietario; no son requisitos para que el agente marque una tarea DONE.
 - Antes de publicar: medir build con Lighthouse o herramienta equivalente. Objetivos orientativos: LCP <=2.5s, CLS <=0.1; INP <=200ms requiere medición adecuada de interacciones/campo. No prometer puntuaciones ni confundir pruebas de laboratorio con datos de usuarios.
 - No instalar un framework de tests para cambios de copy/estilo. Para lógica no trivial, el plan debe definir pruebas de comportamiento y herramienta antes de ejecutar.
 - Cambio solo documental: revisar exactitud, rutas y `git diff --check`; no ejecutar build/lint sin motivo.
-- Un check no ejecutado se reporta como NO EJECUTADO con causa. Un check fallido se reporta como FALLÓ. Nunca marcar como aprobado por inspección visual del código.
+- Un check técnico no ejecutado se reporta como NO EJECUTADO con causa. Un check fallido se reporta como FALLÓ. No afirmar que se ejecutó un check que no se realizó.
 
 ## 14. Ahorro de tokens y control del alcance
 

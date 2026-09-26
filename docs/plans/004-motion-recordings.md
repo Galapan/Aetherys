@@ -1,6 +1,6 @@
 # 004 — Movimiento según las dos nuevas grabaciones
 
-Solicitud explícita más reciente: analizar los vídeos locales 17-11-56 (navbar) y 17-15-27 (entrada), reproducir sus animaciones, reducir menú a secciones/proyectos, usar Framer Motion para todas las animaciones de ahora en adelante. Sustituye decisiones de movimiento de 002/003 y AGENTS.md §5/8 en este alcance. No añadir contacto, 3D ni proyectos inventados.
+Solicitud explícita más reciente: analizar los vídeos locales 17-11-56 (navbar) y 17-15-27 (entrada), reproducir sus animaciones, reducir menú a secciones/proyectos, usar Framer Motion para todas las animaciones de ahora en adelante. Sustituye las decisiones de movimiento anteriores y AGENTS.md §5/8 en este alcance. No añadir contacto, 3D ni proyectos inventados.
 
 ## Observación y adaptación
 
