@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Originales de imagenes de proyectos, sin optimizar, solo en local.
+# Las versiones que se publican viven en public/proyectos/.
+proyectos-originales/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

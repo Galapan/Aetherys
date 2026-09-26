@@ -1,12 +1,21 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
-import { motion } from 'framer-motion'
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react'
+import { motion, useMotionValueEvent, type MotionValue } from 'framer-motion'
 import { LanguageSwitch, type NavigationProps } from './LanguageSwitch'
 import { LanguageTransition } from './LanguageTransition'
+import { AudioToggle } from '../ui/AudioToggle'
 import type { Locale } from '../../content/hero'
 
 interface NavbarProps extends NavigationProps {
   children: ReactNode
   reducedMotion: boolean
+  headerInvert: MotionValue<number>
 }
 
 interface PageSnapshot {
@@ -22,7 +31,7 @@ interface PageSnapshot {
 const expoOut = [0.16, 1, 0.3, 1] as const
 const sceneDuration = 0.7
 
-export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
+export function Navbar({ children, reducedMotion, headerInvert, ...props }: NavbarProps) {
   const { content } = props
   const canHover = props.canHover && !reducedMotion
   const [expanded, setExpanded] = useState(false)
@@ -40,6 +49,16 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
   const gap = snapshot ? Math.min(32, Math.max(16, snapshot.width * 0.042)) : 0
   const headerInset = snapshot ? Math.min(80, snapshot.height * 0.08) : 0
   const compact = expanded && !reducedMotion && snapshot
+
+  function applyHeaderMix(value: number) {
+    header.current?.style.setProperty('--header-mix', `${((1 - value) * 100).toFixed(2)}%`)
+  }
+
+  useMotionValueEvent(headerInvert, 'change', applyHeaderMix)
+
+  useEffect(() => {
+    applyHeaderMix(headerInvert.get())
+  }, [headerInvert])
 
   useLayoutEffect(() => {
     if (!mounted) return
@@ -189,6 +208,20 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
                 {content.brand}
               </a>
               <div className="header-actions">
+                <AudioToggle content={content} reducedMotion={reducedMotion} canHover={canHover} />
+                <motion.button
+                  className="contact-button"
+                  type="button"
+                  aria-label={content.contactPending}
+                  aria-disabled="true"
+                  whileHover={canHover ? { y: -2 } : undefined}
+                  transition={{ duration: 0.18 }}
+                >
+                  <span className="contact-button__label">{content.contact}</span>
+                  <span className="contact-button__arrow" aria-hidden="true">
+                    →
+                  </span>
+                </motion.button>
                 <motion.button
                   ref={trigger}
                   className="menu-toggle"
@@ -200,7 +233,9 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
                   whileHover={canHover ? { y: -2 } : undefined}
                   transition={{ duration: 0.18 }}
                 >
-                  {content.menu}
+                  <span className="menu-label" aria-hidden="true">
+                    <span>{content.menu}</span>
+                  </span>
                   <span className="menu-icon" aria-hidden="true">
                     <i />
                     <i />

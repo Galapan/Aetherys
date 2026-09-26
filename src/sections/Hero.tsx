@@ -1,33 +1,96 @@
-import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { motion } from 'framer-motion'
+import { useEffect, useRef } from 'react'
+import { animate, motion, useMotionValue, useMotionValueEvent, useScroll } from 'framer-motion'
 import type { HeroContent } from '../content/hero'
-import { HeroMark } from '../features/hero/HeroMark'
 
 interface HeroProps {
   content: HeroContent
+  entering: boolean
   reducedMotion: boolean
 }
 
 const curtainEase = [0.76, 0, 0.24, 1] as const
 
-export function Hero({ content, reducedMotion }: HeroProps) {
-  const [introduced, setIntroduced] = useState(reducedMotion)
-  if (reducedMotion && !introduced) setIntroduced(true)
-  const entering = !introduced && !reducedMotion
+// Scroll distance (px) the highlights stay parked and fully visible at the tope
+// before the disappear animation starts.
+const HIGHLIGHTS_HOLD_PX = 80
 
+export function Hero({ content, entering, reducedMotion }: HeroProps) {
+  const { scrollY } = useScroll()
+  const highlightsOpacity = useMotionValue(1)
+  const highlightsRef = useRef<HTMLUListElement>(null)
+  const placeholderRef = useRef<HTMLDivElement>(null)
+  // Scroll offset at which the highlights reach the tope and stop moving.
+  const topeScrollY = useRef(0)
+  // useMotionValueEvent only hands us the latest value, so keep the previous one
+  // ourselves to detect the direction.
+  const lastScrollY = useRef(0)
+  const hidden = useRef(false)
+
+  // Measure the pinned logo so the text can sit on its centre. The frame is
+  // sticky at top:0 with rows `1fr auto`, so the logo centre is not the viewport
+  // centre and hard-coding it would drift between breakpoints.
   useEffect(() => {
-    if (introduced) return
-    const finish = () => setIntroduced(true)
-    const timer = window.setTimeout(finish, 5400)
-    document.addEventListener('focusin', finish)
-    document.addEventListener('pointerdown', finish)
-    return () => {
-      window.clearTimeout(timer)
-      document.removeEventListener('focusin', finish)
-      document.removeEventListener('pointerdown', finish)
+    function measure() {
+      const el = highlightsRef.current
+      if (!el) return
+
+      const half = el.getBoundingClientRect().height / 2
+      const logoEl = document.querySelector<HTMLElement>('.sticky-stage__mark .hero-mark-reveal')
+      const placeholder = placeholderRef.current
+
+      // Prefer the real logo; the placeholder reserves its box as a proxy.
+      let logoRect = logoEl?.getBoundingClientRect()
+      if ((!logoRect || logoRect.height === 0) && placeholder) {
+        logoRect = placeholder.getBoundingClientRect()
+      }
+
+      if (!logoRect || logoRect.height === 0) {
+        const stickTop = parseFloat(getComputedStyle(el).top) || 0
+        topeScrollY.current = el.getBoundingClientRect().top + window.scrollY - stickTop
+        return
+      }
+
+      const logoCenter = logoRect.top + logoRect.height / 2
+      // Park the block with its centre on the logo's centre.
+      el.style.setProperty('--highlights-tope', `${logoCenter - half}px`)
+
+      if (placeholder) {
+        const box = placeholder.getBoundingClientRect()
+        const stageCenter = box.top + box.height / 2
+        // Drop the resting position onto the logo, so it is already parked and
+        // never travels before fading.
+        el.style.setProperty('--highlights-nudge', `${logoCenter - stageCenter}px`)
+      }
+      topeScrollY.current = 0
     }
-  }, [introduced])
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
+
+  useMotionValueEvent(scrollY, 'change', (latest) => {
+    if (reducedMotion) return
+    const previous = lastScrollY.current
+    lastScrollY.current = latest
+    const goingDown = latest > previous
+
+    if (hidden.current) {
+      // Any upward movement brings them back.
+      if (!goingDown) {
+        hidden.current = false
+        animate(highlightsOpacity, 1, { duration: 0.35, ease: 'easeOut' })
+      }
+      return
+    }
+
+    // Going down: stay parked and visible until the hold distance is covered.
+    const hold = Math.max(0, topeScrollY.current) + HIGHLIGHTS_HOLD_PX
+    if (goingDown && latest > hold) {
+      hidden.current = true
+      animate(highlightsOpacity, 0, { duration: 0.35, ease: 'easeOut' })
+    }
+  })
 
   function reveal(delay: number) {
     return {
@@ -113,21 +176,13 @@ export function Hero({ content, reducedMotion }: HeroProps) {
           </div>,
           document.body,
         )}
-      <div className="hero-grid" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
       <div className="hero-stage">
-        <motion.div className="hero-mark-reveal" {...reveal(3.8)}>
-          <HeroMark />
-        </motion.div>
-        <motion.ul className="hero-highlights" {...reveal(4.1)}>
+        <div className="hero-mark-placeholder" aria-hidden="true" ref={placeholderRef} />
+        <motion.ul ref={highlightsRef} className="hero-highlights" {...reveal(4.1)}>
           {content.highlights.map((phrase) => (
-            <li key={phrase}>{phrase}</li>
+            <motion.li key={phrase} style={{ opacity: reducedMotion ? 1 : highlightsOpacity }}>
+              {phrase}
+            </motion.li>
           ))}
         </motion.ul>
       </div>
@@ -135,10 +190,6 @@ export function Hero({ content, reducedMotion }: HeroProps) {
         <motion.h1 id="hero-heading" {...reveal(4)}>
           {content.heading}
         </motion.h1>
-      </div>
-      <div className="hero-bottom">
-        <p className="eyebrow">{content.eyebrow}</p>
-        <span className="hero-cross" aria-hidden="true" />
       </div>
     </section>
   )

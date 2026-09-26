@@ -8,9 +8,13 @@
   --color-secondary: color-mix(in srgb, var(--color-warm-white) 78%, transparent);
   --color-border: color-mix(in srgb, var(--color-warm-white) 14%, transparent);
   --color-grid: color-mix(in srgb, var(--color-warm-white) 6%, transparent);
+  --color-grid-burgundy: color-mix(in srgb, var(--color-burgundy) 12%, transparent);
   --page-padding: 20px;
   --grid-columns: 4;
   --grid-gap: 16px;
+  --header-height: 80px;
+  --foot-space: 72px;
+  --mark-lift: 40px;
   font-family:
     system-ui,
     -apple-system,
@@ -59,7 +63,8 @@ a:focus-visible,
   padding-inline: var(--page-padding);
 }
 .site-header.container,
-.hero.container {
+.hero.container,
+.hero-bottom.container {
   max-width: none;
   --page-padding: clamp(20px, 1.85vw, 32px);
 }
@@ -76,12 +81,23 @@ a:focus-visible,
   transform-origin: center;
 }
 .site-header {
-  height: 80px;
+  height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
-  z-index: 1;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  --header-mix: 100%;
+  background: transparent;
+  pointer-events: none;
+  color: var(--color-warm-white);
+  color: color-mix(in srgb, var(--color-warm-white) var(--header-mix), var(--color-burgundy));
+}
+.site-header .brand,
+.site-header .menu-toggle,
+.site-header .audio-toggle {
+  pointer-events: auto;
 }
 .brand {
   display: inline-flex;
@@ -94,7 +110,7 @@ a:focus-visible,
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: clamp(6px, 1.8vw, 12px);
 }
 .language-switch {
   display: flex;
@@ -126,7 +142,8 @@ a:focus-visible,
 .language-switch > span {
   color: var(--color-secondary);
 }
-.menu-toggle {
+.menu-toggle,
+.contact-button {
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -136,10 +153,57 @@ a:focus-visible,
   color: inherit;
   border: 0;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 18px;
   line-height: 1.4;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+/* The audio button carries no outer padding, so the text buttons would otherwise
+   show twice the inset on the contact<->menu side. Drop the right inset to keep
+   the optical gap identical on both sides of the contact button. */
+.contact-button {
+  padding-right: 0;
+}
+audio {
+  display: none;
+}
+.audio-toggle {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  border-radius: 4px;
+}
+.audio-toggle__wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+}
+.audio-toggle__bar {
+  display: block;
+  width: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  transform-origin: center;
+}
+.contact-button__arrow {
+  display: none;
+  font-size: 18px;
+  line-height: 1;
+}
+@media (max-width: 430px) {
+  .contact-button__label {
+    display: none;
+  }
+  .contact-button__arrow {
+    display: block;
+  }
 }
 .menu-icon {
   display: grid;
@@ -172,11 +236,11 @@ a:focus-visible,
   transform: translateY(0);
 }
 .hero {
-  min-height: calc(100svh - 80px);
+  min-height: calc(100svh - var(--header-height));
   position: relative;
   display: flex;
   flex-direction: column;
-  padding-bottom: 24px;
+  padding-bottom: calc(24px + var(--foot-space));
 }
 .hero-entrance {
   position: fixed;
@@ -252,23 +316,64 @@ a:focus-visible,
   width: 2px;
   left: 5px;
 }
-.hero-grid {
-  position: absolute;
-  inset: -80px var(--page-padding) 0;
+.rule-grid {
   display: flex;
   justify-content: space-between;
+  padding-inline: var(--page-padding);
   pointer-events: none;
-  z-index: -1;
 }
-.hero-grid span {
-  height: 100%;
+.rule-grid span {
   width: 1px;
+  height: 100%;
+  flex-shrink: 0;
   background: var(--color-grid);
 }
-.hero-grid span:nth-child(2),
-.hero-grid span:nth-child(4),
-.hero-grid span:nth-child(5) {
+.rule-grid span:nth-child(2),
+.rule-grid span:nth-child(4),
+.rule-grid span:nth-child(5) {
   display: none;
+}
+.sticky-stage__grid {
+  position: sticky;
+  top: 0;
+  z-index: -1;
+  height: 0;
+}
+.sticky-stage__grid span {
+  /* Extend the rules up past the header box so they reach the top of the viewport.
+     Done on the rules rather than on the sticky container: a negative margin on a
+     sticky box can be clamped back inside its containing block. */
+  height: calc(100svh + var(--header-height));
+  margin-top: calc(var(--header-height) * -1);
+}
+.sticky-stage {
+  position: relative;
+}
+.sticky-stage__frame {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  margin-top: calc(var(--header-height) * -1);
+  margin-bottom: calc(-100svh + var(--header-height));
+  display: grid;
+  grid-template-rows: 1fr auto;
+  pointer-events: none;
+}
+.sticky-stage__mark {
+  position: relative;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  padding-bottom: var(--mark-lift);
+}
+.sticky-stage__mark > .hero-mark-reveal {
+  width: min(100%, 480px);
+}
+.hero-stage > .hero-mark-placeholder {
+  width: min(100%, 480px);
+  aspect-ratio: 1;
+  max-height: 48svh;
+  pointer-events: none;
 }
 .hero-stage {
   min-height: 144px;
@@ -281,11 +386,19 @@ a:focus-visible,
   grid-area: 1 / 1;
 }
 .hero-highlights {
-  position: relative;
+  position: sticky;
   z-index: 1;
+  /* The "tope": set at runtime to the logo's own centre, so the text parks on
+     the logo instead of flying up under the header. */
+  top: var(--highlights-tope, 40svh);
+  /* `.hero-stage` uses `place-items: center`, which centres the margin box, so a
+     margin-top of 2N shifts the text by N. */
+  margin-top: calc(var(--highlights-nudge, 0px) * 2);
   display: flex;
   flex-direction: column;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   max-width: 100%;
   padding: 0;
@@ -293,7 +406,7 @@ a:focus-visible,
   list-style: none;
   pointer-events: none;
   color: var(--color-warm-white);
-  font-size: 12px;
+  font-size: clamp(12px, 0.9vw, 15px);
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: 0.04em;
@@ -330,6 +443,16 @@ a:focus-visible,
 .hero-content h1 {
   grid-column: 1 / -1;
 }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .eyebrow {
   font-size: 12px;
   line-height: 1.4;
@@ -339,7 +462,7 @@ a:focus-visible,
   margin: 0;
 }
 h1 {
-  font-size: clamp(2rem, 2.8vw, 2.75rem);
+  font-size: clamp(2.25rem, 3.3vw, 3.4rem);
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: -0.04em;
@@ -349,34 +472,272 @@ h1 {
   margin: 0;
 }
 .hero-bottom {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
+  width: 100%;
+  padding-bottom: 32px;
+  pointer-events: none;
 }
-.hero-cross {
-  width: 12px;
-  height: 12px;
-  position: relative;
+.hero-time {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
+  font-size: clamp(13px, 1.2vw, 15px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: var(--color-warm-white);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
-.hero-cross::before,
-.hero-cross::after {
-  content: '';
-  background: var(--color-warm-white);
+.manifesto {
+  position: relative;
+  z-index: 1;
+  padding-inline: var(--page-padding);
+  padding-inline-start: calc(var(--page-padding) + clamp(0px, 5vw, 72px));
+  min-height: 200svh;
+}
+.manifesto-inner {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  padding-block: 64px;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 32px;
+}
+.manifesto-eyebrow {
+  margin: 0;
+  color: var(--color-burgundy);
+  font-size: 16px;
+  font-weight: 700;
+}
+/* Shared reveal mechanism: an underline that wipes in, plus a cover block that
+   retracts to "materialise" the label. Reused by the manifesto and projects. */
+.reveal-eyebrow {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 7px;
+}
+.reveal-eyebrow__line {
   position: absolute;
-}
-.hero-cross::before {
-  width: 12px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: 1px;
-  top: 5px;
+  background: currentColor;
+  transform-origin: left center;
 }
-.hero-cross::after {
-  height: 12px;
-  width: 1px;
-  left: 5px;
+.reveal-eyebrow__cover {
+  position: absolute;
+  inset: 0;
+  background: var(--eyebrow-cover, var(--color-burgundy));
+  transform-origin: top center;
+}
+.projects {
+  position: relative;
+  /* Curtain: pull the white panel up over the manifesto and the pinned hero frame.
+     z-index matches .manifesto (1) and this section comes later in the DOM, so it
+     paints on top of the manifesto while staying below the header (z-index 2). */
+  z-index: 1;
+  margin-top: -100svh;
+  padding-top: clamp(48px, 6vw, 96px);
+  padding-bottom: clamp(80px, 9vw, 144px);
+  background: var(--color-warm-white);
+  color: var(--color-graphite);
+}
+.projects__grid {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 100%;
+}
+.projects__grid span {
+  background: var(--color-grid-burgundy);
+}
+.projects__inner {
+  position: relative;
+  /* No max-width here on purpose: the cards must hug the real viewport edges
+     (left card flush left, right card flush right) instead of the edges of a
+     centred 1440px column. Padding keeps them just off the edge. */
+  padding-inline: var(--page-padding);
+}
+.projects__intro {
+  position: sticky;
+  /* 38svh tall instead of a full viewport so the cards arrive sooner, but offset
+     by 31svh so the heading still lands on the vertical centre of the screen. */
+  top: 31svh;
+  height: 38svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Full-viewport sticky block sitting over the cards: without this it would
+     swallow the card hovers as they scroll underneath. */
+  pointer-events: none;
+}
+.projects__heading {
+  margin: 0;
+  color: var(--color-burgundy);
+  font-size: clamp(1.25rem, 2.6vw, 2.25rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-align: center;
+}
+.projects__list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2vw, 24px);
+  margin-top: clamp(8px, 1.5vw, 20px);
+}
+.project-card {
+  position: relative;
+  /* Lets the mark scale with the card instead of the viewport. */
+  container-type: inline-size;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  /* Shows through while the image decodes, and stands in if it fails. */
+  background: var(--color-burgundy);
+  color: var(--color-warm-white);
+}
+.project-card__mark {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  font-size: 20cqw;
+  line-height: 1;
+  color: var(--color-warm-white);
+  text-shadow: 0 2px 14px color-mix(in srgb, var(--color-graphite) 55%, transparent);
+  pointer-events: none;
+  user-select: none;
+}
+.project-card__name {
+  position: absolute;
+  left: clamp(12px, 3.5cqw, 22px);
+  bottom: clamp(12px, 3.5cqw, 22px);
+  z-index: 1;
+  font-size: clamp(11px, 2.8cqw, 15px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-warm-white);
+  text-shadow: 0 2px 10px color-mix(in srgb, var(--color-graphite) 55%, transparent);
+  pointer-events: none;
+  user-select: none;
+}
+/* The leading slash is presentational, so it stays out of the content data. */
+.project-card__name::before {
+  content: '/';
+}
+/* Wordmark variants. System stacks only: no downloaded fonts. */
+.project-card__mark--grotesque {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-indent: -0.04em;
+}
+.project-card__mark--contrast {
+  font-family: Didot, 'Bodoni MT', 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  text-indent: 0.02em;
+}
+.project-card__mark--geometric {
+  font-family: Futura, 'Century Gothic', 'URW Gothic', 'Avenir Next', sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  /* Balances the trailing space so wide tracking stays optically centred. */
+  text-indent: 0.16em;
+}
+.project-card__mark--mono {
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  text-indent: -0.06em;
+}
+.project-card__mark--slab {
+  font-family: Rockwell, 'Rockwell Nova', 'Bookman Old Style', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-indent: 0.02em;
+}
+.project-card__mark--display {
+  font-family: 'Bodoni MT', Didot, 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-indent: -0.02em;
+}
+.project-card__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (min-width: 768px) {
+  .project-card {
+    width: 56%;
+  }
+  .project-card:nth-child(even) {
+    margin-left: auto;
+  }
+}
+@media (min-width: 1024px) {
+  .project-card {
+    width: 40%;
+  }
+}
+.manifesto-statement {
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  max-width: 44ch;
+  margin: 0;
+  text-wrap: pretty;
+}
+.hero-bottom__aside {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.showreel-placeholder {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 16px);
+  border: 1px solid var(--color-border);
+  background: var(--color-grid);
+  border-radius: 8px;
+  padding: 20px 20px;
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  min-width: 170px;
+  min-height: 96px;
+  text-align: center;
+}
+.showreel-placeholder__label {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+}
+.showreel-placeholder__hint {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-secondary);
 }
 .menu-dialog {
   --menu-margin: 16px;
@@ -466,15 +827,14 @@ h1 {
   justify-content: space-between;
 }
 .menu-label {
-  display: block;
-  position: relative;
-  width: 56px;
-  height: 18px;
+  display: grid;
+  justify-items: end;
+  align-items: center;
+  width: 84px;
 }
 .menu-label > span {
-  position: absolute;
-  inset: 0;
-  text-align: right;
+  grid-area: 1 / 1;
+  white-space: nowrap;
 }
 .menu-scroll {
   min-height: 0;
@@ -576,9 +936,9 @@ h1 {
     --grid-gap: 24px;
   }
   .header-actions {
-    gap: 32px;
+    gap: 16px;
   }
-  .hero-grid span:nth-child(4) {
+  .rule-grid span:nth-child(4) {
     display: block;
   }
   .hero-stage {
@@ -598,13 +958,24 @@ h1 {
   .menu-dialog {
     --menu-margin: 24px;
   }
+  .manifesto {
+    min-height: 200svh;
+  }
+  .manifesto-inner {
+    max-width: 780px;
+    padding-block: 80px;
+  }
+  .manifesto-statement {
+    font-size: 32px;
+    line-height: 1.15;
+  }
 }
 @media (min-width: 1024px) {
   :root {
     --page-padding: 64px;
     --grid-columns: 12;
   }
-  .hero-grid span:nth-child(n) {
+  .rule-grid span:nth-child(n) {
     display: block;
   }
   .hero-stage {
@@ -617,6 +988,15 @@ h1 {
   }
   .menu-dialog {
     --menu-margin: 32px;
+  }
+  .manifesto-inner {
+    max-width: 960px;
+    padding-block: 104px;
+  }
+  .manifesto-statement {
+    font-size: clamp(2rem, 3.4vw, 2.75rem);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
   }
   .menu-content {
     grid-template-columns: 1fr 1fr;

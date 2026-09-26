@@ -12,6 +12,10 @@ export interface HeroContent {
   openMenu: string
   closeMenu: string
   close: string
+  playMusic: string
+  stopMusic: string
+  contact: string
+  contactPending: string
   navigation: string
   sectionsLabel: string
   projectsLabel: string
@@ -27,6 +31,7 @@ export interface HeroContent {
   es: string
   en: string
   eyebrow: string
+  localTime: string
   highlights: [string, string, string]
   heading: string
   description: string
@@ -39,6 +44,10 @@ export const content: Record<Locale, HeroContent> = {
     openMenu: 'Abrir menú',
     closeMenu: 'Cerrar menú',
     close: 'Cerrar',
+    playMusic: 'Reproducir música',
+    stopMusic: 'Detener música',
+    contact: 'Contacto',
+    contactPending: 'Contacto — próximamente',
     navigation: 'Navegación principal',
     sectionsLabel: 'Secciones',
     projectsLabel: 'Proyectos',
@@ -54,6 +63,7 @@ export const content: Record<Locale, HeroContent> = {
     es: 'ES',
     en: 'EN',
     eyebrow: 'Desarrollo de software a medida',
+    localTime: 'Hora local',
     highlights: ['Software a medida', 'Integración de IA', 'Acompañamiento cercano'],
     heading: 'Tecnología a la medida de lo que imaginas.',
     description:
@@ -65,6 +75,10 @@ export const content: Record<Locale, HeroContent> = {
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
     close: 'Close',
+    playMusic: 'Play music',
+    stopMusic: 'Stop music',
+    contact: 'Contact',
+    contactPending: 'Contact — coming soon',
     navigation: 'Main navigation',
     sectionsLabel: 'Sections',
     projectsLabel: 'Projects',
@@ -80,6 +94,7 @@ export const content: Record<Locale, HeroContent> = {
     es: 'ES',
     en: 'EN',
     eyebrow: 'Custom software development',
+    localTime: 'Local time',
     highlights: ['Custom software', 'AI integration', 'Guidance at every step'],
     heading: 'Technology tailored to what you imagine.',
     description:

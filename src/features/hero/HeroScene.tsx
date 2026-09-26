@@ -15,7 +15,7 @@ function Mark() {
   const tiltY = useSpring(0, { stiffness: 420, damping: 32, mass: 0.6 })
 
   useEffect(() => {
-    const surface = gl.domElement.closest('.hero')
+    const surface = gl.domElement.closest('.sticky-stage')
     if (!surface) return
     let visible = true
     const apply = () => {
