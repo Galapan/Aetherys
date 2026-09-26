@@ -24,4 +24,4 @@ Rangos de ajuste acotados (máx. dos rondas, valores finales documentados en la 
 ## Documentación asociada
 
 - AGENTS.md §3: grafito pasa a «Fondo principal»; nueva línea de material del símbolo. §9: material actual = `meshPhysicalMaterial` con clearcoat. §12 paso 4: «material de vidrio» → «material metálico-vítreo» (exactitud documental).
-- Contrato ejecutable en docs/tasks/006-acabado-metalico-vitreo.md; evidencia en docs/verification/006-acabado-metalico-vitreo.md.
+- La evidencia histórica de implementación y verificación está en `docs/verification/006-acabado-metalico-vitreo.md`; los valores vigentes también se resumen en AGENTS.md §3 y §9.
