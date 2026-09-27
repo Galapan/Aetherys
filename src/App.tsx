@@ -7,11 +7,13 @@ import { content, type Locale } from './content/hero'
 import { content as manifestoContent } from './content/manifesto'
 import { content as projectsContent } from './content/projects'
 import { content as expertiseContent } from './content/expertise'
+import { content as servicesContent } from './content/services'
 import { Navbar } from './components/layout/Navbar'
 import { Hero } from './sections/Hero'
 import { Manifesto } from './sections/Manifesto'
 import { Projects } from './sections/Projects'
 import { Expertise } from './sections/Expertise'
+import { Services } from './sections/Services'
 import { HeroMark } from './features/hero/HeroMark'
 
 function readLocale(): Locale {
@@ -138,6 +140,11 @@ function App() {
           </section>
           <Expertise
             content={expertiseContent[locale]}
+            reducedMotion={reducedMotion}
+            canHover={canHover}
+          />
+          <Services
+            content={servicesContent[locale]}
             reducedMotion={reducedMotion}
             canHover={canHover}
           />
