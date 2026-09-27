@@ -142,8 +142,7 @@ a:focus-visible,
 .language-switch > span {
   color: var(--color-secondary);
 }
-.menu-toggle,
-.contact-button {
+.menu-toggle {
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -158,12 +157,6 @@ a:focus-visible,
   text-transform: uppercase;
   letter-spacing: 0.08em;
   white-space: nowrap;
-}
-/* The audio button carries no outer padding, so the text buttons would otherwise
-   show twice the inset on the contact<->menu side. Drop the right inset to keep
-   the optical gap identical on both sides of the contact button. */
-.contact-button {
-  padding-right: 0;
 }
 audio {
   display: none;
@@ -191,19 +184,6 @@ audio {
   border-radius: 1px;
   background: currentColor;
   transform-origin: center;
-}
-.contact-button__arrow {
-  display: none;
-  font-size: 18px;
-  line-height: 1;
-}
-@media (max-width: 430px) {
-  .contact-button__label {
-    display: none;
-  }
-  .contact-button__arrow {
-    display: block;
-  }
 }
 .menu-icon {
   display: grid;
@@ -572,22 +552,20 @@ h1 {
   padding-inline: var(--page-padding);
 }
 .projects__intro {
-  position: sticky;
-  /* 38svh tall instead of a full viewport so the cards arrive sooner, but offset
-     by 31svh so the heading still lands on the vertical centre of the screen. */
-  top: 31svh;
-  height: 38svh;
+  position: relative;
+  z-index: 2;
+  min-height: 56px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  /* Full-viewport sticky block sitting over the cards: without this it would
-     swallow the card hovers as they scroll underneath. */
+  justify-content: flex-start;
+  margin-bottom: 32px;
+  background: var(--color-warm-white);
   pointer-events: none;
 }
 .projects__heading {
   margin: 0;
   color: var(--color-burgundy);
-  font-size: clamp(1.25rem, 2.6vw, 2.25rem);
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -596,15 +574,19 @@ h1 {
 .projects__list {
   display: flex;
   flex-direction: column;
-  gap: clamp(16px, 2vw, 24px);
-  margin-top: clamp(8px, 1.5vw, 20px);
+  gap: clamp(32px, 5vw, 80px);
 }
 .project-card {
   position: relative;
   /* Lets the mark scale with the card instead of the viewport. */
   container-type: inline-size;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 5 / 3;
+  color: var(--color-warm-white);
+}
+.project-card__surface {
+  position: absolute;
+  inset: 0;
   border-radius: 8px;
   overflow: hidden;
   /* Shows through while the image decodes, and stands in if it fails. */
@@ -624,19 +606,48 @@ h1 {
   pointer-events: none;
   user-select: none;
 }
-.project-card__name {
+.project-card__details {
   position: absolute;
-  left: clamp(12px, 3.5cqw, 22px);
-  bottom: clamp(12px, 3.5cqw, 22px);
+  left: 22px;
+  right: 22px;
+  bottom: 22px;
   z-index: 1;
-  font-size: clamp(11px, 2.8cqw, 15px);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-warm-white);
-  text-shadow: 0 2px 10px color-mix(in srgb, var(--color-graphite) 55%, transparent);
   pointer-events: none;
-  user-select: none;
+  color: var(--color-warm-white);
+  text-shadow:
+    0 2px 10px var(--color-graphite),
+    0 1px 3px var(--color-graphite);
+}
+.project-card__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: clamp(11px, 2.8cqw, 15px);
+  line-height: 1.4;
+}
+.project-card__name {
+  margin: 0;
+  font: inherit;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.project-card__year {
+  flex-shrink: 0;
+}
+.project-card__category {
+  position: absolute;
+  bottom: 0;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: var(--color-warm-white);
+  color: var(--color-graphite);
+  font-size: clamp(10px, 2cqw, 12px);
+  line-height: 1.4;
+  text-transform: uppercase;
+  text-shadow: none;
 }
 /* The leading slash is presentational, so it stays out of the content data. */
 .project-card__name::before {
@@ -687,17 +698,183 @@ h1 {
   height: 100%;
   object-fit: cover;
 }
-@media (min-width: 768px) {
-  .project-card {
-    width: 56%;
+@media (min-width: 1024px) {
+  .projects__intro {
+    position: sticky;
+    top: 50svh;
+    min-height: 0;
+    height: 0;
+    margin-bottom: 0;
+    justify-content: center;
+    background: transparent;
   }
-  .project-card:nth-child(even) {
-    margin-left: auto;
+  .projects__heading {
+    font-size: clamp(0.75rem, 1.05vw, 1.125rem);
+  }
+  .projects__list {
+    display: grid;
+    grid-template-columns: 40vw minmax(0, 1fr) 40vw;
+    column-gap: 0;
+  }
+  /* Three complete pairs: Sigsor/SMyT, Impulso/BUAP, FLOW/Gaucho. */
+  .project-card:first-child {
+    grid-area: 1 / 1;
+  }
+  .project-card:nth-child(2) {
+    grid-area: 2 / 1;
+  }
+  .project-card:nth-child(3) {
+    grid-area: 1 / 3;
+  }
+  .project-card:nth-child(4) {
+    grid-area: 3 / 1;
+  }
+  .project-card:nth-child(5) {
+    grid-area: 2 / 3;
+  }
+  .project-card:nth-child(6) {
+    grid-area: 3 / 3;
+  }
+}
+.expertise {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 80px;
+  background: var(--color-warm-white);
+  color: var(--color-graphite);
+  scroll-margin-top: calc(var(--header-height) + 24px);
+}
+.expertise__grid {
+  position: absolute;
+  inset: 0;
+}
+.expertise__grid span {
+  background: var(--color-grid-burgundy);
+}
+.expertise__intro {
+  position: relative;
+}
+.expertise__eyebrow {
+  position: relative;
+  display: table;
+  margin: 0 0 32px;
+  color: var(--color-burgundy);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+.expertise__cover {
+  position: absolute;
+  inset: 0 -2px;
+  opacity: 0;
+  background: var(--color-burgundy);
+  transform-origin: left center;
+}
+.expertise__text-row {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 48px;
+}
+.expertise__mask {
+  overflow: hidden;
+}
+.expertise__copy {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.6;
+}
+.expertise__heading {
+  font-weight: 500;
+}
+.expertise__description {
+  max-width: 46ch;
+}
+.expertise__rail {
+  position: relative;
+  overflow: hidden;
+}
+.expertise__track {
+  display: flex;
+  width: max-content;
+}
+.expertise__cards {
+  display: flex;
+  gap: 24px;
+  padding: 0 24px 0 0;
+  margin: 0;
+  list-style: none;
+}
+.expertise__card {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(230px, 23.6vw, 410px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--color-dark-gray);
+  color: var(--color-warm-white);
+}
+.expertise__card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.expertise__card h3 {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  font-size: clamp(1.75rem, 3vw, 3rem);
+  line-height: 1.1;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.expertise__rail[data-moving='false'] {
+  padding-inline: var(--page-padding);
+  max-width: 1440px;
+  margin-inline: auto;
+}
+.expertise__rail[data-moving='false'] .expertise__track {
+  width: 100%;
+}
+.expertise__rail[data-moving='false'] .expertise__cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  padding: 0;
+  gap: 16px;
+}
+.expertise__rail[data-moving='false'] .expertise__card {
+  width: 75%;
+  justify-self: center;
+}
+@media (min-width: 768px) {
+  .expertise {
+    padding-bottom: 104px;
+  }
+  .expertise__text-row {
+    grid-template-columns: 7fr 5fr;
+    gap: 24px;
+  }
+  .expertise__rail[data-moving='false'] .expertise__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
   }
 }
 @media (min-width: 1024px) {
-  .project-card {
-    width: 40%;
+  .expertise {
+    padding-bottom: 144px;
+  }
+  .expertise__text-row {
+    margin-bottom: 64px;
+  }
+  .expertise__rail[data-moving='false'] .expertise__cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 .manifesto-statement {
@@ -862,11 +1039,9 @@ h1 {
   align-items: stretch;
   gap: 8px;
 }
-.menu-column-label {
-  margin-bottom: 24px;
-}
-.menu-projects {
-  min-height: 160px;
+.projects,
+.project-card {
+  scroll-margin-top: calc(var(--header-height) + 24px);
 }
 .menu-language {
   align-self: flex-end;
@@ -884,17 +1059,6 @@ h1 {
   letter-spacing: -0.04em;
   text-transform: uppercase;
   overflow: hidden;
-}
-.menu-link-inner {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-}
-.menu-link-arrow {
-  font-size: 24px;
-  color: var(--color-burgundy);
 }
 .menu-link-label {
   display: block;
@@ -921,10 +1085,6 @@ h1 {
 @media (min-width: 768px) {
   .entrance-name {
     font-size: 32px;
-  }
-  .menu-content {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
   }
   .entrance-columns {
     grid-template-columns: repeat(8, 1fr);
@@ -1001,9 +1161,6 @@ h1 {
     letter-spacing: -0.025em;
   }
   .menu-content {
-    grid-template-columns: 1fr 1fr;
-    gap: 64px;
-    align-items: start;
     padding-block: 64px;
   }
 }

@@ -6,10 +6,12 @@ import { useHeroEntrance } from './hooks/useHeroEntrance'
 import { content, type Locale } from './content/hero'
 import { content as manifestoContent } from './content/manifesto'
 import { content as projectsContent } from './content/projects'
+import { content as expertiseContent } from './content/expertise'
 import { Navbar } from './components/layout/Navbar'
 import { Hero } from './sections/Hero'
 import { Manifesto } from './sections/Manifesto'
 import { Projects } from './sections/Projects'
+import { Expertise } from './sections/Expertise'
 import { HeroMark } from './features/hero/HeroMark'
 
 function readLocale(): Locale {
@@ -116,6 +118,7 @@ function App() {
           <section
             ref={projectsRef}
             id="proyectos"
+            tabIndex={-1}
             className="projects"
             aria-labelledby="proyectos-heading"
           >
@@ -133,6 +136,11 @@ function App() {
               canHover={canHover}
             />
           </section>
+          <Expertise
+            content={expertiseContent[locale]}
+            reducedMotion={reducedMotion}
+            canHover={canHover}
+          />
         </main>
       </Navbar>
     </div>

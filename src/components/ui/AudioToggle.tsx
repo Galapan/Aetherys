@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
 import { motion } from 'framer-motion'
 import type { HeroContent } from '../../content/hero'
 
@@ -11,42 +11,64 @@ const BAR_DURATIONS = [1.4, 1.7, 1.25, 1.55]
 const BAR_MIN_SCALE = 0.3
 const BAR_STAGGER = 0.17
 
+class AudioSnapshotStore {
+  private audio: RefObject<HTMLAudioElement | null>
+
+  constructor(audio: RefObject<HTMLAudioElement | null>) {
+    this.audio = audio
+  }
+
+  subscribe = (onChange: () => void) => {
+    const element = this.audio.current
+    if (!element) return () => {}
+    const onEnded = () => {
+      element.currentTime = 0
+      onChange()
+    }
+    element.addEventListener('play', onChange)
+    element.addEventListener('pause', onChange)
+    element.addEventListener('ended', onEnded)
+    element.addEventListener('loadeddata', onChange)
+    element.addEventListener('error', onChange)
+    return () => {
+      element.removeEventListener('play', onChange)
+      element.removeEventListener('pause', onChange)
+      element.removeEventListener('ended', onEnded)
+      element.removeEventListener('loadeddata', onChange)
+      element.removeEventListener('error', onChange)
+    }
+  }
+
+  getPlaying = () => Boolean(this.audio.current && !this.audio.current.paused)
+
+  getAvailable = () => {
+    const element = this.audio.current
+    if (!element) return null
+    if (element.error) return false
+    return element.readyState >= 2 ? true : null
+  }
+}
+
 interface AudioToggleProps {
   content: HeroContent
   reducedMotion: boolean
   canHover?: boolean
+  audioRef?: RefObject<HTMLAudioElement | null>
 }
 
-export function AudioToggle({ content, reducedMotion, canHover }: AudioToggleProps) {
-  const audio = useRef<HTMLAudioElement>(null)
-  const [playing, setPlaying] = useState(false)
-  const [available, setAvailable] = useState<boolean | null>(null)
+export function AudioToggle({ content, reducedMotion, canHover, audioRef }: AudioToggleProps) {
+  const localAudio = useRef<HTMLAudioElement>(null)
+  const audio = audioRef ?? localAudio
+  const [store] = useState(() => new AudioSnapshotStore(audio))
+  const playing = useSyncExternalStore(store.subscribe, store.getPlaying, store.getPlaying)
+  const available = useSyncExternalStore(store.subscribe, store.getAvailable, store.getAvailable)
 
   useEffect(() => {
     const element = audio.current
-    if (!element) return
-    const onPlay = () => setPlaying(true)
-    const onPause = () => setPlaying(false)
-    const onEnded = () => {
-      element.currentTime = 0
-      setPlaying(false)
-    }
-    const onReady = () => setAvailable(true)
-    const onError = () => setAvailable(false)
-    element.addEventListener('play', onPlay)
-    element.addEventListener('pause', onPause)
-    element.addEventListener('ended', onEnded)
-    element.addEventListener('loadeddata', onReady)
-    element.addEventListener('error', onError)
     return () => {
-      element.removeEventListener('play', onPlay)
-      element.removeEventListener('pause', onPause)
-      element.removeEventListener('ended', onEnded)
-      element.removeEventListener('loadeddata', onReady)
-      element.removeEventListener('error', onError)
-      element.pause()
+      if (!audioRef) element?.pause()
     }
-  }, [])
+  }, [audio, audioRef])
 
   async function toggle() {
     const element = audio.current
@@ -99,7 +121,7 @@ export function AudioToggle({ content, reducedMotion, canHover }: AudioTogglePro
           ))}
         </span>
       </motion.button>
-      <audio src={audioSrc} ref={audio} preload="metadata" />
+      {!audioRef && <audio src={audioSrc} ref={localAudio} preload="metadata" />}
     </>
   )
 }

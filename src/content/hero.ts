@@ -20,8 +20,6 @@ export interface HeroContent {
   sectionsLabel: string
   projectsLabel: string
   homeLabel: string
-  servicesLabel: string
-  aboutLabel: string
   brand: string
   home: string
   skip: string
@@ -52,8 +50,6 @@ export const content: Record<Locale, HeroContent> = {
     sectionsLabel: 'Secciones',
     projectsLabel: 'Proyectos',
     homeLabel: 'Inicio',
-    servicesLabel: 'Servicios',
-    aboutLabel: 'Empresa',
     brand: 'Aetherys',
     home: 'Aetherys — inicio',
     skip: 'Ir al contenido',
@@ -83,8 +79,6 @@ export const content: Record<Locale, HeroContent> = {
     sectionsLabel: 'Sections',
     projectsLabel: 'Projects',
     homeLabel: 'Home',
-    servicesLabel: 'Services',
-    aboutLabel: 'About',
     brand: 'Aetherys',
     home: 'Aetherys — home',
     skip: 'Skip to content',

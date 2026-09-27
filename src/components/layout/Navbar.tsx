@@ -9,7 +9,7 @@ import {
 import { motion, useMotionValueEvent, type MotionValue } from 'framer-motion'
 import { LanguageSwitch, type NavigationProps } from './LanguageSwitch'
 import { LanguageTransition } from './LanguageTransition'
-import { AudioToggle } from '../ui/AudioToggle'
+import { AudioToggle, audioSrc } from '../ui/AudioToggle'
 import type { Locale } from '../../content/hero'
 
 interface NavbarProps extends NavigationProps {
@@ -42,13 +42,21 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
   const header = useRef<HTMLElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
+  const audioElement = useRef<HTMLAudioElement>(null)
   const closing = useRef(false)
   const destination = useRef<string | null>(null)
   const restoreScroll = useRef(0)
+  const reducedMotionRef = useRef(reducedMotion)
   const mounted = snapshot !== null
   const gap = snapshot ? Math.min(32, Math.max(16, snapshot.width * 0.042)) : 0
   const headerInset = snapshot ? Math.min(80, snapshot.height * 0.08) : 0
   const compact = expanded && !reducedMotion && snapshot
+
+  useEffect(() => () => audioElement.current?.pause(), [])
+
+  useEffect(() => {
+    reducedMotionRef.current = reducedMotion
+  }, [reducedMotion])
 
   function applyHeaderMix(value: number) {
     header.current?.style.setProperty('--header-mix', `${((1 - value) * 100).toFixed(2)}%`)
@@ -90,7 +98,10 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
         window.history.pushState(null, '', url)
         const target = document.getElementById(id)
         target?.focus({ preventScroll: true })
-        target?.scrollIntoView({ block: 'nearest', behavior: 'instant' })
+        target?.scrollIntoView({
+          block: 'start',
+          behavior: reducedMotionRef.current ? 'instant' : 'smooth',
+        })
       } else opener?.focus({ preventScroll: true })
     }
   }, [mounted])
@@ -158,12 +169,12 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
   }
   const links = [
     { id: 'main', label: content.homeLabel },
-    { id: null, label: content.servicesLabel },
-    { id: null, label: content.aboutLabel },
+    { id: 'proyectos', label: content.projectsLabel },
   ]
 
   return (
     <>
+      <audio ref={audioElement} src={audioSrc} preload="metadata" />
       <div className="navigation-scene" style={{ height: snapshot?.documentHeight }}>
         <motion.div
           ref={page}
@@ -208,20 +219,12 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
                 {content.brand}
               </a>
               <div className="header-actions">
-                <AudioToggle content={content} reducedMotion={reducedMotion} canHover={canHover} />
-                <motion.button
-                  className="contact-button"
-                  type="button"
-                  aria-label={content.contactPending}
-                  aria-disabled="true"
-                  whileHover={canHover ? { y: -2 } : undefined}
-                  transition={{ duration: 0.18 }}
-                >
-                  <span className="contact-button__label">{content.contact}</span>
-                  <span className="contact-button__arrow" aria-hidden="true">
-                    →
-                  </span>
-                </motion.button>
+                <AudioToggle
+                  content={content}
+                  reducedMotion={reducedMotion}
+                  canHover={canHover}
+                  audioRef={audioElement}
+                />
                 <motion.button
                   ref={trigger}
                   className="menu-toggle"
@@ -282,55 +285,66 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
               >
                 {content.brand}
               </motion.span>
-              <motion.button
-                className="menu-toggle"
-                type="button"
-                aria-label={content.closeMenu}
-                autoFocus
-                onClick={() => closeMenu()}
+              <motion.div
+                className="header-actions menu-moving-actions"
                 initial={{ x: 0 }}
                 animate={{ x: expanded && !reducedMotion ? snapshot.headerRight - gap * 2 : 0 }}
                 transition={sceneTransition}
               >
-                <span className="menu-label" aria-hidden="true">
-                  <motion.span
-                    initial={{ opacity: 1, filter: 'blur(0px)' }}
-                    animate={{
-                      opacity: expanded ? 0 : 1,
-                      filter: expanded && !reducedMotion ? 'blur(6px)' : 'blur(0px)',
-                    }}
-                    transition={{
-                      duration: reducedMotion ? 0 : expanded ? 0.28 : 0.45,
-                      delay: expanded || reducedMotion ? 0 : 0.12,
-                    }}
-                  >
-                    {content.menu}
-                  </motion.span>
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{
-                      opacity: expanded ? 1 : 0,
-                      filter: !expanded && !reducedMotion ? 'blur(6px)' : 'blur(0px)',
-                    }}
-                    transition={{
-                      duration: reducedMotion ? 0 : expanded ? 0.45 : 0.28,
-                      delay: expanded && !reducedMotion ? 0.12 : 0,
-                    }}
-                  >
-                    {content.close}
-                  </motion.span>
-                </span>
-                <span className="menu-icon" aria-hidden="true">
-                  <motion.i
-                    animate={{ y: expanded ? 3 : 0, rotate: expanded ? 45 : 0 }}
-                    transition={{ duration: reducedMotion ? 0 : 0.45 }}
-                  />
-                  <motion.i
-                    animate={{ y: expanded ? -3 : 0, rotate: expanded ? -45 : 0 }}
-                    transition={{ duration: reducedMotion ? 0 : 0.45 }}
-                  />
-                </span>
-              </motion.button>
+                <AudioToggle
+                  content={content}
+                  reducedMotion={reducedMotion}
+                  canHover={canHover}
+                  audioRef={audioElement}
+                />
+                <motion.button
+                  className="menu-toggle"
+                  type="button"
+                  aria-label={content.closeMenu}
+                  autoFocus
+                  onClick={() => closeMenu()}
+                  transition={sceneTransition}
+                >
+                  <span className="menu-label" aria-hidden="true">
+                    <motion.span
+                      initial={{ opacity: 1, filter: 'blur(0px)' }}
+                      animate={{
+                        opacity: expanded ? 0 : 1,
+                        filter: expanded && !reducedMotion ? 'blur(6px)' : 'blur(0px)',
+                      }}
+                      transition={{
+                        duration: reducedMotion ? 0 : expanded ? 0.28 : 0.45,
+                        delay: expanded || reducedMotion ? 0 : 0.12,
+                      }}
+                    >
+                      {content.menu}
+                    </motion.span>
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{
+                        opacity: expanded ? 1 : 0,
+                        filter: !expanded && !reducedMotion ? 'blur(6px)' : 'blur(0px)',
+                      }}
+                      transition={{
+                        duration: reducedMotion ? 0 : expanded ? 0.45 : 0.28,
+                        delay: expanded && !reducedMotion ? 0.12 : 0,
+                      }}
+                    >
+                      {content.close}
+                    </motion.span>
+                  </span>
+                  <span className="menu-icon" aria-hidden="true">
+                    <motion.i
+                      animate={{ y: expanded ? 3 : 0, rotate: expanded ? 45 : 0 }}
+                      transition={{ duration: reducedMotion ? 0 : 0.45 }}
+                    />
+                    <motion.i
+                      animate={{ y: expanded ? -3 : 0, rotate: expanded ? -45 : 0 }}
+                      transition={{ duration: reducedMotion ? 0 : 0.45 }}
+                    />
+                  </span>
+                </motion.button>
+              </motion.div>
             </motion.div>
             <motion.div
               className="menu-panel"
@@ -355,18 +369,13 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
               >
                 <div className="menu-content">
                   <nav aria-label={content.sectionsLabel}>
-                    <motion.p className="eyebrow menu-column-label" {...reveal(0.35)}>
-                      {content.sectionsLabel}
-                    </motion.p>
                     {links.map((link, index) => (
                       <div className="menu-row-mask" key={link.label}>
                         <motion.a
-                          href={link.id ? `#${link.id}` : undefined}
-                          role="link"
-                          aria-disabled={!link.id || undefined}
+                          href={`#${link.id}`}
                           onClick={(event) => {
                             event.preventDefault()
-                            if (link.id) closeMenu(link.id)
+                            closeMenu(link.id)
                           }}
                           {...reveal(0.35 + index * 0.075, true)}
                           onHoverStart={() => {
@@ -392,16 +401,10 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
                               </span>
                             </motion.span>
                           </span>
-                          <span className="menu-link-arrow" aria-hidden="true">
-                            ↗
-                          </span>
                         </motion.a>
                       </div>
                     ))}
                   </nav>
-                  <motion.div className="menu-projects" {...reveal(0.5)}>
-                    <h2 className="eyebrow menu-column-label">{content.projectsLabel}</h2>
-                  </motion.div>
                 </div>
                 <motion.div className="menu-language" {...reveal(0.7)}>
                   <LanguageSwitch
