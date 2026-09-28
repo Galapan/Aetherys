@@ -8,12 +8,14 @@ import { content as manifestoContent } from './content/manifesto'
 import { content as projectsContent } from './content/projects'
 import { content as expertiseContent } from './content/expertise'
 import { content as servicesContent } from './content/services'
+import { content as processContent } from './content/process'
 import { Navbar } from './components/layout/Navbar'
 import { Hero } from './sections/Hero'
 import { Manifesto } from './sections/Manifesto'
 import { Projects } from './sections/Projects'
 import { Expertise } from './sections/Expertise'
 import { Services } from './sections/Services'
+import { Process } from './sections/Process'
 import { HeroMark } from './features/hero/HeroMark'
 
 function readLocale(): Locale {
@@ -148,6 +150,7 @@ function App() {
             reducedMotion={reducedMotion}
             canHover={canHover}
           />
+          <Process content={processContent[locale]} reducedMotion={reducedMotion} />
         </main>
       </Navbar>
     </div>

@@ -743,6 +743,8 @@ h1 {
   background: var(--color-warm-white);
   color: var(--color-graphite);
   scroll-margin-top: calc(var(--header-height) + 24px);
+  /* Contains the full-bleed rail without opening a horizontal scrollbar. */
+  overflow-x: clip;
 }
 .services__grid {
   position: absolute;
@@ -841,7 +843,10 @@ h1 {
   letter-spacing: -0.035em;
 }
 .services__technologies {
+  width: 100vw;
   margin-top: 48px;
+  /* Escapes the container padding and the 1440px cap to reach both screen edges. */
+  margin-inline: calc(50% - 50vw);
 }
 .services__rail {
   overflow: hidden;
@@ -873,10 +878,10 @@ h1 {
 .services__technology::after {
   content: '+' / '';
   position: absolute;
-  left: 8px;
+  left: 10px;
   z-index: 2;
   color: var(--color-burgundy);
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1;
 }
 .services__technology::before {
@@ -998,6 +1003,209 @@ h1 {
   }
   .services__rail[data-static='true'] .services__technology-list {
     grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+.process {
+  position: relative;
+  z-index: 1;
+  background: var(--color-warm-white);
+  color: var(--color-graphite);
+  scroll-margin-top: calc(var(--header-height) + 24px);
+}
+.process__grid {
+  position: absolute;
+  inset: 0;
+}
+.process__grid span {
+  background: var(--color-grid-burgundy);
+}
+.process__grid--frame {
+  position: absolute;
+  inset: 0;
+  /* Above the steps so the warm white rules read on the graphite blocks, the same
+     way the hero rules read on its dark stage. */
+  z-index: 1;
+}
+.process__grid--frame span {
+  background: var(--color-grid);
+}
+.process__intro {
+  position: relative;
+  display: grid;
+  gap: 24px;
+  align-content: start;
+  /* Full bleed like the rules and the staircase, so the eyebrow keeps the same
+     distance from the left edge as the first grid line at any viewport width. */
+  padding-inline: var(--page-padding);
+  margin-bottom: clamp(24px, 4svh, 48px);
+}
+.process__eyebrow {
+  position: relative;
+  display: table;
+  margin: 0;
+  color: var(--color-burgundy);
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+.process__stage {
+  position: relative;
+  /* Scroll length that the three steps are revealed across while the frame is pinned.
+     The surplus past the fill is deliberate: it keeps scrolling after the bars fill. */
+  height: 320svh;
+  padding-bottom: 80px;
+}
+.process__frame {
+  position: sticky;
+  /* Catches three quarters down the viewport, so the heading stays on screen with
+     the bars and the graphite bodies run from there to the bottom edge. */
+  top: 25%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 75svh;
+}
+.process__steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 48px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  --process-panel-height: 36px;
+  --process-panel-gap: 2px;
+  --process-stagger: calc(var(--process-panel-height) + var(--process-panel-gap));
+  --process-type-size: clamp(0.875rem, 1.15vw, 1.125rem);
+}
+.process__step {
+  display: grid;
+  /* Panel takes its own height, the graphite body fills the rest. All three steps
+     share the grid row height, so the three blocks end on the same line and read
+     as one mass with a stepped top edge. */
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+}
+.process__panel {
+  min-height: var(--process-panel-height);
+  /* The container keeps the final rectangle: transparent burgundy shows the shape
+     the solid fill has yet to reach. */
+  background: color-mix(in srgb, var(--color-burgundy) 20%, transparent);
+}
+.process__fill {
+  display: flex;
+  align-items: center;
+  min-height: var(--process-panel-height);
+  padding-inline: clamp(24px, 2.6vw, 40px);
+  background: var(--color-burgundy);
+  color: var(--color-warm-white);
+}
+.process__panel-line {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(8px, 1vw, 16px);
+  margin: 0;
+  white-space: nowrap;
+}
+.process__body {
+  display: grid;
+  gap: 12px;
+  /* Hug the copy at the top: the stretched body must not push the paragraph down. */
+  align-content: start;
+  padding: 30px clamp(24px, 2.6vw, 40px) 24px;
+  background: var(--color-graphite);
+  color: var(--color-warm-white);
+  /* Shared by the date and the paragraph so both start on the same left edge. */
+  --process-copy-measure: 56ch;
+}
+.process__mask {
+  display: block;
+  max-width: var(--process-copy-measure);
+  /* No auto margins: as a grid item they would collapse the date to its intrinsic
+     width and centre it, breaking the alignment with the paragraph. */
+  margin: 0;
+  overflow: hidden;
+}
+.process__index {
+  display: block;
+  color: var(--color-warm-white);
+  font-size: var(--process-type-size);
+  line-height: 1.1;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.process__title {
+  display: block;
+  font-size: var(--process-type-size);
+  line-height: 1.1;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.process__date {
+  display: block;
+  color: var(--color-warm-white);
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.process__description {
+  display: block;
+  color: color-mix(in srgb, var(--color-warm-white) 68%, transparent);
+  font-size: 18px;
+  line-height: 1.6;
+  text-align: justify;
+  /* Justified Spanish needs hyphenation or the rivers get ugly. */
+  hyphens: auto;
+}
+.process:focus-visible,
+.process :focus-visible {
+  outline: 2px solid var(--color-graphite);
+  outline-offset: 4px;
+  outline-color: var(--color-graphite);
+}
+.process[data-static='true'] .process__stage {
+  height: auto;
+}
+.process[data-static='true'] .process__frame {
+  position: static;
+  height: auto;
+}
+@media (min-width: 768px) {
+  .process__stage {
+    padding-bottom: 104px;
+  }
+  .process__intro {
+    grid-template-columns: 7fr 5fr;
+    gap: 24px;
+  }
+  .process__steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* Panels tile the width with no column gap; only the vertical stagger offsets them. */
+    gap: 0;
+    /* Staircase that starts at the left: /1 highest, each next step one notch
+       lower. Swap the three offsets below to climb instead of descend. */
+    --process-panel-height: clamp(30px, 2.9vw, 42px);
+    --process-panel-gap: 2px;
+    /* One notch equals one panel plus the sliver of space between them, so
+       consecutive panels nearly meet corner to corner. */
+    --process-stagger: calc(var(--process-panel-height) + var(--process-panel-gap));
+  }
+  .process__step:nth-child(1) {
+    margin-block-start: 0;
+  }
+  .process__step:nth-child(2) {
+    margin-block-start: var(--process-stagger);
+  }
+  .process__step:nth-child(3) {
+    margin-block-start: calc(var(--process-stagger) * 2);
+  }
+}
+@media (min-width: 1024px) {
+  .process__stage {
+    padding-bottom: 144px;
   }
 }
 .expertise {
