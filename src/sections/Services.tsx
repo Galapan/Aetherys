@@ -179,8 +179,9 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
     }
     const measure = () => {
       width.current = element.getBoundingClientRect().width
-      // Match the existing card rail's cadence: one item every 5.5 seconds.
-      cruiseSpeed.current = width.current / technologies.length / 5.5
+      // One item every 4 seconds. The rail is full-bleed, so it covers more
+      // ground than the card rail and needs a brisker cadence to feel even.
+      cruiseSpeed.current = width.current / technologies.length / 4
       x.set(0)
     }
     const onVisibility = () => {
