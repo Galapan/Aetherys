@@ -1,5 +1,5 @@
 import { useRef, useSyncExternalStore } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
 import type { MotionValue } from 'framer-motion'
 import type { ProcessContent, ProcessStep } from '../content/process'
 
@@ -9,14 +9,13 @@ interface ProcessProps {
 }
 
 const wideQuery = '(min-width: 768px)'
-const ease = [0.22, 1, 0.36, 1] as const
 
-// Each step owns a slice of the pinned scroll so the three reveal in sequence.
-// They finish around 0.6 so there is scroll left over with the bars already full.
+// Closely overlapping rises settle into a compact staircase before the bars fill.
+// Adjacent spans keep the fill moving from one bar straight into the next.
 const spans: [number, number][] = [
-  [0.1, 0.26],
-  [0.24, 0.4],
-  [0.38, 0.58],
+  [0.25, 0.4],
+  [0.4, 0.55],
+  [0.55, 0.7],
 ]
 
 function subscribeWide(onChange: () => void) {
@@ -33,64 +32,46 @@ function useWide() {
   return useSyncExternalStore(subscribeWide, readWide)
 }
 
-function stepVariants(index: number) {
-  return {
-    hidden: { opacity: 0 },
-    shown: { opacity: 1, transition: { duration: 0.4, delayChildren: index * 0.04 } },
-    static: { opacity: 1, transition: { duration: 0 } },
-  }
-}
-
-const lineVariants = {
-  hidden: { y: '110%' },
-  shown: { y: '0%', transition: { duration: 0.75, ease } },
-  static: { y: '0%', transition: { duration: 0 } },
-}
-
-// The panel fills left to right like a progress bar: the right inset closes to 0.
-const panelVariants = {
-  hidden: { clipPath: 'inset(0% 100% 0% 0%)' },
-  shown: { clipPath: 'inset(0% 0% 0% 0%)', transition: { duration: 0.9, ease } },
-  static: { clipPath: 'inset(0% 0% 0% 0%)', transition: { duration: 0 } },
-}
-
 interface StepBlockProps {
   step: ProcessStep
   index: number
   pinned: boolean
+  mobile: boolean
   reducedMotion: boolean
   progress: MotionValue<number>
 }
 
-function StepBlock({ step, index, pinned, reducedMotion, progress }: StepBlockProps) {
-  const block = useRef<HTMLLIElement>(null)
+function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: StepBlockProps) {
+  const entranceY = useTransform(
+    progress,
+    [index * 0.025, 0.18 + index * 0.025],
+    [80 + index * 64, 0],
+  )
   const [from, to] = spans[index] ?? [0, 1]
   const reveal = useTransform(progress, [from, to], [0, 1], { clamp: true })
-  const opacity = useTransform(reveal, [0, 1], [0, 1])
   const rightInset = useTransform(reveal, [0, 1], [100, 0])
   const clipPath = useTransform(rightInset, (value) => `inset(0% ${value}% 0% 0%)`)
-  const copyY = useTransform(reveal, [0.22, 1], ['110%', '0%'])
-  // scroll: the pinned frame drives each step. view: one-shot reveal on enter.
-  // static: reduced motion, so everything renders in its final state.
-  const mode = reducedMotion ? 'static' : pinned ? 'scroll' : 'view'
-  const scroll = mode === 'scroll'
-  const revealOnView = mode === 'view'
+  const dateY = useTransform(reveal, mobile ? [0, 0.15] : [0.15, 0.55], ['110%', '0%'])
+  const copyY = useTransform(reveal, mobile ? [0, 0.25] : [0.3, 0.8], ['110%', '0%'])
+  // Mobile keeps all three headers visible and crossfades copy in one shared area.
+  // Screen readers retain the complete ordered list, including every description.
+  const bodyOpacity = useTransform(
+    progress,
+    index === spans.length - 1 ? [from, from + 0.025] : [from, from + 0.025, to, to + 0.025],
+    index === spans.length - 1 ? [0, 1] : [0, 1, 1, 0],
+  )
+  const scroll = pinned && !reducedMotion
 
   return (
     <motion.li
-      ref={block}
       className="process__step"
-      style={scroll ? { opacity } : undefined}
-      initial={revealOnView ? 'hidden' : false}
-      whileInView={revealOnView ? 'shown' : undefined}
-      viewport={revealOnView ? { once: true, amount: 0.5 } : undefined}
-      variants={stepVariants(index)}
+      style={{ y: scroll && !mobile ? entranceY : 0 }}
+      initial={false}
     >
       <div className="process__panel">
         <motion.div
           className="process__fill"
-          style={scroll ? { clipPath } : undefined}
-          variants={panelVariants}
+          style={{ clipPath: scroll ? clipPath : 'inset(0% 0% 0% 0%)' }}
         >
           <h3 className="process__panel-line">
             <span className="process__index">{step.index}</span>
@@ -98,26 +79,18 @@ function StepBlock({ step, index, pinned, reducedMotion, progress }: StepBlockPr
           </h3>
         </motion.div>
       </div>
-      <div className="process__body">
+      <motion.div className="process__body" style={{ opacity: scroll && mobile ? bodyOpacity : 1 }}>
         <p className="process__mask process__mask--date">
-          <motion.span
-            className="process__date"
-            style={scroll ? { y: copyY } : undefined}
-            variants={lineVariants}
-          >
+          <motion.span className="process__date" style={{ y: scroll ? dateY : 0 }}>
             {step.date}
           </motion.span>
         </p>
         <p className="process__mask">
-          <motion.span
-            className="process__description"
-            style={scroll ? { y: copyY } : undefined}
-            variants={lineVariants}
-          >
+          <motion.span className="process__description" style={{ y: scroll ? copyY : 0 }}>
             {step.description}
           </motion.span>
         </p>
-      </div>
+      </motion.div>
     </motion.li>
   )
 }
@@ -125,12 +98,14 @@ function StepBlock({ step, index, pinned, reducedMotion, progress }: StepBlockPr
 export function Process({ content, reducedMotion }: ProcessProps) {
   const stage = useRef<HTMLDivElement>(null)
   const wide = useWide()
-  // Pinning only pays off where the three blocks sit side by side. On mobile and
-  // with reduced motion the steps stay in normal flow.
-  const pinned = wide && !reducedMotion
-  // 'start end' starts the fill as soon as the staircase enters the viewport, so
-  // the bars are already running before the frame pins against the top edge.
+  // Both layouts scrub through the steps; reduced motion uses normal document flow.
+  const pinned = !reducedMotion
+  // Entry uses the first quarter of the scroll; color starts after the frame pins.
   const { scrollYProgress } = useScroll({ target: stage, offset: ['start end', 'end end'] })
+  const progress = useSpring(
+    scrollYProgress,
+    wide ? { stiffness: 180, damping: 30, mass: 0.5 } : { stiffness: 500, damping: 32, mass: 0.5 },
+  )
 
   return (
     <section
@@ -170,8 +145,9 @@ export function Process({ content, reducedMotion }: ProcessProps) {
                 step={step}
                 index={index}
                 pinned={pinned}
+                mobile={!wide}
                 reducedMotion={reducedMotion}
-                progress={scrollYProgress}
+                progress={progress}
               />
             ))}
           </ol>

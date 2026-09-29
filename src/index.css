@@ -1006,7 +1006,9 @@ h1 {
   }
 }
 .process {
+  --process-scroll-height: 320svh;
   position: relative;
+  overflow: clip;
   z-index: 1;
   background: var(--color-warm-white);
   color: var(--color-graphite);
@@ -1051,10 +1053,10 @@ h1 {
 }
 .process__stage {
   position: relative;
-  /* Scroll length that the three steps are revealed across while the frame is pinned.
-     The surplus past the fill is deliberate: it keeps scrolling after the bars fill. */
-  height: 320svh;
-  padding-bottom: 80px;
+  /* Add a final hold, then keep the frame pinned through a full viewport of
+     JoinUs covering it. The following section overlaps the last 100svh.
+     No bottom padding: the sticky frame must remain fixed until fully covered. */
+  height: calc(var(--process-scroll-height) + 140svh);
 }
 .process__frame {
   position: sticky;
@@ -1078,12 +1080,24 @@ h1 {
   --process-type-size: clamp(0.875rem, 1.15vw, 1.125rem);
 }
 .process__step {
+  position: relative;
   display: grid;
   /* Panel takes its own height, the graphite body fills the rest. All three steps
      share the grid row height, so the three blocks end on the same line and read
      as one mass with a stepped top edge. */
   grid-template-rows: auto 1fr;
   min-width: 0;
+}
+/* Extend each rising column to the section's bottom. Once all three arrive,
+   the lower surface stays graphite, including the space after the sticky frame. */
+.process[data-static='false'] .process__step::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  inset-inline: 0;
+  height: var(--process-scroll-height);
+  background: var(--color-graphite);
+  pointer-events: none;
 }
 .process__panel {
   min-height: var(--process-panel-height);
@@ -1168,13 +1182,45 @@ h1 {
 }
 .process[data-static='true'] .process__stage {
   height: auto;
+  padding-bottom: 80px;
 }
 .process[data-static='true'] .process__frame {
   position: static;
   height: auto;
 }
+@media (max-width: 767px) {
+  .process {
+    --process-scroll-height: 640svh;
+  }
+  /* The mobile timeline has three adjacent headers and a shared copy area.
+     Overlapping list items preserve each heading/description's semantic pairing. */
+  .process[data-static='false'] .process__steps {
+    gap: 0;
+    background: var(--color-graphite);
+  }
+  .process[data-static='false'] .process__step {
+    grid-area: 1 / 1;
+    grid-template-rows: calc(var(--process-panel-height) * 3) 1fr;
+  }
+  .process[data-static='false'] .process__panel {
+    align-self: start;
+    background: color-mix(in srgb, var(--color-burgundy) 20%, var(--color-warm-white));
+  }
+  .process[data-static='false'] .process__step:nth-child(2) .process__panel {
+    margin-top: var(--process-panel-height);
+  }
+  .process[data-static='false'] .process__step:nth-child(3) .process__panel {
+    margin-top: calc(var(--process-panel-height) * 2);
+  }
+  .process[data-static='false'] .process__body {
+    background: transparent;
+  }
+  .process__description {
+    text-align: left;
+  }
+}
 @media (min-width: 768px) {
-  .process__stage {
+  .process[data-static='true'] .process__stage {
     padding-bottom: 104px;
   }
   .process__intro {
@@ -1204,7 +1250,7 @@ h1 {
   }
 }
 @media (min-width: 1024px) {
-  .process__stage {
+  .process[data-static='true'] .process__stage {
     padding-bottom: 144px;
   }
 }

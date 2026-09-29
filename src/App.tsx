@@ -9,6 +9,7 @@ import { content as projectsContent } from './content/projects'
 import { content as expertiseContent } from './content/expertise'
 import { content as servicesContent } from './content/services'
 import { content as processContent } from './content/process'
+import { content as joinUsContent } from './content/joinUs'
 import { Navbar } from './components/layout/Navbar'
 import { Hero } from './sections/Hero'
 import { Manifesto } from './sections/Manifesto'
@@ -16,6 +17,7 @@ import { Projects } from './sections/Projects'
 import { Expertise } from './sections/Expertise'
 import { Services } from './sections/Services'
 import { Process } from './sections/Process'
+import { JoinUs } from './sections/JoinUs'
 import { HeroMark } from './features/hero/HeroMark'
 
 function readLocale(): Locale {
@@ -151,6 +153,11 @@ function App() {
             canHover={canHover}
           />
           <Process content={processContent[locale]} reducedMotion={reducedMotion} />
+          <JoinUs
+            content={joinUsContent[locale]}
+            reducedMotion={reducedMotion}
+            canHover={canHover}
+          />
         </main>
       </Navbar>
     </div>

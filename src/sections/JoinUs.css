@@ -1,0 +1,186 @@
+.join-us {
+  position: relative;
+  isolation: isolate;
+  z-index: 1;
+  min-height: 100svh;
+  padding-block: 80px;
+  background: var(--color-warm-white);
+  color: var(--color-graphite);
+  color-scheme: light;
+  scroll-margin-top: calc(var(--header-height) + 24px);
+}
+
+/* Native scroll carries this opaque surface over the still-pinned Process.
+   Reduced motion leaves both sections in ordinary document flow. */
+.process[data-static='false'] + .join-us {
+  margin-top: -100svh;
+}
+
+.join-us__grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.join-us__grid span {
+  background: var(--color-grid-burgundy);
+}
+
+.join-us__eyebrow {
+  position: relative;
+  display: table;
+  margin: 0 0 64px;
+  color: var(--color-burgundy);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+}
+
+.join-us__eyebrow-cover {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: var(--color-burgundy);
+  transform-origin: right center;
+}
+
+.join-us__columns {
+  display: grid;
+  gap: 48px;
+}
+
+.join-us__column {
+  min-width: 0;
+}
+
+.join-us__heading {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.join-us__emphasis {
+  color: var(--color-burgundy);
+}
+
+.join-us__word-mask {
+  display: inline-block;
+  overflow: clip;
+  vertical-align: top;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+
+.join-us__word {
+  display: inline-block;
+}
+
+.join-us__media {
+  overflow: clip;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: var(--color-dark-gray);
+}
+
+.join-us__photo {
+  margin-top: 48px;
+}
+
+.join-us__media img,
+.join-us__media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.join-us__details {
+  margin-top: 32px;
+  overflow: clip;
+}
+
+.join-us__description {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 18px;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--color-graphite) 78%, transparent);
+}
+
+.join-us__contact {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 24px;
+  padding: 8px 16px;
+  border: 1px solid color-mix(in srgb, var(--color-warm-white) 35%, transparent);
+  border-radius: 4px;
+  background: var(--color-burgundy);
+  color: var(--color-warm-white);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.join-us__contact:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.join-us:focus-visible,
+.join-us :focus-visible {
+  outline: 2px solid var(--color-graphite);
+  outline-offset: 4px;
+}
+
+@media (min-width: 768px) {
+  .join-us {
+    padding-block: 104px;
+  }
+
+  .join-us__columns {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .join-us__column {
+    grid-column: span 4;
+  }
+
+  .join-us__heading {
+    font-size: clamp(2rem, 3.2vw, 3rem);
+  }
+
+  .join-us__column--video {
+    padding-top: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .join-us {
+    padding-block: 144px;
+  }
+
+  .join-us__columns {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .join-us__column {
+    grid-column: 1 / span 5;
+  }
+
+  .join-us__column--video {
+    grid-column: 8 / span 5;
+  }
+
+  .join-us__photo {
+    margin-top: 64px;
+  }
+
+  .join-us__details {
+    margin-top: 48px;
+  }
+}
