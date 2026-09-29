@@ -878,7 +878,7 @@ h1 {
 .services__technology::after {
   content: '+' / '';
   position: absolute;
-  left: 10px;
+  left: 0;
   z-index: 2;
   color: var(--color-burgundy);
   font-size: 15px;
@@ -886,9 +886,11 @@ h1 {
 }
 .services__technology::before {
   top: 0;
+  transform: translate(-50%, -50%);
 }
 .services__technology::after {
   bottom: 0;
+  transform: translate(-50%, 50%);
 }
 .services__technology svg {
   flex: 0 0 56px;
