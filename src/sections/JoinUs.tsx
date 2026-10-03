@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
-import { motion, stagger, useAnimate, useInView } from 'framer-motion'
+import { m, stagger, useAnimate, useInView } from 'framer-motion'
 import { joinUsAssets, type JoinUsContent } from '../content/joinUs'
 import './JoinUs.css'
 
@@ -165,14 +165,14 @@ export function JoinUs({ content, reducedMotion, canHover }: JoinUsProps) {
               <div className="join-us__reveal-content">
                 <p className="join-us__description">{content.description}</p>
                 {joinUsAssets.contactHref ? (
-                  <motion.a
+                  <m.a
                     className="join-us__contact"
                     href={joinUsAssets.contactHref}
                     whileHover={canHover && !reducedMotion ? { y: -2 } : undefined}
                     transition={{ duration: 0.18 }}
                   >
                     {content.contact}
-                  </motion.a>
+                  </m.a>
                 ) : (
                   <button className="join-us__contact" type="button" disabled>
                     {content.contact}

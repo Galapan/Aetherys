@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { motion, useAnimate, useAnimationFrame, useInView, useMotionValue } from 'framer-motion'
+import { m, useAnimate, useAnimationFrame, useInView, useMotionValue } from 'framer-motion'
 import type { ExpertiseContent } from '../content/expertise'
 
 interface ExpertiseProps {
@@ -126,7 +126,7 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
           }
         }}
       >
-        <motion.div className="expertise__track" style={{ x: moving ? x : 0 }}>
+        <m.div className="expertise__track" style={{ x: moving ? x : 0 }}>
           {(moving ? [false, true] : [false]).map((duplicate) => (
             <ul
               key={String(duplicate)}
@@ -157,7 +157,7 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
               )}
             </ul>
           ))}
-        </motion.div>
+        </m.div>
       </div>
     </section>
   )

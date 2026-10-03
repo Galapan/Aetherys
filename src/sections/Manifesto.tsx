@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import type { ManifestoContent } from '../content/manifesto'
 
 interface ManifestoProps {
@@ -21,10 +21,10 @@ export function Manifesto({ content, reducedMotion }: ManifestoProps) {
   return (
     <section id="manifiesto" className="manifesto" aria-labelledby="manifiesto-heading">
       <div className="manifesto-inner">
-        <motion.p className="manifesto-eyebrow eyebrow" {...reveal(0.2, reducedMotion)}>
+        <m.p className="manifesto-eyebrow eyebrow" {...reveal(0.2, reducedMotion)}>
           <span className="reveal-eyebrow">
             {content.eyebrow}
-            <motion.span
+            <m.span
               className="reveal-eyebrow__line"
               initial={reducedMotion ? false : { scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
@@ -35,7 +35,7 @@ export function Manifesto({ content, reducedMotion }: ManifestoProps) {
                 ease: [0.22, 1, 0.36, 1],
               }}
             />
-            <motion.span
+            <m.span
               className="reveal-eyebrow__cover"
               aria-hidden="true"
               initial={{ scaleY: reducedMotion ? 0 : 1 }}
@@ -48,14 +48,14 @@ export function Manifesto({ content, reducedMotion }: ManifestoProps) {
               }}
             />
           </span>
-        </motion.p>
-        <motion.h2
+        </m.p>
+        <m.h2
           id="manifiesto-heading"
           className="manifesto-statement"
           {...reveal(0.35, reducedMotion)}
         >
           {content.statement}
-        </motion.h2>
+        </m.h2>
       </div>
     </section>
   )

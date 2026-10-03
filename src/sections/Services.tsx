@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import {
-  motion,
+  m,
   stagger,
   useAnimate,
   useAnimationFrame,
@@ -84,12 +84,12 @@ function ServiceFeature({
   return (
     <li ref={element}>
       <span className="services__item-text">
-        <motion.span
+        <m.span
           className="services__item-hover"
           style={{ x: interactive ? x : 0, opacity: interactive ? opacity : 1 }}
         >
           {item}
-        </motion.span>
+        </m.span>
       </span>
     </li>
   )
@@ -229,7 +229,7 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
           focused.current = false
         }}
       >
-        <motion.div className="services__track" style={{ x: reducedMotion ? 0 : x }}>
+        <m.div className="services__track" style={{ x: reducedMotion ? 0 : x }}>
           {(reducedMotion ? [false] : [false, true]).map((duplicate) => (
             <ul
               key={String(duplicate)}
@@ -241,14 +241,14 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
               {technologies.map(({ id, name }) => {
                 const Icon = icons[id]
                 return (
-                  <motion.li
+                  <m.li
                     key={id}
                     className="services__technology"
                     initial={false}
                     animate={interactive ? 'rest' : 'static'}
                     whileHover={interactive ? 'hover' : undefined}
                   >
-                    <motion.span
+                    <m.span
                       className="services__technology-surface"
                       aria-hidden="true"
                       variants={{
@@ -257,7 +257,7 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
                         static: { opacity: 0, scale: 1, transition: { duration: 0 } },
                       }}
                     />
-                    <motion.span
+                    <m.span
                       className="services__technology-icon"
                       aria-hidden="true"
                       variants={{
@@ -285,8 +285,8 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
                       }}
                     >
                       <Icon focusable="false" />
-                    </motion.span>
-                    <motion.span
+                    </m.span>
+                    <m.span
                       className="services__technology-name"
                       variants={{
                         rest: {
@@ -307,13 +307,13 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
                       }}
                     >
                       {name}
-                    </motion.span>
-                  </motion.li>
+                    </m.span>
+                  </m.li>
                 )
               })}
             </ul>
           ))}
-        </motion.div>
+        </m.div>
       </div>
     </div>
   )

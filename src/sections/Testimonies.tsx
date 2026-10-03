@@ -1,7 +1,7 @@
 import { useState, useSyncExternalStore, type RefObject } from 'react'
 import {
   AnimatePresence,
-  motion,
+  m,
   useAnimationFrame,
   useInView,
   useIsPresent,
@@ -44,7 +44,7 @@ function Slide({
 
   let letterIndex = 0
   return (
-    <motion.figure
+    <m.figure
       className="testimonies__slide"
       initial={animateEntry && !reducedMotion ? 'enter' : false}
       animate="visible"
@@ -61,7 +61,7 @@ function Slide({
                 {Array.from(word).map((letter) => {
                   const index = letterIndex++
                   return (
-                    <motion.span
+                    <m.span
                       key={index}
                       className="testimonies__letter"
                       variants={{
@@ -77,7 +77,7 @@ function Slide({
                       }}
                     >
                       {letter}
-                    </motion.span>
+                    </m.span>
                   )
                 })}
               </span>
@@ -86,7 +86,7 @@ function Slide({
         </span>
       </blockquote>
       <figcaption className="testimonies__author">
-        <motion.div
+        <m.div
           className="testimonies__portrait"
           variants={{
             enter: { clipPath: 'inset(0 100% 0 0)' },
@@ -108,9 +108,9 @@ function Slide({
               element.dataset.placeholder = 'true'
             }}
           />
-        </motion.div>
+        </m.div>
         <div className="testimonies__identity-mask">
-          <motion.div
+          <m.div
             className="testimonies__identity"
             variants={{
               enter: { y: '110%', opacity: 0 },
@@ -120,10 +120,10 @@ function Slide({
           >
             <p className="testimonies__name">{item.name}</p>
             <p className="testimonies__detail">{item.detail}</p>
-          </motion.div>
+          </m.div>
         </div>
       </figcaption>
-    </motion.figure>
+    </m.figure>
   )
 }
 
@@ -191,7 +191,7 @@ export function Testimonies({
               </button>
             </div>
             <div className="testimonies__progress" aria-hidden="true">
-              <motion.span style={{ scaleX: reducedMotion ? 0 : progress }} />
+              <m.span style={{ scaleX: reducedMotion ? 0 : progress }} />
             </div>
           </div>
           <div

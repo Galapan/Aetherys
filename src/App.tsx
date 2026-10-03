@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { m, useScroll, useTransform } from 'framer-motion'
 import { useMotionPreferences } from './hooks/useMotionPreferences'
 import { useLocalTime } from './hooks/useLocalTime'
 import { useHeroEntrance } from './hooks/useHeroEntrance'
@@ -94,7 +94,7 @@ function App() {
             </div>
             <div className="sticky-stage__frame">
               <div className="sticky-stage__mark" aria-hidden="true">
-                <motion.div
+                <m.div
                   className="hero-mark-reveal"
                   initial={entering ? { opacity: 0 } : false}
                   animate={{ opacity: 1 }}
@@ -105,7 +105,7 @@ function App() {
                   }}
                 >
                   <HeroMark />
-                </motion.div>
+                </m.div>
               </div>
               <div className="hero-bottom container">
                 <p className="eyebrow">{copy.eyebrow}</p>

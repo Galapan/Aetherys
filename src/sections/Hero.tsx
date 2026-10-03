@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useRef } from 'react'
-import { animate, motion, useMotionValue, useMotionValueEvent, useScroll } from 'framer-motion'
+import { animate, m, useMotionValue, useMotionValueEvent, useScroll } from 'framer-motion'
 import type { HeroContent } from '../content/hero'
 
 interface HeroProps {
@@ -112,7 +112,7 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
             <div className="entrance-columns">
               {Array.from({ length: 8 }, (_, index) => (
                 <div className="entrance-column" key={index}>
-                  <motion.span
+                  <m.span
                     className="entrance-top"
                     initial={{ y: '0%' }}
                     animate={{ y: '-101%' }}
@@ -122,7 +122,7 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                       ease: curtainEase,
                     }}
                   />
-                  <motion.span
+                  <m.span
                     className="entrance-bottom"
                     initial={{ y: '0%' }}
                     animate={{ y: '101%' }}
@@ -136,14 +136,14 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
               ))}
             </div>
             <div className="entrance-center">
-              <motion.span
+              <m.span
                 className="entrance-name"
                 initial={{ scaleX: 1, opacity: 1 }}
                 animate={{ scaleX: 0.035, opacity: 0 }}
                 transition={{ delay: 1.7, duration: 0.6, ease: curtainEase }}
               >
                 {Array.from(content.brand).map((letter, index) => (
-                  <motion.span
+                  <m.span
                     key={index}
                     initial={{ y: '110%' }}
                     animate={{ y: '0%' }}
@@ -154,10 +154,10 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                     }}
                   >
                     {letter}
-                  </motion.span>
+                  </m.span>
                 ))}
-              </motion.span>
-              <motion.span
+              </m.span>
+              <m.span
                 className="entrance-cross"
                 initial={{ opacity: 0, rotate: 0, scale: 0.6 }}
                 animate={{
@@ -178,18 +178,18 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
         )}
       <div className="hero-stage">
         <div className="hero-mark-placeholder" aria-hidden="true" ref={placeholderRef} />
-        <motion.ul ref={highlightsRef} className="hero-highlights" {...reveal(4.1)}>
+        <m.ul ref={highlightsRef} className="hero-highlights" {...reveal(4.1)}>
           {content.highlights.map((phrase) => (
-            <motion.li key={phrase} style={{ opacity: reducedMotion ? 1 : highlightsOpacity }}>
+            <m.li key={phrase} style={{ opacity: reducedMotion ? 1 : highlightsOpacity }}>
               {phrase}
-            </motion.li>
+            </m.li>
           ))}
-        </motion.ul>
+        </m.ul>
       </div>
       <div className="hero-content">
-        <motion.h1 id="hero-heading" {...reveal(4)}>
+        <m.h1 id="hero-heading" {...reveal(4)}>
           {content.heading}
-        </motion.h1>
+        </m.h1>
       </div>
     </section>
   )

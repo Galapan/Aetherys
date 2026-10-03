@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import type { HeroContent } from '../../content/hero'
 
 // Drop the owner's file at public/audio/aetherys.mp3 (see docs/AGENTS notes).
@@ -91,7 +91,7 @@ export function AudioToggle({ content, reducedMotion, canHover, audioRef }: Audi
 
   return (
     <>
-      <motion.button
+      <m.button
         className="audio-toggle"
         type="button"
         aria-label={playing ? content.stopMusic : content.playMusic}
@@ -102,7 +102,7 @@ export function AudioToggle({ content, reducedMotion, canHover, audioRef }: Audi
       >
         <span className="audio-toggle__wave" aria-hidden="true">
           {BAR_HEIGHTS.map((height, index) => (
-            <motion.span
+            <m.span
               className="audio-toggle__bar"
               key={index}
               style={{ height }}
@@ -120,7 +120,7 @@ export function AudioToggle({ content, reducedMotion, canHover, audioRef }: Audi
             />
           ))}
         </span>
-      </motion.button>
+      </m.button>
       {!audioRef && <audio src={audioSrc} ref={localAudio} preload="metadata" />}
     </>
   )

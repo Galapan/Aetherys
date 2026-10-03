@@ -1,5 +1,5 @@
 import { useRef, useSyncExternalStore } from 'react'
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
+import { m, useScroll, useSpring, useTransform } from 'framer-motion'
 import type { MotionValue } from 'framer-motion'
 import type { ProcessContent, ProcessStep } from '../content/process'
 
@@ -63,13 +63,13 @@ function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: Ste
   const scroll = pinned && !reducedMotion
 
   return (
-    <motion.li
+    <m.li
       className="process__step"
       style={{ y: scroll && !mobile ? entranceY : 0 }}
       initial={false}
     >
       <div className="process__panel">
-        <motion.div
+        <m.div
           className="process__fill"
           style={{ clipPath: scroll ? clipPath : 'inset(0% 0% 0% 0%)' }}
         >
@@ -77,21 +77,21 @@ function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: Ste
             <span className="process__index">{step.index}</span>
             <span className="process__title">{step.title}</span>
           </h3>
-        </motion.div>
+        </m.div>
       </div>
-      <motion.div className="process__body" style={{ opacity: scroll && mobile ? bodyOpacity : 1 }}>
+      <m.div className="process__body" style={{ opacity: scroll && mobile ? bodyOpacity : 1 }}>
         <p className="process__mask process__mask--date">
-          <motion.span className="process__date" style={{ y: scroll ? dateY : 0 }}>
+          <m.span className="process__date" style={{ y: scroll ? dateY : 0 }}>
             {step.date}
-          </motion.span>
+          </m.span>
         </p>
         <p className="process__mask">
-          <motion.span className="process__description" style={{ y: scroll ? copyY : 0 }}>
+          <m.span className="process__description" style={{ y: scroll ? copyY : 0 }}>
             {step.description}
-          </motion.span>
+          </m.span>
         </p>
-      </motion.div>
-    </motion.li>
+      </m.div>
+    </m.li>
   )
 }
 
