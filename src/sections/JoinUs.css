@@ -10,12 +10,6 @@
   scroll-margin-top: calc(var(--header-height) + 24px);
 }
 
-/* Native scroll carries this opaque surface over the still-pinned Process.
-   Reduced motion leaves both sections in ordinary document flow. */
-.process[data-static='false'] + .join-us {
-  margin-top: -100svh;
-}
-
 .join-us__grid {
   position: absolute;
   inset: 0;

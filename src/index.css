@@ -737,9 +737,11 @@ h1 {
   }
 }
 .services {
+  --services-section-gap: 40svh;
   position: relative;
   z-index: 1;
-  padding-bottom: 80px;
+  /* Let technologies leave the viewport before Process reaches its pinned frame. */
+  padding-bottom: max(80px, var(--services-section-gap));
   background: var(--color-warm-white);
   color: var(--color-graphite);
   scroll-margin-top: calc(var(--header-height) + 24px);
@@ -945,7 +947,7 @@ h1 {
 }
 @media (min-width: 768px) {
   .services {
-    padding-bottom: 104px;
+    padding-bottom: max(104px, var(--services-section-gap));
   }
   .services__intro {
     grid-template-columns: 3fr 9fr;
@@ -973,7 +975,7 @@ h1 {
 }
 @media (min-width: 1024px) {
   .services {
-    padding-bottom: 144px;
+    padding-bottom: max(144px, var(--services-section-gap));
   }
   .services__intro {
     grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -1055,10 +1057,9 @@ h1 {
 }
 .process__stage {
   position: relative;
-  /* Add a final hold, then keep the frame pinned through a full viewport of
-     JoinUs covering it. The following section overlaps the last 100svh.
-     No bottom padding: the sticky frame must remain fixed until fully covered. */
-  height: calc(var(--process-scroll-height) + 140svh);
+  /* After a short final hold, release the frame into normal scroll. Its graphite
+     columns leave a continuous dark surface leading into Testimonies below. */
+  height: calc(var(--process-scroll-height) + 40svh);
 }
 .process__frame {
   position: sticky;
@@ -1235,10 +1236,10 @@ h1 {
     gap: 0;
     /* Staircase that starts at the left: /1 highest, each next step one notch
        lower. Swap the three offsets below to climb instead of descend. */
-    --process-panel-height: clamp(30px, 2.9vw, 42px);
-    --process-panel-gap: 2px;
-    /* One notch equals one panel plus the sliver of space between them, so
-       consecutive panels nearly meet corner to corner. */
+    --process-panel-height: clamp(30px, 2.35vw, 42px);
+    --process-panel-gap: 0px;
+    /* The settled bars meet corner to corner; Motion supplies the larger
+       temporary separation while the columns rise. */
     --process-stagger: calc(var(--process-panel-height) + var(--process-panel-gap));
   }
   .process__step:nth-child(1) {

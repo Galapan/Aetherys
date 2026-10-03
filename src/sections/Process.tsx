@@ -10,7 +10,7 @@ interface ProcessProps {
 
 const wideQuery = '(min-width: 768px)'
 
-// Closely overlapping rises settle into a compact staircase before the bars fill.
+// The rises begin farther apart and converge to one panel-height per step.
 // Adjacent spans keep the fill moving from one bar straight into the next.
 const spans: [number, number][] = [
   [0.25, 0.4],
@@ -44,8 +44,8 @@ interface StepBlockProps {
 function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: StepBlockProps) {
   const entranceY = useTransform(
     progress,
-    [index * 0.025, 0.18 + index * 0.025],
-    [80 + index * 64, 0],
+    [index * 0.035, 0.18 + index * 0.035],
+    [`${7.5 + index * 10.5}svh`, '0svh'],
   )
   const [from, to] = spans[index] ?? [0, 1]
   const reveal = useTransform(progress, [from, to], [0, 1], { clamp: true })

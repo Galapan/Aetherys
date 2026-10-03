@@ -9,6 +9,7 @@ import { content as projectsContent } from './content/projects'
 import { content as expertiseContent } from './content/expertise'
 import { content as servicesContent } from './content/services'
 import { content as processContent } from './content/process'
+import { content as testimoniesContent } from './content/testimonies'
 import { content as joinUsContent } from './content/joinUs'
 import { Navbar } from './components/layout/Navbar'
 import { Hero } from './sections/Hero'
@@ -17,6 +18,7 @@ import { Projects } from './sections/Projects'
 import { Expertise } from './sections/Expertise'
 import { Services } from './sections/Services'
 import { Process } from './sections/Process'
+import { Testimonies } from './sections/Testimonies'
 import { JoinUs } from './sections/JoinUs'
 import { HeroMark } from './features/hero/HeroMark'
 
@@ -32,11 +34,20 @@ function App() {
   const copy = content[locale]
 
   const projectsRef = useRef<HTMLDivElement>(null)
+  const testimoniesRef = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({
     target: projectsRef,
     offset: ['start end', 'start start'],
   })
-  const headerInvert = useTransform(scrollYProgress, [0.82, 0.9], [0, 1], { clamp: true })
+  const lightHeaderInvert = useTransform(scrollYProgress, [0.82, 0.9], [0, 1], { clamp: true })
+  const { scrollYProgress: testimoniesProgress } = useScroll({
+    target: testimoniesRef,
+    offset: ['start start', 'end start'],
+  })
+  const headerInvert = useTransform(() => {
+    const progress = testimoniesProgress.get()
+    return progress > 0 && progress < 1 ? 0 : lightHeaderInvert.get()
+  })
 
   useEffect(() => {
     const syncLocale = () => setLocale(readLocale())
@@ -153,6 +164,12 @@ function App() {
             canHover={canHover}
           />
           <Process content={processContent[locale]} reducedMotion={reducedMotion} />
+          <Testimonies
+            key={locale}
+            sectionRef={testimoniesRef}
+            content={testimoniesContent[locale]}
+            reducedMotion={reducedMotion}
+          />
           <JoinUs
             content={joinUsContent[locale]}
             reducedMotion={reducedMotion}
