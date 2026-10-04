@@ -35,6 +35,7 @@ export interface HeroContent {
   description: string
   title: string
   showreel: {
+    video: string
     label: string
     open: string
     play: string
@@ -80,6 +81,7 @@ export const content: Record<Locale, HeroContent> = {
       'Diseñamos y desarrollamos sitios web, plataformas y soluciones con IA. Te acompañamos desde la primera idea hasta su puesta en marcha.',
     title: 'Aetherys — Software a medida',
     showreel: {
+      video: '/showreel/aetherys-20s-1920x1080-60fps.mp4',
       label: '/SHOWREEL',
       open: 'Ver showreel de Aetherys',
       play: 'Reproducir',
@@ -125,6 +127,7 @@ export const content: Record<Locale, HeroContent> = {
       'We design and build websites, platforms, and AI solutions. We work with you from the first idea through launch.',
     title: 'Aetherys — Custom software',
     showreel: {
+      video: '/showreel/aetherys-20s-1920x1080-60fps.mp4',
       label: '/SHOWREEL',
       open: 'Watch the Aetherys showreel',
       play: 'Play',

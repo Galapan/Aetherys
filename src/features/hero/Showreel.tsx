@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
-import { heroMark, type HeroContent } from '../../content/hero'
+import type { HeroContent } from '../../content/hero'
 
 interface ShowreelProps {
   content: HeroContent
@@ -63,14 +63,22 @@ export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
         }}
       >
         <span
-          className="relative grid h-[72px] place-items-center bg-[linear-gradient(130deg,var(--color-graphite),var(--color-burgundy))]"
+          className="relative grid aspect-video place-items-center overflow-hidden"
           aria-hidden="true"
         >
-          <img className="h-12 w-[60px]" src={heroMark.fallback} alt="" />
-          <span className="absolute right-3 bottom-2 text-[22px]">↗</span>
-        </span>
-        <span className="flex justify-between gap-3 p-2.5 text-[10px] tracking-[0.05em]">
-          <span>{content.showreel.label}</span>
+          <video
+            className="absolute inset-0 h-full w-full scale-[1.04] object-cover blur-[1px]"
+            src={content.showreel.video}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+          <span className="absolute inset-0 bg-[color-mix(in_srgb,var(--color-graphite)_58%,transparent)]" />
+          <span className="relative text-xs tracking-[0.08em] text-[var(--color-warm-white)]">
+            {content.showreel.label.replace(/^\//, '')}
+          </span>
         </span>
       </motion.button>
       {origin &&
@@ -98,9 +106,11 @@ interface DialogProps {
 
 function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed }: DialogProps) {
   const dialog = useRef<HTMLDialogElement>(null)
+  const video = useRef<HTMLVideoElement>(null)
   const [target, setTarget] = useState(playerFrame)
   const [closing, setClosing] = useState(false)
   const [destination, setDestination] = useState(origin)
+  const [isPlaying, setIsPlaying] = useState(false)
 
   useLayoutEffect(() => {
     const element = dialog.current
@@ -132,6 +142,18 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
     if (reducedMotion) onClosed()
   }
 
+  function togglePlayback() {
+    const player = video.current
+    if (!player) return
+
+    if (player.paused) {
+      if (player.ended) player.currentTime = 0
+      void player.play().catch(() => setIsPlaying(false))
+    } else {
+      player.pause()
+    }
+  }
+
   return (
     <dialog
       ref={dialog}
@@ -149,10 +171,11 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
         {content.brand} {content.showreel.label}
       </h2>
       <motion.div
-        className="pointer-events-none absolute inset-0 bg-[color-mix(in_srgb,var(--color-graphite)_62%,transparent)]"
+        className="pointer-events-auto absolute inset-0 bg-[color-mix(in_srgb,var(--color-graphite)_62%,transparent)]"
         initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
         animate={{ opacity: closing ? 0 : 1, backdropFilter: closing ? 'blur(0px)' : 'blur(16px)' }}
         transition={{ duration: reducedMotion ? 0 : 0.5 }}
+        onClick={close}
       />
       <motion.div
         className="absolute rounded-lg bg-[var(--color-graphite)] shadow-[0_24px_100px_color-mix(in_srgb,var(--color-graphite)_65%,transparent)]"
@@ -163,6 +186,30 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
           if (closing) onClosed()
         }}
       >
+        <video
+          ref={video}
+          className="absolute inset-0 h-full w-full rounded-lg object-contain"
+          src={content.showreel.video}
+          aria-label={isPlaying ? content.showreel.pause : content.showreel.play}
+          aria-pressed={isPlaying}
+          role="button"
+          tabIndex={0}
+          autoPlay={!reducedMotion}
+          playsInline
+          preload="metadata"
+          onClick={togglePlayback}
+          onKeyDown={(event) => {
+            if (event.code === 'Space' || event.key === 'Enter') {
+              event.preventDefault()
+              togglePlayback()
+            }
+          }}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onLoadedMetadata={(event) => {
+            event.currentTarget.currentTime = 0
+          }}
+        />
         <motion.div
           className="absolute inset-x-0 bottom-[calc(100%+12px)] flex items-center justify-between gap-4 text-sm"
           initial={{ opacity: 0 }}
