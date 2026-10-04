@@ -1,5 +1,5 @@
 import type { HeroContent, Locale } from '../../content/hero'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 
 export interface NavigationProps {
   content: HeroContent
@@ -11,7 +11,7 @@ export interface NavigationProps {
 export function LanguageSwitch({ content, locale, onChange, canHover }: NavigationProps) {
   return (
     <div className="language-switch" role="group" aria-label={content.language}>
-      <motion.button
+      <m.button
         whileHover={canHover ? { y: -2 } : undefined}
         transition={{ duration: 0.18, ease: 'easeOut' }}
         type="button"
@@ -21,9 +21,9 @@ export function LanguageSwitch({ content, locale, onChange, canHover }: Navigati
         onClick={() => onChange('es')}
       >
         {content.es}
-      </motion.button>
+      </m.button>
       <span aria-hidden="true">/</span>
-      <motion.button
+      <m.button
         whileHover={canHover ? { y: -2 } : undefined}
         transition={{ duration: 0.18, ease: 'easeOut' }}
         type="button"
@@ -33,7 +33,7 @@ export function LanguageSwitch({ content, locale, onChange, canHover }: Navigati
         onClick={() => onChange('en')}
       >
         {content.en}
-      </motion.button>
+      </m.button>
     </div>
   )
 }

@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
@@ -6,6 +14,16 @@ import { Color, type Group } from 'three'
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import { heroMark } from '../../content/hero'
 import { useMotionPreferences } from '../../hooks/useMotionPreferences'
+
+const EXTRUDE_OPTIONS = {
+  depth: 13,
+  bevelEnabled: true,
+  bevelSegments: 8,
+  steps: 1,
+  bevelSize: 2,
+  bevelThickness: 2,
+  curveSegments: 32,
+}
 
 function Mark() {
   const group = useRef<Group>(null)
@@ -83,26 +101,19 @@ function Mark() {
     )
     return svg.paths.flatMap((path) => SVGLoader.createShapes(path))
   }, [])
-  const colors = getComputedStyle(document.documentElement)
-  const graphite = new Color(colors.getPropertyValue('--color-graphite').trim())
-  const body = new Color(colors.getPropertyValue('--color-warm-white').trim()).lerp(graphite, 0.15)
+  const { graphite, body } = useMemo(() => {
+    const colors = getComputedStyle(document.documentElement)
+    const graphite = new Color(colors.getPropertyValue('--color-graphite').trim())
+    const body = new Color(colors.getPropertyValue('--color-warm-white').trim()).lerp(
+      graphite,
+      0.15,
+    )
+    return { graphite, body }
+  }, [])
   return (
     <group ref={group} scale={heroMark.scale}>
       <mesh scale={[0.012, -0.012, 0.012]} position={[-2.91, 2.28, -0.08]}>
-        <extrudeGeometry
-          args={[
-            shapes,
-            {
-              depth: 13,
-              bevelEnabled: true,
-              bevelSegments: 8,
-              steps: 1,
-              bevelSize: 2,
-              bevelThickness: 2,
-              curveSegments: 32,
-            },
-          ]}
-        />
+        <extrudeGeometry args={[shapes, EXTRUDE_OPTIONS]} />
         <MeshTransmissionMaterial
           backside
           resolution={512}
@@ -132,32 +143,28 @@ function Mark() {
   )
 }
 
-function RenderQuality({
-  onContextLost,
-  onResolutionChange,
-}: {
-  onContextLost: () => void
-  onResolutionChange: (dpr: number) => void
-}) {
-  const { gl, size } = useThree()
+function RenderQuality({ onContextLost }: { onContextLost: () => void }) {
+  const { gl, size, setDpr, invalidate } = useThree()
+  const onContextLostEvent = useEffectEvent(onContextLost)
 
   useEffect(() => {
     // Target a 1080px-high drawing buffer, with a bounded cost on small screens.
-    onResolutionChange(Math.min(3, Math.max(1, 1080 / Math.max(1, size.height))))
-  }, [onResolutionChange, size.height])
+    setDpr(Math.min(3, Math.max(1, 1080 / Math.max(1, size.height))))
+    invalidate()
+  }, [invalidate, setDpr, size.height])
 
   useEffect(() => {
     const canvas = gl.domElement
-    canvas.addEventListener('webglcontextlost', onContextLost, { once: true })
-    return () => canvas.removeEventListener('webglcontextlost', onContextLost)
-  }, [gl, onContextLost])
+    const handleContextLost = () => onContextLostEvent()
+    canvas.addEventListener('webglcontextlost', handleContextLost, { once: true })
+    return () => canvas.removeEventListener('webglcontextlost', handleContextLost)
+  }, [gl])
 
   return null
 }
 
 export default function HeroScene({ fallback }: { fallback: ReactNode }) {
   const [lost, setLost] = useState(false)
-  const [dpr, setDpr] = useState(1)
   const handleContextLost = useCallback(() => setLost(true), [])
   const colors = getComputedStyle(document.documentElement)
   const white = colors.getPropertyValue('--color-warm-white').trim()
@@ -166,12 +173,11 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
   return (
     <Canvas
       camera={{ position: [0, 0, 5], fov: 35 }}
-      dpr={dpr}
       gl={{ antialias: true, alpha: true }}
       frameloop="demand"
       fallback={fallback}
     >
-      <RenderQuality onContextLost={handleContextLost} onResolutionChange={setDpr} />
+      <RenderQuality onContextLost={handleContextLost} />
       <ambientLight color={white} intensity={0.25} />
       <Environment resolution={512} frames={1}>
         <Lightformer color={white} intensity={5} position={[-4, 1, 2]} scale={[1.2, 8, 1]} />

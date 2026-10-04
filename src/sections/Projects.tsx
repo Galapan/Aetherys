@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import type { ProjectCard as ProjectCardData, ProjectsContent } from '../content/projects'
 
 interface ProjectsProps {
@@ -28,6 +28,79 @@ interface ProjectCardProps {
   canHover: boolean
 }
 
+interface ProjectCardVisualProps {
+  card: ProjectCardData
+  active: boolean
+  transition: {
+    duration: number
+    ease: readonly [0.22, 1, 0.36, 1]
+  }
+  reducedMotion: boolean
+}
+
+function ProjectCardMedia({ card, active, transition, reducedMotion }: ProjectCardVisualProps) {
+  return (
+    <>
+      <m.img
+        className="project-card__image"
+        src={card.image}
+        alt={card.imageAlt}
+        loading="lazy"
+        decoding="async"
+        width={1200}
+        height={675}
+        initial={false}
+        animate={{ scale: active ? 1.1 : 1, filter: active ? 'blur(3px)' : 'blur(0px)' }}
+        transition={transition}
+      />
+      <m.span
+        className={`project-card__mark project-card__mark--${card.markVariant}`}
+        aria-hidden="true"
+        initial={false}
+        animate={{ opacity: active ? 0 : 1 }}
+        transition={{ ...transition, duration: reducedMotion ? 0 : 0.4 }}
+      >
+        {card.mark}
+      </m.span>
+    </>
+  )
+}
+
+interface ProjectCardDetailsProps extends ProjectCardVisualProps {
+  showCategory: boolean
+}
+
+function ProjectCardDetails({ card, active, showCategory, transition }: ProjectCardDetailsProps) {
+  return (
+    <m.div
+      className="project-card__details"
+      layout
+      initial={false}
+      style={{ left: active ? 42 : 22, right: active ? 42 : 22 }}
+      animate={{ y: active ? -20 : 0 }}
+      transition={transition}
+    >
+      <m.div
+        className="project-card__meta"
+        initial={false}
+        animate={{ y: showCategory ? -40 : 0 }}
+        transition={transition}
+      >
+        <h3 className="project-card__name">{card.title}</h3>
+        {card.year && <span className="project-card__year">{card.year}</span>}
+      </m.div>
+      <m.div
+        className="project-card__category"
+        initial={false}
+        animate={{ opacity: showCategory ? 1 : 0, y: showCategory ? 0 : 16 }}
+        transition={{ ...transition, delay: active ? 0.12 : 0 }}
+      >
+        {card.category}
+      </m.div>
+    </m.div>
+  )
+}
+
 function ProjectCard({ card, index, reducedMotion, canHover }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false)
   const active = canHover && !reducedMotion && hovered
@@ -38,7 +111,7 @@ function ProjectCard({ card, index, reducedMotion, canHover }: ProjectCardProps)
   }
 
   return (
-    <motion.article
+    <m.article
       id={card.id}
       tabIndex={-1}
       className="project-card"
@@ -47,59 +120,27 @@ function ProjectCard({ card, index, reducedMotion, canHover }: ProjectCardProps)
       onHoverEnd={() => setHovered(false)}
     >
       {/* Keep the hit area fixed while only the visual surface retracts. */}
-      <motion.div
+      <m.div
         className="project-card__surface"
         initial={false}
         animate={{ clipPath: `inset(${active ? 20 : 0}px round 8px)` }}
         transition={transition}
       >
-        <motion.img
-          className="project-card__image"
-          src={card.image}
-          alt={card.imageAlt}
-          loading="lazy"
-          decoding="async"
-          width={1200}
-          height={675}
-          initial={false}
-          animate={{ scale: active ? 1.1 : 1, filter: active ? 'blur(3px)' : 'blur(0px)' }}
+        <ProjectCardMedia
+          card={card}
+          active={active}
           transition={transition}
+          reducedMotion={reducedMotion}
         />
-        <motion.span
-          className={`project-card__mark project-card__mark--${card.markVariant}`}
-          aria-hidden="true"
-          initial={false}
-          animate={{ opacity: active ? 0 : 1 }}
-          transition={{ ...transition, duration: reducedMotion ? 0 : 0.4 }}
-        >
-          {card.mark}
-        </motion.span>
-        <motion.div
-          className="project-card__details"
-          initial={false}
-          animate={{ left: active ? 42 : 22, y: active ? -20 : 0, right: active ? 42 : 22 }}
+        <ProjectCardDetails
+          card={card}
+          active={active}
+          showCategory={showCategory}
           transition={transition}
-        >
-          <motion.div
-            className="project-card__meta"
-            initial={false}
-            animate={{ y: showCategory ? -40 : 0 }}
-            transition={transition}
-          >
-            <h3 className="project-card__name">{card.title}</h3>
-            {card.year && <span className="project-card__year">{card.year}</span>}
-          </motion.div>
-          <motion.div
-            className="project-card__category"
-            initial={false}
-            animate={{ opacity: showCategory ? 1 : 0, y: showCategory ? 0 : 16 }}
-            transition={{ ...transition, delay: active ? 0.12 : 0 }}
-          >
-            {card.category}
-          </motion.div>
-        </motion.div>
-      </motion.div>
-    </motion.article>
+          reducedMotion={reducedMotion}
+        />
+      </m.div>
+    </m.article>
   )
 }
 
@@ -107,14 +148,10 @@ export function Projects({ content, reducedMotion, canHover }: ProjectsProps) {
   return (
     <div className="projects__inner">
       <div className="projects__intro">
-        <motion.h2
-          id="proyectos-heading"
-          className="projects__heading"
-          {...reveal(0.2, reducedMotion)}
-        >
+        <m.h2 id="proyectos-heading" className="projects__heading" {...reveal(0.2, reducedMotion)}>
           <span className="reveal-eyebrow">
             {content.eyebrow}
-            <motion.span
+            <m.span
               className="reveal-eyebrow__line"
               initial={reducedMotion ? false : { scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
@@ -125,7 +162,7 @@ export function Projects({ content, reducedMotion, canHover }: ProjectsProps) {
                 ease: [0.22, 1, 0.36, 1],
               }}
             />
-            <motion.span
+            <m.span
               className="reveal-eyebrow__cover"
               aria-hidden="true"
               initial={{ scaleY: reducedMotion ? 0 : 1 }}
@@ -138,7 +175,7 @@ export function Projects({ content, reducedMotion, canHover }: ProjectsProps) {
               }}
             />
           </span>
-        </motion.h2>
+        </m.h2>
       </div>
       <div className="projects__list">
         {content.cards.map((card, index) => (

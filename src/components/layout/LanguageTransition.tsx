@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { motion, useAnimationControls } from 'framer-motion'
+import { m, useAnimationControls } from 'framer-motion'
 
 interface LanguageTransitionProps {
   label: string
@@ -90,7 +90,7 @@ export function LanguageTransition({
         aria-hidden="true"
       >
         {Array.from({ length: columns }, (_, index) => (
-          <motion.span
+          <m.span
             key={index}
             custom={index}
             initial={{ y: '101%' }}

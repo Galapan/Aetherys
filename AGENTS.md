@@ -61,10 +61,10 @@ Instaladas en package.json al crear este documento:
 
 - Vite 8 + React 19 + TypeScript 6.
 - Tailwind CSS 4 y @tailwindcss/vite.
-- Framer Motion 13 (`framer-motion`): motor de animación de UI vigente.
+- Framer Motion 13 (`framer-motion`): motor de animación de UI vigente. Los componentes DOM usan `LazyMotion` + `m` con `domMax` para soportar layout transitions; el provider global vive en `src/main.tsx`.
 - Three.js 0.186, @react-three/fiber 9, @react-three/drei 10 y @types/three.
 - ESLint 10 con plugins React/TypeScript; Prettier 3.
-- pnpm con pnpm-lock.yaml; Git.
+- pnpm con pnpm-lock.yaml y `pnpm-workspace.yaml` (`minimumReleaseAge: 10080`, `trustPolicy: no-downgrade`); Git.
 
 GSAP 3 y Lenis 1 siguen en package.json pero no se importan en `src/`; no reintroducirlos sin solicitud explícita.
 
@@ -73,7 +73,7 @@ package.json y el lockfile son la autoridad sobre versiones exactas. No actualiz
 - Scripts existentes: dev, build, lint, preview. Build ejecuta `tsc -b && vite build`.
 - No existe todavía script de tests o formato; no reportarlos como disponibles.
 - vite.config.ts debe importar únicamente los plugins/configuración usados. Framer Motion y R3F pertenecen a src, no a la configuración de Vite.
-- Framer Motion para animaciones de UI; R3F/Three para 3D, con `useSpring` de Motion dentro de la escena. No añadir otra librería de scroll ni otro motor 3D sin solicitud explícita.
+- Framer Motion con `LazyMotion` + `m` (`domMax`) para animaciones DOM y layout transitions; R3F/Three para 3D, con `useSpring` de Motion dentro de la escena. No importar el componente `motion` completo en UI. No añadir otra librería de scroll ni otro motor 3D sin solicitud explícita.
 - No se necesitan inicialmente CMS, base de datos, autenticación ni backend propio.
 - No instalar router, biblioteca de iconos o traducción por comodidad; cualquier dependencia nueva requiere justificación en el plan y autorización del propietario.
 
@@ -154,9 +154,11 @@ Crear progresivamente según las tareas, no carpetas vacías en masa:
 ```text
 src/
   App.tsx                        composición de página, locale y preferencias
-  main.tsx                       entrada React
+  main.tsx                       entrada React y provider LazyMotion (domMax, strict)
   index.css                      Tailwind, tokens y estilos base
-  components/layout/             Navbar (sustituyó a Header) y LanguageSwitch
+  components/layout/             Navbar, SiteHeader, PageSurface, LanguageSwitch,
+                                 LocaleTransition, MenuDialog/MovingHeader/CloseButton/Link,
+                                 useMenuScene y menuMotion
   components/ui/                 pendiente: Button, Container, SectionHeading
   sections/                      Hero implementado; Services, Process, About, Contact pendientes
   features/hero/                 HeroMark (lazy + fallback) y HeroScene (R3F)
