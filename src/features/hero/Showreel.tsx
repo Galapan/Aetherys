@@ -1,9 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { heroMark, type HeroContent } from '../../content/hero'
-import { ShowreelFilm } from './ShowreelFilm'
-import './Showreel.css'
 
 interface ShowreelProps {
   content: HeroContent
@@ -51,7 +49,7 @@ export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
       <motion.button
         ref={trigger}
         type="button"
-        className="showreel-trigger"
+        className="pointer-events-auto absolute right-0 bottom-[calc(100%+16px)] w-[170px] overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-dark-gray)] p-0 text-[var(--color-warm-white)]"
         aria-label={content.showreel.open}
         aria-haspopup="dialog"
         aria-expanded={origin !== null}
@@ -64,13 +62,15 @@ export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
           setOrigin(readFrame(trigger.current))
         }}
       >
-        <span className="showreel-trigger__art" aria-hidden="true">
-          <img src={heroMark.fallback} alt="" />
-          <span className="showreel-trigger__play">↗</span>
+        <span
+          className="relative grid h-[72px] place-items-center bg-[linear-gradient(130deg,var(--color-graphite),var(--color-burgundy))]"
+          aria-hidden="true"
+        >
+          <img className="h-12 w-[60px]" src={heroMark.fallback} alt="" />
+          <span className="absolute right-3 bottom-2 text-[22px]">↗</span>
         </span>
-        <span className="showreel-trigger__caption">
+        <span className="flex justify-between gap-3 p-2.5 text-[10px] tracking-[0.05em]">
           <span>{content.showreel.label}</span>
-          <span aria-hidden="true">00:20</span>
         </span>
       </motion.button>
       {origin &&
@@ -100,7 +100,6 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
   const dialog = useRef<HTMLDialogElement>(null)
   const [target, setTarget] = useState(playerFrame)
   const [closing, setClosing] = useState(false)
-  const [ready, setReady] = useState(reducedMotion)
   const [destination, setDestination] = useState(origin)
 
   useLayoutEffect(() => {
@@ -112,7 +111,7 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
     document.body.style.overflow = 'hidden'
     document.body.style.paddingRight = `${padding + scrollbar}px`
     element?.showModal()
-    element?.querySelector<HTMLElement>('.showreel-film')?.focus({ preventScroll: true })
+    element?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true })
     return () => {
       element?.close()
       document.body.style.overflow = previousOverflow
@@ -128,33 +127,16 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
 
   function close() {
     if (closing) return
-    setReady(false)
     setDestination(returnFrame())
     setClosing(true)
     if (reducedMotion) onClosed()
   }
 
-  function containFocus(event: KeyboardEvent<HTMLDialogElement>) {
-    if (event.key !== 'Tab') return
-    const controls = event.currentTarget.querySelectorAll<HTMLElement>('[tabindex="0"]')
-    const first = controls[0]
-    const last = controls[controls.length - 1]
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault()
-      last?.focus()
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault()
-      first?.focus()
-    }
-  }
-
   return (
     <dialog
       ref={dialog}
-      className="showreel-dialog"
+      className="pointer-events-auto fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none overflow-hidden border-0 bg-transparent p-0 text-[var(--color-warm-white)] backdrop:bg-transparent"
       aria-labelledby="showreel-title"
-      aria-describedby="showreel-description showreel-instructions"
-      onKeyDown={containFocus}
       onCancel={(event) => {
         event.preventDefault()
         close()
@@ -166,27 +148,23 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
       <h2 id="showreel-title" className="visually-hidden">
         {content.brand} {content.showreel.label}
       </h2>
-      <p id="showreel-description" className="visually-hidden">
-        {content.showreel.summary}
-      </p>
-      <p id="showreel-instructions" className="visually-hidden">
-        {content.showreel.instructions}
-      </p>
       <motion.div
-        className="showreel-scrim"
+        className="pointer-events-none absolute inset-0 bg-[color-mix(in_srgb,var(--color-graphite)_62%,transparent)]"
         initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
         animate={{ opacity: closing ? 0 : 1, backdropFilter: closing ? 'blur(0px)' : 'blur(16px)' }}
         transition={{ duration: reducedMotion ? 0 : 0.5 }}
       />
       <motion.div
-        className="showreel-player"
+        className="absolute rounded-lg bg-[var(--color-graphite)] shadow-[0_24px_100px_color-mix(in_srgb,var(--color-graphite)_65%,transparent)]"
         initial={{ ...(reducedMotion ? target : origin) }}
         animate={{ ...(closing ? destination : target) }}
         transition={{ duration: reducedMotion ? 0 : 0.75, ease: [0.76, 0, 0.24, 1] }}
-        onAnimationComplete={() => (closing ? onClosed() : setReady(true))}
+        onAnimationComplete={() => {
+          if (closing) onClosed()
+        }}
       >
         <motion.div
-          className="showreel-player__heading"
+          className="absolute inset-x-0 bottom-[calc(100%+12px)] flex items-center justify-between gap-4 text-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: closing ? 0 : 1 }}
           transition={{
@@ -195,10 +173,15 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
           }}
         >
           <span>
-            {content.brand} <span>{content.showreel.label}</span>
+            {content.brand}{' '}
+            <span className="ml-2 text-[10px] tracking-[0.08em] text-[var(--color-secondary)] md:ml-4">
+              {content.showreel.label}
+            </span>
           </span>
+          <button type="button" onClick={close} aria-label={content.close}>
+            {content.close}
+          </button>
         </motion.div>
-        <ShowreelFilm content={content} active={ready && !closing} reducedMotion={reducedMotion} />
       </motion.div>
     </dialog>
   )
