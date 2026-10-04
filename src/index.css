@@ -221,6 +221,14 @@ audio {
   display: flex;
   flex-direction: column;
   padding-bottom: calc(24px + var(--foot-space));
+  /* Empty overlay areas must let the pinned showreel receive clicks. */
+  pointer-events: none;
+}
+.hero h1,
+.hero li,
+.manifesto p,
+.manifesto h2 {
+  pointer-events: auto;
 }
 .hero-entrance {
   position: fixed;
@@ -482,6 +490,7 @@ h1 {
   padding-inline: var(--page-padding);
   padding-inline-start: calc(var(--page-padding) + clamp(0px, 5vw, 72px));
   min-height: 200svh;
+  pointer-events: none;
 }
 .manifesto-inner {
   position: sticky;
@@ -1412,32 +1421,6 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-}
-.showreel-placeholder {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 16px);
-  border: 1px solid var(--color-border);
-  background: var(--color-grid);
-  border-radius: 8px;
-  padding: 20px 20px;
-  display: grid;
-  place-items: center;
-  gap: 3px;
-  min-width: 170px;
-  min-height: 96px;
-  text-align: center;
-}
-.showreel-placeholder__label {
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-secondary);
-}
-.showreel-placeholder__hint {
-  font-size: 14px;
-  line-height: 1.4;
-  color: var(--color-secondary);
 }
 .menu-dialog {
   --menu-margin: 16px;

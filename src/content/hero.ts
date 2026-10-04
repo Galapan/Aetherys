@@ -34,6 +34,21 @@ export interface HeroContent {
   heading: string
   description: string
   title: string
+  showreel: {
+    video: string
+    label: string
+    open: string
+    play: string
+    pause: string
+    replay: string
+    instructions: string
+    summary: string
+    reducedMotion: string
+    words: [string, string, string]
+    craft: string
+    services: [string, string, string, string]
+    closing: string
+  }
 }
 
 export const content: Record<Locale, HeroContent> = {
@@ -65,6 +80,23 @@ export const content: Record<Locale, HeroContent> = {
     description:
       'Diseñamos y desarrollamos sitios web, plataformas y soluciones con IA. Te acompañamos desde la primera idea hasta su puesta en marcha.',
     title: 'Aetherys — Software a medida',
+    showreel: {
+      video: '/showreel/aetherys-20s-1920x1080-60fps.mp4',
+      label: '/SHOWREEL',
+      open: 'Ver showreel de Aetherys',
+      play: 'Reproducir',
+      pause: 'Pausar',
+      replay: 'Volver a reproducir',
+      instructions:
+        'Haz clic en la animación para pausar o continuar; al terminar, haz clic para repetir. Con teclado, usa Espacio o Enter. Haz clic fuera o pulsa Escape para cerrar.',
+      summary:
+        'Aetherys. Imagina, diseña, construye. Desarrollo web, plataformas a medida, integración de IA y modernización de sistemas. De tu idea a su puesta en marcha.',
+      reducedMotion: 'Versión estática · movimiento reducido',
+      words: ['Imagina.', 'Diseña.', 'Construye.'],
+      craft: 'Tecnología con intención.',
+      services: ['Desarrollo web', 'Plataformas a medida', 'Integración de IA', 'Modernización'],
+      closing: 'De tu idea a su puesta en marcha.',
+    },
   },
   en: {
     menu: 'Menu',
@@ -94,5 +126,22 @@ export const content: Record<Locale, HeroContent> = {
     description:
       'We design and build websites, platforms, and AI solutions. We work with you from the first idea through launch.',
     title: 'Aetherys — Custom software',
+    showreel: {
+      video: '/showreel/aetherys-20s-1920x1080-60fps.mp4',
+      label: '/SHOWREEL',
+      open: 'Watch the Aetherys showreel',
+      play: 'Play',
+      pause: 'Pause',
+      replay: 'Replay',
+      instructions:
+        'Click the animation to pause or continue; when it ends, click to replay. With a keyboard, use Space or Enter. Click outside or press Escape to close.',
+      summary:
+        'Aetherys. Imagine, design, build. Web development, custom platforms, AI integration and system modernization. From your idea to launch.',
+      reducedMotion: 'Static version · reduced motion',
+      words: ['Imagine.', 'Design.', 'Build.'],
+      craft: 'Technology with intention.',
+      services: ['Web development', 'Custom platforms', 'AI integration', 'Modernization'],
+      closing: 'From your idea to launch.',
+    },
   },
 }

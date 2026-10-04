@@ -21,6 +21,7 @@ import { Process } from './sections/Process'
 import { Testimonies } from './sections/Testimonies'
 import { JoinUs } from './sections/JoinUs'
 import { HeroMark } from './features/hero/HeroMark'
+import { Showreel } from './features/hero/Showreel'
 
 function readLocale(): Locale {
   return new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'es'
@@ -110,18 +111,7 @@ function App() {
               <div className="hero-bottom container">
                 <p className="eyebrow">{copy.eyebrow}</p>
                 <div className="hero-bottom__aside">
-                  <div
-                    className="showreel-placeholder"
-                    role="img"
-                    aria-label={`${manifestoContent[locale].showreelLabel} — ${manifestoContent[locale].showreelHint}`}
-                  >
-                    <span className="showreel-placeholder__label">
-                      {manifestoContent[locale].showreelLabel}
-                    </span>
-                    <span className="showreel-placeholder__hint">
-                      {manifestoContent[locale].showreelHint}
-                    </span>
-                  </div>
+                  <Showreel content={copy} reducedMotion={reducedMotion} canHover={canHover} />
                   <span className="hero-time">
                     <span className="visually-hidden">{`${copy.localTime}: `}</span>
                     <time dateTime={localTime.machine}>{localTime.display}</time>
