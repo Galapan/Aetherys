@@ -12,6 +12,7 @@ import { content as processContent } from './content/process'
 import { content as testimoniesContent } from './content/testimonies'
 import { content as joinUsContent } from './content/joinUs'
 import { Navbar } from './components/layout/Navbar'
+import { RuleGrid } from './components/ui/RuleGrid'
 import { Hero } from './sections/Hero'
 import { Manifesto } from './sections/Manifesto'
 import { Projects } from './sections/Projects'
@@ -71,8 +72,11 @@ function App() {
   }
 
   return (
-    <div className="page-shell" id="inicio">
-      <a className="skip-link" href="#main">
+    <div className="bg-dark-gray isolate min-h-svh" id="inicio">
+      <a
+        className="bg-burgundy fixed top-4 left-5 z-10 -translate-y-[200%] rounded px-4 py-3 focus:translate-y-0"
+        href="#main"
+      >
         {copy.skip}
       </a>
       <Navbar
@@ -84,19 +88,18 @@ function App() {
         headerInvert={headerInvert}
       >
         <main id="main" tabIndex={-1}>
-          <div className="sticky-stage">
-            <div className="rule-grid sticky-stage__grid" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-            <div className="sticky-stage__frame">
-              <div className="sticky-stage__mark" aria-hidden="true">
+          <div className="sticky-stage relative">
+            <RuleGrid
+              className="sticky top-0 z-[-1] h-0"
+              spanClassName="mt-[calc(var(--header-height)*-1)] h-[calc(100svh+var(--header-height))] bg-grid"
+            />
+            <div className="pointer-events-none sticky top-0 mt-[calc(var(--header-height)*-1)] mb-[calc(var(--header-height)-100svh)] grid h-svh grid-rows-[1fr_auto]">
+              <div
+                className="sticky-stage__mark relative z-0 grid place-items-center pb-[var(--mark-lift)]"
+                aria-hidden="true"
+              >
                 <m.div
-                  className="hero-mark-reveal"
+                  className="hero-mark-reveal w-[min(100%,480px)]"
                   initial={entering ? { opacity: 0 } : false}
                   animate={{ opacity: 1 }}
                   transition={{
@@ -108,12 +111,14 @@ function App() {
                   <HeroMark />
                 </m.div>
               </div>
-              <div className="hero-bottom container">
-                <p className="eyebrow">{copy.eyebrow}</p>
-                <div className="hero-bottom__aside">
+              <div className="pointer-events-none relative z-2 container flex w-full max-w-none items-center justify-between gap-6 pb-8 [--page-padding:clamp(20px,1.85vw,32px)]">
+                <p className="text-secondary m-0 text-[12px] leading-[1.4] tracking-[0.08em] uppercase">
+                  {copy.eyebrow}
+                </p>
+                <div className="relative flex items-center justify-end">
                   <Showreel content={copy} reducedMotion={reducedMotion} canHover={canHover} />
-                  <span className="hero-time">
-                    <span className="visually-hidden">{`${copy.localTime}: `}</span>
+                  <span className="text-warm-white flex shrink-0 items-center text-[clamp(13px,1.2vw,15px)] leading-[1.2] font-semibold tracking-[0.02em] whitespace-nowrap tabular-nums">
+                    <span className="sr-only">{`${copy.localTime}: `}</span>
                     <time dateTime={localTime.machine}>{localTime.display}</time>
                   </span>
                 </div>
@@ -126,17 +131,13 @@ function App() {
             ref={projectsRef}
             id="proyectos"
             tabIndex={-1}
-            className="projects"
+            className="bg-warm-white text-graphite relative z-1 mt-[-100svh] scroll-mt-[calc(var(--header-height)+24px)] pt-[clamp(48px,6vw,96px)] pb-[clamp(80px,9vw,144px)]"
             aria-labelledby="proyectos-heading"
           >
-            <div className="rule-grid projects__grid" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
+            <RuleGrid
+              className="absolute inset-x-0 top-0 h-full"
+              spanClassName="bg-grid-burgundy"
+            />
             <Projects
               content={projectsContent[locale]}
               reducedMotion={reducedMotion}

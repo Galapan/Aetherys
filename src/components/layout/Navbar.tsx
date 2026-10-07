@@ -63,7 +63,7 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
 
   return (
     <>
-      <audio ref={audioElement} src={audioSrc} preload="metadata" />
+      <audio className="hidden" ref={audioElement} src={audioSrc} preload="metadata" />
       <PageSurface
         ref={page}
         snapshot={snapshot}

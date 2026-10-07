@@ -105,15 +105,24 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
   }
 
   return (
-    <section className="hero container" aria-labelledby="hero-heading">
+    <section
+      className="pointer-events-none relative container flex min-h-[calc(100svh-var(--header-height))] max-w-none flex-col pb-[calc(24px+var(--foot-space))] [--page-padding:clamp(20px,1.85vw,32px)]"
+      aria-labelledby="hero-heading"
+    >
       {entering &&
         createPortal(
-          <div className="hero-entrance" aria-hidden="true">
-            <div className="entrance-columns">
+          <div
+            className="pointer-events-none fixed inset-0 z-20 overflow-hidden motion-reduce:hidden"
+            aria-hidden="true"
+          >
+            <div className="absolute inset-0 grid grid-cols-4 md:grid-cols-8">
               {Array.from({ length: 8 }, (_, index) => (
-                <div className="entrance-column" key={index}>
+                <div
+                  className={`relative ${index < 2 || index > 5 ? 'hidden md:block' : ''}`}
+                  key={index}
+                >
                   <m.span
-                    className="entrance-top"
+                    className="bg-warm-white absolute top-0 left-0 h-[calc(50%+1px)] w-[calc(100%+1px)] border-r border-[color-mix(in_srgb,var(--color-graphite)_14%,transparent)]"
                     initial={{ y: '0%' }}
                     animate={{ y: '-101%' }}
                     transition={{
@@ -123,7 +132,7 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                     }}
                   />
                   <m.span
-                    className="entrance-bottom"
+                    className="bg-warm-white absolute bottom-0 left-0 h-[calc(50%+1px)] w-[calc(100%+1px)] border-r border-[color-mix(in_srgb,var(--color-graphite)_14%,transparent)]"
                     initial={{ y: '0%' }}
                     animate={{ y: '101%' }}
                     transition={{
@@ -135,9 +144,9 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                 </div>
               ))}
             </div>
-            <div className="entrance-center">
+            <div className="text-burgundy absolute inset-0 grid place-items-center">
               <m.span
-                className="entrance-name"
+                className="flex overflow-hidden px-[2px] py-1 text-[26px] leading-[1.3] font-medium tracking-[-0.055em] md:text-[32px]"
                 initial={{ scaleX: 1, opacity: 1 }}
                 animate={{ scaleX: 0.035, opacity: 0 }}
                 transition={{ delay: 1.7, duration: 0.6, ease: curtainEase }}
@@ -145,6 +154,7 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                 {Array.from(content.brand).map((letter, index) => (
                   <m.span
                     key={index}
+                    className="inline-block"
                     initial={{ y: '110%' }}
                     animate={{ y: '0%' }}
                     transition={{
@@ -158,7 +168,7 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                 ))}
               </m.span>
               <m.span
-                className="entrance-cross"
+                className="absolute size-3 before:absolute before:top-[5px] before:h-[2px] before:w-3 before:bg-current before:content-[''] after:absolute after:left-[5px] after:h-3 after:w-[2px] after:bg-current after:content-['']"
                 initial={{ opacity: 0, rotate: 0, scale: 0.6 }}
                 animate={{
                   opacity: [0, 1, 1, 0],
@@ -176,18 +186,34 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
           </div>,
           document.body,
         )}
-      <div className="hero-stage">
-        <div className="hero-mark-placeholder" aria-hidden="true" ref={placeholderRef} />
-        <m.ul ref={highlightsRef} className="hero-highlights" {...reveal(4.1)}>
-          {content.highlights.map((phrase) => (
-            <m.li key={phrase} style={{ opacity: reducedMotion ? 1 : highlightsOpacity }}>
+      <div className="grid min-h-[144px] flex-1 place-items-center py-12 md:min-h-[192px] lg:min-h-[224px]">
+        <div
+          className="pointer-events-none col-start-1 row-start-1 aspect-square max-h-[48svh] w-[min(100%,480px)]"
+          aria-hidden="true"
+          ref={placeholderRef}
+        />
+        <m.ul
+          ref={highlightsRef}
+          className="text-warm-white pointer-events-none sticky top-[var(--highlights-tope,40svh)] z-1 col-start-1 row-start-1 m-0 flex max-w-full list-none flex-col flex-wrap items-center justify-center gap-2 p-0 text-center text-[clamp(12px,0.9vw,15px)] leading-[1.4] font-medium tracking-[0.04em] uppercase text-shadow-[0_1px_3px_var(--color-graphite),0_0_8px_var(--color-graphite)] md:flex-row md:gap-3"
+          {...reveal(4.1)}
+        >
+          {content.highlights.map((phrase, index) => (
+            <m.li
+              key={phrase}
+              className={`pointer-events-auto whitespace-nowrap ${index > 0 ? "md:before:mr-3 md:before:content-['·']" : ''}`}
+              style={{ opacity: reducedMotion ? 1 : highlightsOpacity }}
+            >
               {phrase}
             </m.li>
           ))}
         </m.ul>
       </div>
-      <div className="hero-content">
-        <m.h1 id="hero-heading" {...reveal(4)}>
+      <div className="grid grid-cols-[repeat(var(--grid-columns),minmax(0,1fr))] gap-x-[var(--grid-gap)] gap-y-8 pb-12">
+        <m.h1
+          id="hero-heading"
+          className="pointer-events-auto col-span-full m-0 max-w-[18ch] text-left text-[clamp(2.25rem,3.3vw,3.4rem)] leading-[1.2] font-medium tracking-[-0.04em] text-pretty lg:row-start-1 lg:self-end"
+          {...reveal(4)}
+        >
           {content.heading}
         </m.h1>
       </div>

@@ -33,7 +33,7 @@ export function MenuMovingHeader({
 }: MenuMovingHeaderProps) {
   return (
     <m.div
-      className="menu-moving-header"
+      className="absolute z-2 flex h-11 items-center justify-between"
       style={{
         top: snapshot.headerTop,
         left: snapshot.headerLeft,
@@ -47,7 +47,7 @@ export function MenuMovingHeader({
       transition={sceneTransition}
     >
       <m.span
-        className="brand"
+        className="brand inline-flex min-h-11 items-center text-[26px] font-medium tracking-[-0.055em]"
         initial={{ x: 0 }}
         animate={{ x: expanded && !reducedMotion ? gap * 2 - snapshot.headerLeft : 0 }}
         transition={sceneTransition}
@@ -55,7 +55,7 @@ export function MenuMovingHeader({
         {content.brand}
       </m.span>
       <m.div
-        className="header-actions menu-moving-actions"
+        className="flex items-center gap-[clamp(6px,1.8vw,12px)] md:gap-4"
         initial={{ x: 0 }}
         animate={{ x: expanded && !reducedMotion ? snapshot.headerRight - gap * 2 : 0 }}
         transition={sceneTransition}

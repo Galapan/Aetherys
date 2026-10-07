@@ -27,8 +27,9 @@ export function MenuLink({
   onClose,
 }: MenuLinkProps) {
   return (
-    <div className="menu-row-mask">
+    <div className="-m-1 overflow-hidden p-1">
       <m.a
+        className="flex min-h-16 items-center justify-between gap-4 overflow-hidden py-2 text-[clamp(2.25rem,5vw,4rem)] leading-[1.1] font-medium tracking-[-0.04em] uppercase"
         href={`#${id}`}
         onClick={(event) => {
           event.preventDefault()
@@ -40,9 +41,9 @@ export function MenuLink({
         }}
         onHoverEnd={() => setHoveredLink(null)}
       >
-        <span className="menu-link-label">
+        <span className="block h-[1.1em] overflow-hidden">
           <m.span
-            className="menu-link-roll"
+            className="flex flex-col"
             initial={{ y: '0%' }}
             animate={{ y: canHover && expanded && hoveredLink === index ? '-50%' : '0%' }}
             transition={{
@@ -50,8 +51,8 @@ export function MenuLink({
               ease: rollEase,
             }}
           >
-            <span>{label}</span>
-            <span className="menu-link-roll-accent" aria-hidden="true">
+            <span className="block leading-[1.1]">{label}</span>
+            <span className="text-burgundy block leading-[1.1]" aria-hidden="true">
               {label}
             </span>
           </m.span>

@@ -24,6 +24,7 @@ import {
 } from 'react-icons/si'
 import type { IconType } from 'react-icons'
 import { technologies, type Service, type ServicesContent } from '../content/services'
+import { RuleGrid } from '../components/ui/RuleGrid'
 
 interface ServicesProps {
   content: ServicesContent
@@ -82,10 +83,10 @@ function ServiceFeature({
   const opacity = useSpring(targetOpacity, spring)
 
   return (
-    <li ref={element}>
-      <span className="services__item-text">
+    <li ref={element} className="overflow-hidden">
+      <span className="services__item-text block">
         <m.span
-          className="services__item-hover"
+          className="block pr-10"
           style={{ x: interactive ? x : 0, opacity: interactive ? opacity : 1 }}
         >
           {item}
@@ -131,16 +132,27 @@ function ServiceRow({
   }, [animate, visible, reducedMotion, service])
 
   return (
-    <article ref={scope} className="services__row" aria-labelledby={`service-${service.id}`}>
-      <span className="services__number" aria-hidden="true">
+    <article
+      ref={scope}
+      className="grid grid-cols-[32px_minmax(0,1fr)] items-start gap-x-4 gap-y-6 md:grid-cols-[1fr_3fr_4fr] md:gap-x-6 lg:grid-cols-12"
+      aria-labelledby={`service-${service.id}`}
+    >
+      <span className="m-0 text-[12px] leading-[1.4] font-normal" aria-hidden="true">
         /{index + 1}
       </span>
-      <h3 id={`service-${service.id}`} className="services__title">
-        <span aria-hidden="true">+</span>
+      <h3
+        id={`service-${service.id}`}
+        className="m-0 justify-self-end text-right text-[12px] leading-[1.4] font-normal tracking-[0.08em] uppercase md:justify-self-start md:text-left lg:col-span-2"
+      >
+        <span className="text-burgundy mr-1" aria-hidden="true">
+          +
+        </span>
         {service.title}
       </h3>
-      <p className="services__description">{service.description}</p>
-      <ul className="services__items">
+      <p className="m-0 hidden max-w-[25ch] text-[18px] leading-[1.6] lg:col-span-4 lg:block">
+        {service.description}
+      </p>
+      <ul className="col-span-full m-0 list-none p-0 text-[clamp(1.25rem,2.15vw,2rem)] leading-[1.25] tracking-[-0.035em] md:col-start-3 lg:col-span-5">
         {service.items.map((item) => (
           <ServiceFeature
             key={item}
@@ -208,11 +220,10 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
   })
 
   return (
-    <div className="services__technologies">
+    <div className="mx-[calc(50%-50vw)] mt-12 w-screen lg:mt-16">
       <div
         ref={rail}
-        className="services__rail"
-        data-static={reducedMotion}
+        className="focus-visible:outline-graphite overflow-hidden py-2 focus-visible:outline-2 focus-visible:outline-offset-4"
         role="region"
         aria-label={content.technologyLabel}
         tabIndex={reducedMotion ? undefined : 0}
@@ -229,12 +240,15 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
           focused.current = false
         }}
       >
-        <m.div className="services__track" style={{ x: reducedMotion ? 0 : x }}>
+        <m.div
+          className={`flex ${reducedMotion ? 'w-full' : 'w-max'}`}
+          style={{ x: reducedMotion ? 0 : x }}
+        >
           {(reducedMotion ? [false] : [false, true]).map((duplicate) => (
             <ul
               key={String(duplicate)}
               ref={duplicate ? undefined : group}
-              className="services__technology-list"
+              className={`m-0 list-none p-0 ${reducedMotion ? 'grid w-full grid-cols-2 gap-x-0 gap-y-4 md:grid-cols-4 lg:grid-cols-5' : 'flex shrink-0'}`}
               aria-label={duplicate ? undefined : content.technologyLabel}
               aria-hidden={duplicate || undefined}
             >
@@ -243,13 +257,13 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
                 return (
                   <m.li
                     key={id}
-                    className="services__technology"
+                    className={`text-graphite before:text-burgundy after:text-burgundy relative flex min-h-[176px] flex-[0_0_clamp(160px,14vw,200px)] flex-col items-center justify-center before:absolute before:top-0 before:left-0 before:z-2 before:-translate-x-1/2 before:-translate-y-1/2 before:text-[15px] before:leading-none before:content-['+'_/_''] after:absolute after:bottom-0 after:left-0 after:z-2 after:-translate-x-1/2 after:translate-y-1/2 after:text-[15px] after:leading-none after:content-['+'_/_''] ${reducedMotion ? 'w-auto' : 'w-[clamp(160px,14vw,200px)]'}`}
                     initial={false}
                     animate={interactive ? 'rest' : 'static'}
                     whileHover={interactive ? 'hover' : undefined}
                   >
                     <m.span
-                      className="services__technology-surface"
+                      className="pointer-events-none absolute inset-0 z-0 origin-center bg-[color-mix(in_srgb,var(--color-graphite)_4%,transparent)] opacity-0"
                       aria-hidden="true"
                       variants={{
                         rest: { opacity: 0, scale: 0.02, transition: technologyLeave },
@@ -258,7 +272,7 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
                       }}
                     />
                     <m.span
-                      className="services__technology-icon"
+                      className="relative z-1 flex size-11 shrink-0 items-center justify-center"
                       aria-hidden="true"
                       variants={{
                         rest: {
@@ -284,10 +298,10 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
                         },
                       }}
                     >
-                      <Icon focusable="false" />
+                      <Icon className="size-14 flex-[0_0_56px]" focusable="false" />
                     </m.span>
                     <m.span
-                      className="services__technology-name"
+                      className="absolute inset-x-2 bottom-[34px] z-1 text-center text-[14px] leading-[1.4]"
                       variants={{
                         rest: {
                           opacity: 0,
@@ -346,23 +360,26 @@ export function Services(props: ServicesProps) {
     }
   }, [canHover, reducedMotion, pointerY])
   return (
-    <section id="servicios" tabIndex={-1} className="services" aria-labelledby="services-heading">
-      <div className="rule-grid services__grid" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
-      <div className="container services__inner">
-        <div className="services__intro">
-          <h2 id="services-heading" className="services__eyebrow">
+    <section
+      id="servicios"
+      tabIndex={-1}
+      className="bg-warm-white text-graphite focus-visible:outline-graphite relative z-1 scroll-mt-[calc(var(--header-height)+24px)] overflow-x-clip pb-[max(80px,var(--services-section-gap))] [--services-section-gap:40svh] focus-visible:outline-2 focus-visible:outline-offset-4 md:pb-[max(104px,var(--services-section-gap))] lg:pb-[max(144px,var(--services-section-gap))]"
+      aria-labelledby="services-heading"
+    >
+      <RuleGrid className="absolute inset-0" spanClassName="bg-grid-burgundy" />
+      <div className="relative container">
+        <div className="mb-20 grid gap-6 md:mb-26 md:grid-cols-[3fr_9fr] lg:grid-cols-12">
+          <h2
+            id="services-heading"
+            className="text-burgundy m-0 text-[12px] leading-[1.4] font-medium tracking-[0.08em] lg:col-span-3"
+          >
             {content.eyebrow}
           </h2>
-          <p>{content.introduction}</p>
+          <p className="m-0 max-w-[62ch] text-[18px] leading-[1.6] lg:col-span-7">
+            {content.introduction}
+          </p>
         </div>
-        <div className="services__rows">
+        <div className="grid gap-16">
           {content.services.map((service, index) => (
             <ServiceRow
               key={service.id}
@@ -375,9 +392,13 @@ export function Services(props: ServicesProps) {
             />
           ))}
         </div>
-        <div className="services__technology-intro">
-          <h3>{content.technologyHeading}</h3>
-          <p>{content.technologyDescription}</p>
+        <div className="mt-26 grid gap-6 md:grid-cols-[7fr_5fr] lg:mt-36">
+          <h3 className="m-0 max-w-[25ch] text-[clamp(1.5rem,2.6vw,2.5rem)] leading-[1.15] font-normal tracking-[-0.035em]">
+            {content.technologyHeading}
+          </h3>
+          <p className="m-0 max-w-[62ch] text-[18px] leading-[1.6]">
+            {content.technologyDescription}
+          </p>
         </div>
         <TechnologyRail {...props} />
       </div>

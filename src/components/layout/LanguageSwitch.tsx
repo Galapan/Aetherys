@@ -10,8 +10,13 @@ export interface NavigationProps {
 
 export function LanguageSwitch({ content, locale, onChange, canHover }: NavigationProps) {
   return (
-    <div className="language-switch" role="group" aria-label={content.language}>
+    <div
+      className="flex items-center text-[12px] tracking-[0.08em]"
+      role="group"
+      aria-label={content.language}
+    >
       <m.button
+        className="text-secondary relative min-h-11 min-w-11 rounded border-0 bg-transparent aria-pressed:text-[var(--switch-pressed,var(--color-warm-white))] aria-pressed:after:absolute aria-pressed:after:right-4 aria-pressed:after:bottom-[7px] aria-pressed:after:left-4 aria-pressed:after:h-[2px] aria-pressed:after:bg-current aria-pressed:after:content-['']"
         whileHover={canHover ? { y: -2 } : undefined}
         transition={{ duration: 0.18, ease: 'easeOut' }}
         type="button"
@@ -22,8 +27,11 @@ export function LanguageSwitch({ content, locale, onChange, canHover }: Navigati
       >
         {content.es}
       </m.button>
-      <span aria-hidden="true">/</span>
+      <span className="text-secondary" aria-hidden="true">
+        /
+      </span>
       <m.button
+        className="text-secondary relative min-h-11 min-w-11 rounded border-0 bg-transparent aria-pressed:text-[var(--switch-pressed,var(--color-warm-white))] aria-pressed:after:absolute aria-pressed:after:right-4 aria-pressed:after:bottom-[7px] aria-pressed:after:left-4 aria-pressed:after:h-[2px] aria-pressed:after:bg-current aria-pressed:after:content-['']"
         whileHover={canHover ? { y: -2 } : undefined}
         transition={{ duration: 0.18, ease: 'easeOut' }}
         type="button"

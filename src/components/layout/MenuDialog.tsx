@@ -46,7 +46,7 @@ export function MenuDialog({
     <dialog
       ref={dialogRef}
       id="navigation-menu"
-      className="menu-dialog"
+      className="text-graphite fixed inset-0 m-auto h-dvh max-h-dvh w-full max-w-none overflow-auto border-0 bg-transparent p-0 [color-scheme:light] [--color-border:color-mix(in_srgb,var(--color-graphite)_14%,transparent)] [--color-secondary:color-mix(in_srgb,var(--color-graphite)_78%,transparent)] [--focus-outline:var(--color-graphite)] [--switch-pressed:var(--color-graphite)] backdrop:bg-transparent"
       aria-label={content.navigation}
       onKeyDown={containFocus}
       onCancel={(event) => {
@@ -124,14 +124,14 @@ function MenuPanel({
 
   return (
     <m.div
-      className="menu-panel"
+      className="absolute isolate flex flex-col overflow-hidden rounded"
       style={{ inset: gap }}
       initial={reducedMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: expanded ? 1 : 0, y: reducedMotion || expanded ? 0 : 12 }}
       transition={sceneTransition}
     >
       <m.div
-        className="menu-panel-background"
+        className="pointer-events-none absolute inset-0 z-[-1] bg-[color-mix(in_srgb,var(--color-warm-white)_90%,transparent)] after:absolute after:top-1/2 after:left-1/2 after:aspect-square after:w-[clamp(320px,60vmin,720px)] after:-translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-burgundy)_18%,transparent)_0%,color-mix(in_srgb,var(--color-burgundy)_8%,transparent)_35%,transparent_70%)] after:blur-[48px] after:content-['']"
         aria-hidden="true"
         initial={{ opacity: 0 }}
         animate={{ opacity: expanded ? 1 : 0 }}
@@ -141,11 +141,11 @@ function MenuPanel({
         }}
       />
       <div
-        className="menu-scroll"
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto"
         style={{ paddingTop: headerInset + 60, paddingInline: gap, paddingBottom: gap }}
       >
-        <div className="menu-content">
-          <nav aria-label={content.sectionsLabel}>
+        <div className="my-auto grid gap-12 py-12 lg:py-16">
+          <nav className="flex flex-col items-stretch gap-2" aria-label={content.sectionsLabel}>
             {links.map((link, index) => (
               <MenuLink
                 key={link.label}
@@ -162,7 +162,7 @@ function MenuPanel({
             ))}
           </nav>
         </div>
-        <m.div className="menu-language" {...createReveal(expanded, reducedMotion, 0.7)}>
+        <m.div className="self-end" {...createReveal(expanded, reducedMotion, 0.7)}>
           <LanguageSwitch {...navigation} canHover={canHover} onChange={onSelectLocale} />
         </m.div>
       </div>

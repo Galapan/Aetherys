@@ -167,7 +167,7 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
         if (event.target === event.currentTarget) close()
       }}
     >
-      <h2 id="showreel-title" className="visually-hidden">
+      <h2 id="showreel-title" className="sr-only">
         {content.brand} {content.showreel.label}
       </h2>
       <motion.div
