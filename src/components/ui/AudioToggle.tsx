@@ -92,7 +92,7 @@ export function AudioToggle({ content, reducedMotion, canHover, audioRef }: Audi
   return (
     <>
       <m.button
-        className="audio-toggle"
+        className="pointer-events-auto grid size-11 place-items-center rounded border-0 bg-transparent p-0 text-inherit"
         type="button"
         aria-label={playing ? content.stopMusic : content.playMusic}
         aria-pressed={playing}
@@ -100,10 +100,10 @@ export function AudioToggle({ content, reducedMotion, canHover, audioRef }: Audi
         whileHover={canHover ? { y: -2 } : undefined}
         transition={{ duration: 0.18 }}
       >
-        <span className="audio-toggle__wave" aria-hidden="true">
+        <span className="flex h-[18px] items-center gap-[3px]" aria-hidden="true">
           {BAR_HEIGHTS.map((height, index) => (
             <m.span
-              className="audio-toggle__bar"
+              className="block w-[2px] origin-center rounded-[1px] bg-current"
               key={index}
               style={{ height }}
               animate={animating ? { scaleY: [1, BAR_MIN_SCALE, 1] } : { scaleY: 1 }}
@@ -121,7 +121,7 @@ export function AudioToggle({ content, reducedMotion, canHover, audioRef }: Audi
           ))}
         </span>
       </m.button>
-      {!audioRef && <audio src={audioSrc} ref={localAudio} preload="metadata" />}
+      {!audioRef && <audio className="hidden" src={audioSrc} ref={localAudio} preload="metadata" />}
     </>
   )
 }

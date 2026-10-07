@@ -29,10 +29,10 @@ export function PageSurface({
   children,
 }: PageSurfaceProps) {
   return (
-    <div className="navigation-scene" style={{ height: snapshot?.documentHeight }}>
+    <div style={{ height: snapshot?.documentHeight }}>
       <m.div
         ref={pageRef}
-        className="page-surface"
+        className="bg-graphite relative isolate min-h-svh origin-center"
         initial={false}
         animate={createPageAnimation(snapshot, gap, compact, expanded)}
         transition={{

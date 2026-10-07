@@ -6,7 +6,7 @@ const HeroScene = lazy(() => import('./HeroScene'))
 function Fallback() {
   return (
     <img
-      className="hero-mark-fallback"
+      className="h-full w-full object-contain p-[12%]"
       src={heroMark.fallback}
       alt=""
       style={{ transform: `scale(${heroMark.scale})` }}
@@ -26,7 +26,7 @@ class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean
 
 export function HeroMark() {
   return (
-    <div className="hero-mark" aria-hidden="true">
+    <div className="relative aspect-square max-h-[48svh] w-full" aria-hidden="true">
       <SceneBoundary>
         <Suspense fallback={<Fallback />}>
           <HeroScene fallback={<Fallback />} />

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { m, useAnimate, useAnimationFrame, useInView, useMotionValue } from 'framer-motion'
 import type { ExpertiseContent } from '../content/expertise'
+import { RuleGrid } from '../components/ui/RuleGrid'
 
 interface ExpertiseProps {
   content: ExpertiseContent
@@ -86,33 +87,39 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
   })
 
   return (
-    <section id="expertise" className="expertise" aria-labelledby="expertise-heading">
-      <div className="rule-grid expertise__grid" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
-      <div ref={scope} className="expertise__intro container">
-        <h2 id="expertise-heading" className="expertise__eyebrow">
+    <section
+      id="expertise"
+      className="bg-warm-white text-graphite relative z-1 scroll-mt-[calc(var(--header-height)+24px)] pb-20 md:pb-26 lg:pb-36"
+      aria-labelledby="expertise-heading"
+    >
+      <RuleGrid className="absolute inset-0" spanClassName="bg-grid-burgundy" />
+      <div ref={scope} className="relative container">
+        <h2
+          id="expertise-heading"
+          className="text-burgundy relative m-0 mb-8 table text-[12px] leading-[1.4] font-medium tracking-[0.08em]"
+        >
           {content.eyebrow}
-          <span className="expertise__cover" aria-hidden="true" />
+          <span
+            className="expertise__cover bg-burgundy absolute -inset-x-0.5 inset-y-0 origin-left opacity-0"
+            aria-hidden="true"
+          />
         </h2>
-        <div className="expertise__text-row">
-          <div className="expertise__mask">
-            <p className="expertise__copy expertise__heading">{content.heading}</p>
+        <div className="mb-12 grid gap-6 md:grid-cols-[7fr_5fr] lg:mb-16">
+          <div className="overflow-hidden">
+            <p className="expertise__copy m-0 text-[18px] leading-[1.6] font-medium">
+              {content.heading}
+            </p>
           </div>
-          <div className="expertise__mask">
-            <p className="expertise__copy expertise__description">{content.description}</p>
+          <div className="overflow-hidden">
+            <p className="expertise__copy m-0 max-w-[46ch] text-[18px] leading-[1.6]">
+              {content.description}
+            </p>
           </div>
         </div>
       </div>
       <div
         ref={rail}
-        className="expertise__rail"
-        data-moving={moving}
+        className={`relative overflow-hidden ${moving ? '' : 'container'}`}
         onPointerEnter={() => {
           if (canHover && moving) {
             hovering.current = true
@@ -126,32 +133,39 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
           }
         }}
       >
-        <m.div className="expertise__track" style={{ x: moving ? x : 0 }}>
+        <m.div className={`flex ${moving ? 'w-max' : 'w-full'}`} style={{ x: moving ? x : 0 }}>
           {(moving ? [false, true] : [false]).map((duplicate) => (
             <ul
               key={String(duplicate)}
               ref={duplicate ? undefined : group}
-              className="expertise__cards"
+              className={
+                moving
+                  ? 'm-0 flex list-none gap-6 p-0 pr-6'
+                  : 'm-0 grid w-full list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 md:gap-6 lg:grid-cols-4'
+              }
               aria-hidden={duplicate || undefined}
             >
               {Array.from({ length: moving ? repeats : 1 }, (_, cycle) =>
                 content.cards.map((card) => (
                   <li
                     key={`${cycle}-${card.id}`}
-                    className="expertise__card"
+                    className={`bg-dark-gray text-warm-white relative aspect-square flex-[0_0_auto] overflow-hidden rounded-lg ${moving ? 'w-[clamp(230px,23.6vw,410px)]' : 'w-[75%] justify-self-center'}`}
                     aria-hidden={cycle > 0 || undefined}
                   >
                     {card.image && (
                       <img
                         src={card.image}
                         alt=""
+                        className="block h-full w-full object-cover"
                         loading="lazy"
                         decoding="async"
                         width={card.imageWidth}
                         height={card.imageHeight}
                       />
                     )}
-                    <h3>{card.title}</h3>
+                    <h3 className="absolute inset-0 z-1 m-0 grid place-content-center p-6 text-center text-[clamp(1.75rem,3vw,3rem)] leading-[1.1] font-medium tracking-[-0.02em]">
+                      {card.title}
+                    </h3>
                   </li>
                 )),
               )}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { m, stagger, useAnimate, useInView } from 'framer-motion'
 import { joinUsAssets, type JoinUsContent } from '../content/joinUs'
-import './JoinUs.css'
+import { RuleGrid } from '../components/ui/RuleGrid'
 
 interface JoinUsProps {
   content: JoinUsContent
@@ -66,8 +66,9 @@ function Words({ text }: { text: string }) {
   return text.split(' ').map((word, index) => (
     <span key={`${index}-${word}`}>
       {index > 0 ? ' ' : null}
-      <span className="join-us__word-mask">
-        <span className="join-us__word">{word}</span>
+      <span className="mb-[-0.12em] inline-block overflow-clip pb-[0.12em] align-top">
+        {/* animation hook: targeted by useAnimate */}
+        <span className="join-us__word inline-block">{word}</span>
       </span>
     </span>
   ))
@@ -101,6 +102,7 @@ function JoinUsVideo({ label, reducedMotion }: { label: string; reducedMotion: b
       ref={video}
       src={joinUsAssets.video}
       poster={joinUsAssets.poster || undefined}
+      className="focus-visible:outline-graphite block h-full w-full object-cover focus-visible:outline-2 focus-visible:outline-offset-4"
       aria-label={label}
       muted
       loop
@@ -113,39 +115,45 @@ function JoinUsVideo({ label, reducedMotion }: { label: string; reducedMotion: b
 
 export function JoinUs({ content, reducedMotion, canHover }: JoinUsProps) {
   return (
-    <section id="join-us" className="join-us" tabIndex={-1} aria-labelledby="join-us-heading">
-      <div className="rule-grid join-us__grid" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
+    <section
+      id="join-us"
+      className="bg-warm-white text-graphite focus-visible:outline-graphite relative isolate z-1 min-h-svh scroll-mt-[calc(var(--header-height)+24px)] py-20 [color-scheme:light] focus-visible:outline-2 focus-visible:outline-offset-4 md:py-26 lg:py-36"
+      tabIndex={-1}
+      aria-labelledby="join-us-heading"
+    >
+      <RuleGrid className="absolute inset-0 z-[-1]" spanClassName="bg-grid-burgundy" />
       <div className="container">
         <Reveal kind="eyebrow" reducedMotion={reducedMotion}>
-          <p className="join-us__eyebrow">
+          <p className="text-burgundy relative m-0 mb-16 table text-[12px] leading-[1.4] tracking-[0.08em]">
             {content.eyebrow}
-            <span className="join-us__eyebrow-cover" aria-hidden="true" />
+            {/* animation hook: targeted by useAnimate */}
+            <span
+              className="join-us__eyebrow-cover bg-burgundy absolute inset-0 origin-right opacity-0"
+              aria-hidden="true"
+            />
           </p>
         </Reveal>
-        <div className="join-us__columns">
-          <div className="join-us__column">
+        <div className="grid gap-12 md:grid-cols-8 md:gap-6 lg:grid-cols-12">
+          <div className="min-w-0 md:col-span-4 lg:col-span-5 lg:col-start-1">
             <Reveal kind="heading" reducedMotion={reducedMotion}>
-              <h2 id="join-us-heading" className="join-us__heading">
+              <h2
+                id="join-us-heading"
+                className="m-0 text-[clamp(2rem,4vw,4rem)] leading-[1.1] font-medium tracking-[-0.03em] md:text-[clamp(2rem,3.2vw,3rem)]"
+              >
                 <Words text={content.headingStart} />{' '}
-                <span className="join-us__emphasis">
+                <span className="text-burgundy">
                   <Words text={content.headingEmphasis} />
                 </span>{' '}
                 <Words text={content.headingEnd} />
               </h2>
             </Reveal>
-            <div className="join-us__photo">
-              <div className="join-us__media">
+            <div className="mt-12 lg:mt-16">
+              <div className="bg-dark-gray aspect-square overflow-clip rounded-lg">
                 {joinUsAssets.photo && (
                   <img
                     src={joinUsAssets.photo}
                     alt={content.photoAlt}
+                    className="block h-full w-full object-cover"
                     width={800}
                     height={800}
                     loading="lazy"
@@ -155,18 +163,25 @@ export function JoinUs({ content, reducedMotion, canHover }: JoinUsProps) {
               </div>
             </div>
           </div>
-          <div className="join-us__column join-us__column--video">
-            <div className="join-us__media">
+          <div className="min-w-0 md:col-span-4 md:pt-6 lg:col-span-5 lg:col-start-8">
+            <div className="bg-dark-gray aspect-square overflow-clip rounded-lg">
               {joinUsAssets.video && (
                 <JoinUsVideo label={content.videoLabel} reducedMotion={reducedMotion} />
               )}
             </div>
-            <Reveal kind="details" className="join-us__details" reducedMotion={reducedMotion}>
+            <Reveal
+              kind="details"
+              className="mt-8 overflow-clip lg:mt-12"
+              reducedMotion={reducedMotion}
+            >
+              {/* animation hook: targeted by useAnimate */}
               <div className="join-us__reveal-content">
-                <p className="join-us__description">{content.description}</p>
+                <p className="m-0 max-w-[62ch] text-[18px] leading-[1.6] text-[color-mix(in_srgb,var(--color-graphite)_78%,transparent)]">
+                  {content.description}
+                </p>
                 {joinUsAssets.contactHref ? (
                   <m.a
-                    className="join-us__contact"
+                    className="bg-burgundy text-warm-white focus-visible:outline-graphite mt-6 inline-flex min-h-11 items-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4"
                     href={joinUsAssets.contactHref}
                     whileHover={canHover && !reducedMotion ? { y: -2 } : undefined}
                     transition={{ duration: 0.18 }}
@@ -174,7 +189,11 @@ export function JoinUs({ content, reducedMotion, canHover }: JoinUsProps) {
                     {content.contact}
                   </m.a>
                 ) : (
-                  <button className="join-us__contact" type="button" disabled>
+                  <button
+                    className="bg-burgundy text-warm-white focus-visible:outline-graphite mt-6 inline-flex min-h-11 items-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-default disabled:opacity-60"
+                    type="button"
+                    disabled
+                  >
                     {content.contact}
                   </button>
                 )}

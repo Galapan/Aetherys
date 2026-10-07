@@ -2,6 +2,7 @@ import { useRef, useSyncExternalStore } from 'react'
 import { m, useScroll, useSpring, useTransform } from 'framer-motion'
 import type { MotionValue } from 'framer-motion'
 import type { ProcessContent, ProcessStep } from '../content/process'
+import { RuleGrid } from '../components/ui/RuleGrid'
 
 interface ProcessProps {
   content: ProcessContent
@@ -61,32 +62,65 @@ function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: Ste
     index === spans.length - 1 ? [0, 1] : [0, 1, 1, 0],
   )
   const scroll = pinned && !reducedMotion
+  const mobilePinned = pinned && mobile
 
   return (
     <m.li
-      className="process__step"
+      className={[
+        'relative grid min-w-0 grid-rows-[auto_1fr]',
+        index === 1 && 'md:mt-[var(--process-stagger)]',
+        index === 2 && 'md:mt-[calc(var(--process-stagger)*2)]',
+        mobilePinned && 'grid-rows-[calc(var(--process-panel-height)*3)_1fr] [grid-area:1/1]',
+        pinned &&
+          "after:bg-graphite after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-[var(--process-scroll-height)] after:content-['']",
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={{ y: scroll && !mobile ? entranceY : 0 }}
       initial={false}
     >
-      <div className="process__panel">
+      <div
+        className={[
+          'min-h-[var(--process-panel-height)] bg-[color-mix(in_srgb,var(--color-burgundy)_20%,transparent)]',
+          mobilePinned &&
+            'self-start bg-[color-mix(in_srgb,var(--color-burgundy)_20%,var(--color-warm-white))]',
+          mobilePinned && index === 1 && 'mt-[var(--process-panel-height)]',
+          mobilePinned && index === 2 && 'mt-[calc(var(--process-panel-height)*2)]',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <m.div
-          className="process__fill"
+          className="bg-burgundy text-warm-white flex min-h-[var(--process-panel-height)] items-center px-[clamp(24px,2.6vw,40px)]"
           style={{ clipPath: scroll ? clipPath : 'inset(0% 0% 0% 0%)' }}
         >
-          <h3 className="process__panel-line">
-            <span className="process__index">{step.index}</span>
-            <span className="process__title">{step.title}</span>
+          <h3 className="m-0 flex items-baseline gap-[clamp(8px,1vw,16px)] whitespace-nowrap">
+            <span className="text-warm-white block leading-[1.1] font-medium tracking-[-0.02em] text-[var(--process-type-size)]">
+              {step.index}
+            </span>
+            <span className="block leading-[1.1] font-medium tracking-[-0.02em] text-[var(--process-type-size)] uppercase">
+              {step.title}
+            </span>
           </h3>
         </m.div>
       </div>
-      <m.div className="process__body" style={{ opacity: scroll && mobile ? bodyOpacity : 1 }}>
-        <p className="process__mask process__mask--date">
-          <m.span className="process__date" style={{ y: scroll ? dateY : 0 }}>
+      <m.div
+        className={`bg-graphite text-warm-white grid content-start gap-3 px-[clamp(24px,2.6vw,40px)] pt-[30px] pb-6 [--process-copy-measure:56ch] ${mobilePinned ? 'bg-transparent' : ''}`}
+        style={{ opacity: scroll && mobile ? bodyOpacity : 1 }}
+      >
+        <p className="m-0 block max-w-[var(--process-copy-measure)] overflow-hidden">
+          <m.span
+            className="text-warm-white block text-left text-[15px] leading-[1.4] font-semibold tracking-[0.08em] uppercase"
+            style={{ y: scroll ? dateY : 0 }}
+          >
             {step.date}
           </m.span>
         </p>
-        <p className="process__mask">
-          <m.span className="process__description" style={{ y: scroll ? copyY : 0 }}>
+        <p className="m-0 block max-w-[var(--process-copy-measure)] overflow-hidden">
+          <m.span
+            className="block text-justify text-[18px] leading-[1.6] hyphens-auto text-[color-mix(in_srgb,var(--color-warm-white)_68%,transparent)] max-md:text-left"
+            style={{ y: scroll ? copyY : 0 }}
+          >
             {step.description}
           </m.span>
         </p>
@@ -111,34 +145,43 @@ export function Process({ content, reducedMotion }: ProcessProps) {
     <section
       id="proceso"
       tabIndex={-1}
-      className="process"
-      data-static={!pinned}
+      className="bg-warm-white text-graphite focus-visible:outline-graphite relative z-1 scroll-mt-[calc(var(--header-height)+24px)] overflow-clip [--process-scroll-height:320svh] focus-visible:outline-2 focus-visible:outline-offset-4 max-md:[--process-scroll-height:640svh]"
       aria-labelledby="process-heading"
     >
-      <div className="rule-grid process__grid" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
-      <div ref={stage} className="process__stage">
-        <div className="process__frame">
-          <div className="rule-grid process__grid process__grid--frame" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-          <div className="process__intro">
-            <h2 id="process-heading" className="process__eyebrow">
+      <RuleGrid className="absolute inset-0" spanClassName="bg-grid-burgundy" />
+      <div
+        ref={stage}
+        className={[
+          'relative',
+          pinned
+            ? 'h-[calc(var(--process-scroll-height)+40svh)]'
+            : 'h-auto pb-20 md:pb-26 lg:pb-36',
+        ].join(' ')}
+      >
+        <div
+          className={
+            pinned
+              ? 'sticky top-[25%] grid h-[75svh] grid-rows-[auto_1fr]'
+              : 'static grid h-auto grid-rows-[auto_1fr]'
+          }
+        >
+          <RuleGrid className="absolute inset-0 z-1" />
+          <div className="relative mb-[clamp(24px,4svh,48px)] grid content-start gap-6 px-[var(--page-padding)] md:grid-cols-[7fr_5fr]">
+            <h2
+              id="process-heading"
+              className="text-burgundy relative m-0 table text-[16px] leading-[1.4] font-medium tracking-[0.08em]"
+            >
               {content.eyebrow}
             </h2>
           </div>
-          <ol className="process__steps">
+          <ol
+            className={[
+              'm-0 grid list-none grid-cols-[minmax(0,1fr)] gap-12 p-0 [--process-panel-gap:2px] [--process-panel-height:36px] [--process-stagger:calc(var(--process-panel-height)+var(--process-panel-gap))] [--process-type-size:clamp(0.875rem,1.15vw,1.125rem)] md:grid-cols-3 md:gap-0 md:[--process-panel-gap:0px] md:[--process-panel-height:clamp(30px,2.35vw,42px)]',
+              pinned && !wide && 'bg-graphite gap-0',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
             {content.steps.map((step, index) => (
               <StepBlock
                 key={step.id}

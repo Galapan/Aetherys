@@ -8,7 +8,7 @@ import {
   useMotionValue,
 } from 'framer-motion'
 import { testimonyImages, type TestimoniesContent, type Testimony } from '../content/testimonies'
-import './Testimonies.css'
+import { RuleGrid } from '../components/ui/RuleGrid'
 
 const ease = [0.22, 1, 0.36, 1] as const
 const interval = 10_000
@@ -45,25 +45,25 @@ function Slide({
   let letterIndex = 0
   return (
     <m.figure
-      className="testimonies__slide"
+      className="col-start-1 row-start-1 m-0 min-w-0"
       initial={animateEntry && !reducedMotion ? 'enter' : false}
       animate="visible"
       aria-hidden={!present || undefined}
       exit={reducedMotion ? undefined : 'exit'}
     >
-      <blockquote className="testimonies__quote">
-        <span className="visually-hidden">{item.quote}</span>
+      <blockquote className="m-0 max-w-[34ch] text-[clamp(1.75rem,3.2vw,3.5rem)] leading-[1.2] font-normal tracking-[-0.035em]">
+        <span className="sr-only">{item.quote}</span>
         <span aria-hidden="true">
           {item.quote.split(' ').map((word, wordIndex) => (
             <span key={wordIndex}>
               {wordIndex > 0 ? ' ' : null}
-              <span className="testimonies__word">
+              <span className="mb-[-0.12em] inline-block overflow-clip pb-[0.12em] align-top">
                 {Array.from(word).map((letter) => {
                   const index = letterIndex++
                   return (
                     <m.span
                       key={index}
-                      className="testimonies__letter"
+                      className="inline-block"
                       variants={{
                         enter: { y: '110%' },
                         visible: {
@@ -85,9 +85,9 @@ function Slide({
           ))}
         </span>
       </blockquote>
-      <figcaption className="testimonies__author">
+      <figcaption className="mt-8 flex min-h-[72px] items-center gap-4">
         <m.div
-          className="testimonies__portrait"
+          className="bg-warm-white size-[72px] shrink-0 overflow-clip"
           variants={{
             enter: { clipPath: 'inset(0 100% 0 0)' },
             visible: { clipPath: 'inset(0 0% 0 0)', transition: timing(0.55, 0.12) },
@@ -97,6 +97,7 @@ function Slide({
           <img
             src={image || profileIcon}
             alt={item.imageAlt}
+            className="block h-full w-full object-cover data-[placeholder=true]:p-3"
             width={72}
             height={72}
             decoding="async"
@@ -109,17 +110,16 @@ function Slide({
             }}
           />
         </m.div>
-        <div className="testimonies__identity-mask">
+        <div className="overflow-clip">
           <m.div
-            className="testimonies__identity"
             variants={{
               enter: { y: '110%', opacity: 0 },
               visible: { y: '0%', opacity: 1, transition: timing(0.55, 0.22) },
               exit: { y: '-110%', opacity: 0, transition: timing(0.3) },
             }}
           >
-            <p className="testimonies__name">{item.name}</p>
-            <p className="testimonies__detail">{item.detail}</p>
+            <p className="m-0 text-[12px] leading-[1.4] tracking-[0.04em] uppercase">{item.name}</p>
+            <p className="text-secondary m-0 mt-1 text-[12px] leading-[1.4]">{item.detail}</p>
           </m.div>
         </div>
       </figcaption>
@@ -161,50 +161,70 @@ export function Testimonies({
     <section
       ref={sectionRef}
       id="testimonies"
-      className="testimonies"
+      className="bg-graphite text-warm-white relative isolate z-1 min-h-svh scroll-mt-[var(--header-height)] pt-20 pb-[60svh] md:pt-26 lg:pt-36"
       tabIndex={-1}
       aria-labelledby="testimonies-heading"
     >
-      <div className="rule-grid testimonies__grid" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
+      <RuleGrid className="absolute inset-0 z-[-1]" />
       <div className="container">
-        <div className="testimonies__carousel" role="group" aria-label={content.carouselLabel}>
-          <div className="testimonies__top">
-            <h2 id="testimonies-heading" className="testimonies__eyebrow">
+        <div role="group" aria-label={content.carouselLabel}>
+          <div className="grid grid-cols-[1fr_auto] items-center gap-4 max-[479px]:grid-cols-1 md:grid-cols-[1fr_auto_minmax(120px,25%)] md:gap-6">
+            <h2
+              id="testimonies-heading"
+              className="m-0 text-[12px] leading-[1.4] font-medium tracking-[0.08em]"
+            >
               {content.eyebrow}
             </h2>
-            <div className="testimonies__controls">
-              <button type="button" aria-label={content.previous} onClick={() => change(-1)}>
+            <div className="flex items-center gap-1 max-[479px]:justify-self-end">
+              <button
+                className="grid size-11 cursor-pointer place-items-center border-0 bg-transparent p-0 text-inherit"
+                type="button"
+                aria-label={content.previous}
+                onClick={() => change(-1)}
+              >
                 <span aria-hidden="true">←</span>
               </button>
-              <span className="testimonies__count" aria-hidden="true">
+              <span
+                className="text-secondary text-[12px] whitespace-nowrap tabular-nums"
+                aria-hidden="true"
+              >
                 {String(active + 1).padStart(3, '0')} / {String(count).padStart(3, '0')}
               </span>
-              <button type="button" aria-label={content.next} onClick={() => change(1)}>
+              <button
+                className="grid size-11 cursor-pointer place-items-center border-0 bg-transparent p-0 text-inherit"
+                type="button"
+                aria-label={content.next}
+                onClick={() => change(1)}
+              >
                 <span aria-hidden="true">→</span>
               </button>
             </div>
-            <div className="testimonies__progress" aria-hidden="true">
-              <m.span style={{ scaleX: reducedMotion ? 0 : progress }} />
+            <div
+              className="bg-border col-span-full h-px overflow-clip md:col-auto"
+              aria-hidden="true"
+            >
+              <m.span
+                className="bg-warm-white block h-full origin-left"
+                style={{ scaleX: reducedMotion ? 0 : progress }}
+              />
             </div>
           </div>
           <div
-            className="testimonies__slides"
+            className="mt-[clamp(64px,12svh,144px)] grid md:mx-[8.333%]"
             aria-live={playing ? 'off' : 'polite'}
             aria-atomic="true"
           >
             {/* Reserve the tallest quote so automatic changes never move the page. */}
-            <div className="testimonies__sizing" aria-hidden="true">
+            <div
+              className="pointer-events-none invisible col-start-1 row-start-1 m-0 grid min-w-0"
+              aria-hidden="true"
+            >
               {content.items.map((item) => (
-                <div key={item.id} className="testimonies__size">
-                  <p className="testimonies__quote">{item.quote}</p>
-                  <div className="testimonies__author" />
+                <div key={item.id} className="col-start-1 row-start-1 m-0 min-w-0">
+                  <p className="m-0 max-w-[34ch] text-[clamp(1.75rem,3.2vw,3.5rem)] leading-[1.2] font-normal tracking-[-0.035em]">
+                    {item.quote}
+                  </p>
+                  <div className="mt-8 flex min-h-[72px] items-center gap-4" />
                 </div>
               ))}
             </div>

@@ -159,7 +159,7 @@ src/
   components/layout/             Navbar, SiteHeader, PageSurface, LanguageSwitch,
                                  LocaleTransition, MenuDialog/MovingHeader/CloseButton/Link,
                                  useMenuScene y menuMotion
-  components/ui/                 pendiente: Button, Container, SectionHeading
+  components/ui/                 RuleGrid; pendiente: Button, Container, SectionHeading
   sections/                      Hero implementado; Services, Process, About, Contact pendientes
   features/hero/                 HeroMark (lazy + fallback) y HeroScene (R3F)
   content/hero.ts                diccionario ES/EN y path del logo

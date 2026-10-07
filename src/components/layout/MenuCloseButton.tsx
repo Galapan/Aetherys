@@ -19,14 +19,14 @@ export function MenuCloseButton({
 }: MenuCloseButtonProps) {
   return (
     <m.button
-      className="menu-toggle"
+      className="flex min-h-11 items-center gap-4 rounded border-0 bg-transparent px-2 text-[18px] leading-[1.4] tracking-[0.08em] whitespace-nowrap text-inherit uppercase"
       type="button"
       aria-label={content.closeMenu}
       autoFocus
       onClick={onClose}
       transition={sceneTransition}
     >
-      <span className="menu-label" aria-hidden="true">
+      <span className="grid w-[84px] items-center justify-items-end" aria-hidden="true">
         <OpenLabel content={content} expanded={expanded} reducedMotion={reducedMotion} />
         <CloseLabel content={content} expanded={expanded} reducedMotion={reducedMotion} />
       </span>
@@ -42,6 +42,7 @@ function OpenLabel({
 }: Pick<MenuCloseButtonProps, 'content' | 'expanded' | 'reducedMotion'>) {
   return (
     <m.span
+      className="col-start-1 row-start-1 whitespace-nowrap"
       initial={{ opacity: 1, filter: 'blur(0px)' }}
       animate={{
         opacity: expanded ? 0 : 1,
@@ -64,6 +65,7 @@ function CloseLabel({
 }: Pick<MenuCloseButtonProps, 'content' | 'expanded' | 'reducedMotion'>) {
   return (
     <m.span
+      className="col-start-1 row-start-1 whitespace-nowrap"
       initial={{ opacity: 0 }}
       animate={{
         opacity: expanded ? 1 : 0,
@@ -84,12 +86,14 @@ function MenuCloseIcon({
   reducedMotion,
 }: Pick<MenuCloseButtonProps, 'expanded' | 'reducedMotion'>) {
   return (
-    <span className="menu-icon" aria-hidden="true">
+    <span className="grid w-5 gap-[5px]" aria-hidden="true">
       <m.i
+        className="block h-px w-5 bg-current"
         animate={{ y: expanded ? 3 : 0, rotate: expanded ? 45 : 0 }}
         transition={{ duration: reducedMotion ? 0 : 0.45 }}
       />
       <m.i
+        className="block h-px w-5 bg-current"
         animate={{ y: expanded ? -3 : 0, rotate: expanded ? -45 : 0 }}
         transition={{ duration: reducedMotion ? 0 : 0.45 }}
       />

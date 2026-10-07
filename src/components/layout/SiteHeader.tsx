@@ -27,13 +27,17 @@ export function SiteHeader({
   return (
     <header
       ref={headerRef}
-      className="site-header container"
+      className="pointer-events-none sticky top-0 z-2 container flex h-[var(--header-height)] max-w-none items-center justify-between bg-transparent text-[color-mix(in_srgb,var(--color-warm-white)_var(--header-mix),var(--color-burgundy))] [--header-mix:100%] [--page-padding:clamp(20px,1.85vw,32px)]"
       style={{ visibility: mounted ? 'hidden' : undefined }}
     >
-      <a className="brand" href="#inicio" aria-label={content.home}>
+      <a
+        className="brand pointer-events-auto inline-flex min-h-11 items-center text-[26px] font-medium tracking-[-0.055em]"
+        href="#inicio"
+        aria-label={content.home}
+      >
         {content.brand}
       </a>
-      <div className="header-actions">
+      <div className="flex items-center gap-[clamp(6px,1.8vw,12px)] md:gap-4">
         <AudioToggle
           content={content}
           reducedMotion={reducedMotion}
@@ -42,7 +46,7 @@ export function SiteHeader({
         />
         <m.button
           ref={triggerRef}
-          className="menu-toggle"
+          className="pointer-events-auto flex min-h-11 items-center gap-4 rounded border-0 bg-transparent px-2 text-[18px] leading-[1.4] tracking-[0.08em] whitespace-nowrap text-inherit uppercase"
           type="button"
           aria-label={content.openMenu}
           aria-expanded={mounted}
@@ -51,12 +55,12 @@ export function SiteHeader({
           whileHover={canHover ? { y: -2 } : undefined}
           transition={{ duration: 0.18 }}
         >
-          <span className="menu-label" aria-hidden="true">
-            <span>{content.menu}</span>
+          <span className="grid w-[84px] items-center justify-items-end" aria-hidden="true">
+            <span className="col-start-1 row-start-1 whitespace-nowrap">{content.menu}</span>
           </span>
-          <span className="menu-icon" aria-hidden="true">
-            <i />
-            <i />
+          <span className="grid w-5 gap-[5px]" aria-hidden="true">
+            <i className="block h-px w-5 bg-current" />
+            <i className="block h-px w-5 bg-current" />
           </span>
         </m.button>
       </div>

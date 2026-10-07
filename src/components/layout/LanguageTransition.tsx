@@ -75,7 +75,7 @@ export function LanguageTransition({
   return (
     <dialog
       ref={dialog}
-      className="language-transition"
+      className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none overflow-hidden border-0 bg-transparent p-0 backdrop:bg-transparent"
       aria-label={label}
       aria-busy="true"
       tabIndex={-1}
@@ -85,13 +85,14 @@ export function LanguageTransition({
       }}
     >
       <div
-        className="language-transition-columns"
+        className="grid h-full w-full"
         style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
         aria-hidden="true"
       >
         {Array.from({ length: columns }, (_, index) => (
           <m.span
             key={index}
+            className="bg-graphite h-full w-[calc(100%+1px)]"
             custom={index}
             initial={{ y: '101%' }}
             animate={controls}

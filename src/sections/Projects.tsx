@@ -21,6 +21,24 @@ function reveal(index: number, reducedMotion: boolean) {
   }
 }
 
+const desktopCardAreas = [
+  'lg:[grid-area:1/1]',
+  'lg:[grid-area:2/1]',
+  'lg:[grid-area:1/3]',
+  'lg:[grid-area:3/1]',
+  'lg:[grid-area:2/3]',
+  'lg:[grid-area:3/3]',
+]
+
+const markVariantClasses: Record<ProjectCardData['markVariant'], string> = {
+  grotesque: 'font-grotesque font-bold tracking-[-0.04em] indent-[-0.04em]',
+  contrast: 'font-contrast italic tracking-[0.02em] indent-[0.02em]',
+  geometric: 'font-geometric font-light tracking-[0.16em] indent-[0.16em]',
+  mono: 'font-mono-mark font-medium tracking-[-0.06em] indent-[-0.06em]',
+  slab: 'font-slab font-bold tracking-[0.02em] indent-[0.02em]',
+  display: 'font-display font-bold tracking-[-0.02em] indent-[-0.02em]',
+}
+
 interface ProjectCardProps {
   card: ProjectCardData
   index: number
@@ -42,7 +60,7 @@ function ProjectCardMedia({ card, active, transition, reducedMotion }: ProjectCa
   return (
     <>
       <m.img
-        className="project-card__image"
+        className="block h-full w-full object-cover"
         src={card.image}
         alt={card.imageAlt}
         loading="lazy"
@@ -54,7 +72,7 @@ function ProjectCardMedia({ card, active, transition, reducedMotion }: ProjectCa
         transition={transition}
       />
       <m.span
-        className={`project-card__mark project-card__mark--${card.markVariant}`}
+        className={`text-warm-white pointer-events-none absolute inset-0 z-1 grid place-items-center text-[20cqw] leading-none select-none text-shadow-[0_2px_14px_color-mix(in_srgb,var(--color-graphite)_55%,transparent)] ${markVariantClasses[card.markVariant]}`}
         aria-hidden="true"
         initial={false}
         animate={{ opacity: active ? 0 : 1 }}
@@ -73,7 +91,7 @@ interface ProjectCardDetailsProps extends ProjectCardVisualProps {
 function ProjectCardDetails({ card, active, showCategory, transition }: ProjectCardDetailsProps) {
   return (
     <m.div
-      className="project-card__details"
+      className="text-warm-white pointer-events-none absolute right-[22px] bottom-[22px] left-[22px] z-1 text-shadow-[0_2px_10px_var(--color-graphite),0_1px_3px_var(--color-graphite)]"
       layout
       initial={false}
       style={{ left: active ? 42 : 22, right: active ? 42 : 22 }}
@@ -81,16 +99,16 @@ function ProjectCardDetails({ card, active, showCategory, transition }: ProjectC
       transition={transition}
     >
       <m.div
-        className="project-card__meta"
+        className="flex items-baseline justify-between gap-4 text-[clamp(11px,2.8cqw,15px)] leading-[1.4]"
         initial={false}
         animate={{ y: showCategory ? -40 : 0 }}
         transition={transition}
       >
-        <h3 className="project-card__name">{card.title}</h3>
-        {card.year && <span className="project-card__year">{card.year}</span>}
+        <h3 className="font-medium uppercase before:content-['/']">{card.title}</h3>
+        {card.year && <span className="shrink-0">{card.year}</span>}
       </m.div>
       <m.div
-        className="project-card__category"
+        className="bg-warm-white text-graphite absolute bottom-0 w-fit max-w-full rounded px-[10px] py-[6px] text-[clamp(10px,2cqw,12px)] leading-[1.4] uppercase text-shadow-none"
         initial={false}
         animate={{ opacity: showCategory ? 1 : 0, y: showCategory ? 0 : 16 }}
         transition={{ ...transition, delay: active ? 0.12 : 0 }}
@@ -114,14 +132,14 @@ function ProjectCard({ card, index, reducedMotion, canHover }: ProjectCardProps)
     <m.article
       id={card.id}
       tabIndex={-1}
-      className="project-card"
+      className={`text-warm-white [container-type:inline-size] relative aspect-[5/3] w-full scroll-mt-[calc(var(--header-height)+24px)] ${desktopCardAreas[index] ?? ''}`}
       {...reveal(index, reducedMotion)}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
     >
       {/* Keep the hit area fixed while only the visual surface retracts. */}
       <m.div
-        className="project-card__surface"
+        className="bg-burgundy text-warm-white absolute inset-0 overflow-hidden rounded-lg"
         initial={false}
         animate={{ clipPath: `inset(${active ? 20 : 0}px round 8px)` }}
         transition={transition}
@@ -146,13 +164,17 @@ function ProjectCard({ card, index, reducedMotion, canHover }: ProjectCardProps)
 
 export function Projects({ content, reducedMotion, canHover }: ProjectsProps) {
   return (
-    <div className="projects__inner">
-      <div className="projects__intro">
-        <m.h2 id="proyectos-heading" className="projects__heading" {...reveal(0.2, reducedMotion)}>
-          <span className="reveal-eyebrow">
+    <div className="relative px-[var(--page-padding)]">
+      <div className="bg-warm-white pointer-events-none relative z-2 mb-8 flex min-h-14 items-center justify-start lg:sticky lg:top-[50svh] lg:mb-0 lg:h-0 lg:min-h-0 lg:justify-center lg:bg-transparent">
+        <m.h2
+          id="proyectos-heading"
+          className="text-burgundy m-0 text-center text-[16px] leading-[1.1] font-medium tracking-[-0.03em] lg:text-[clamp(0.75rem,1.05vw,1.125rem)]"
+          {...reveal(0.2, reducedMotion)}
+        >
+          <span className="relative inline-block pb-[7px]">
             {content.eyebrow}
             <m.span
-              className="reveal-eyebrow__line"
+              className="absolute right-0 bottom-0 left-0 h-px origin-left bg-current"
               initial={reducedMotion ? false : { scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={{ once: false, amount: 0.4 }}
@@ -163,7 +185,7 @@ export function Projects({ content, reducedMotion, canHover }: ProjectsProps) {
               }}
             />
             <m.span
-              className="reveal-eyebrow__cover"
+              className="absolute inset-0 origin-top bg-[var(--eyebrow-cover,var(--color-burgundy))]"
               aria-hidden="true"
               initial={{ scaleY: reducedMotion ? 0 : 1 }}
               whileInView={{ scaleY: 0 }}
@@ -177,7 +199,7 @@ export function Projects({ content, reducedMotion, canHover }: ProjectsProps) {
           </span>
         </m.h2>
       </div>
-      <div className="projects__list">
+      <div className="flex flex-col gap-[clamp(32px,5vw,80px)] lg:grid lg:grid-cols-[40vw_minmax(0,1fr)_40vw] lg:gap-x-0">
         {content.cards.map((card, index) => (
           <ProjectCard
             key={card.id}
