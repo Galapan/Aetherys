@@ -55,6 +55,13 @@ export const content: Record<Locale, ExpertiseContent> = {
         imageWidth: 1600,
         imageHeight: 1088,
       },
+      {
+        id: 'cinema',
+        title: 'Cine',
+        image: '/expertise/cinema.jpg',
+        imageWidth: 1600,
+        imageHeight: 1100,
+      },
     ],
   },
   en: {
@@ -97,6 +104,13 @@ export const content: Record<Locale, ExpertiseContent> = {
         image: '/expertise/cars.webp',
         imageWidth: 1600,
         imageHeight: 1088,
+      },
+      {
+        id: 'cinema',
+        title: 'cinema',
+        image: '/expertise/cinema.jpg',
+        imageWidth: 1600,
+        imageHeight: 1100,
       },
     ],
   },
