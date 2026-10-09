@@ -1,3 +1,4 @@
+import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
 import { useState } from 'react'
 import { m } from 'framer-motion'
 import type { ProjectCard as ProjectCardData, ProjectsContent } from '../content/projects'
@@ -166,38 +167,12 @@ export function Projects({ content, reducedMotion, canHover }: ProjectsProps) {
   return (
     <div className="relative px-[var(--page-padding)]">
       <div className="bg-warm-white pointer-events-none relative z-2 mb-8 flex min-h-14 items-center justify-start lg:sticky lg:top-[50svh] lg:mb-0 lg:h-0 lg:min-h-0 lg:justify-center lg:bg-transparent">
-        <m.h2
+        <h2
           id="proyectos-heading"
           className="text-burgundy m-0 text-center text-[16px] leading-[1.1] font-medium tracking-[-0.03em] lg:text-[clamp(0.75rem,1.05vw,1.125rem)]"
-          {...reveal(0.2, reducedMotion)}
         >
-          <span className="relative inline-block pb-[7px]">
-            {content.eyebrow}
-            <m.span
-              className="absolute right-0 bottom-0 left-0 h-px origin-left bg-current"
-              initial={reducedMotion ? false : { scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: false, amount: 0.4 }}
-              transition={{
-                duration: reducedMotion ? 0 : 0.6,
-                delay: reducedMotion ? 0 : 0.85,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-            />
-            <m.span
-              className="absolute inset-0 origin-top bg-[var(--eyebrow-cover,var(--color-burgundy))]"
-              aria-hidden="true"
-              initial={{ scaleY: reducedMotion ? 0 : 1 }}
-              whileInView={{ scaleY: 0 }}
-              viewport={{ once: false, amount: 0.6 }}
-              transition={{
-                duration: reducedMotion ? 0 : 0.75,
-                delay: reducedMotion ? 0 : 0.4,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-            />
-          </span>
-        </m.h2>
+          <SectionTitleReveal text={content.eyebrow} reducedMotion={reducedMotion} />
+        </h2>
       </div>
       <div className="flex flex-col gap-[clamp(32px,5vw,80px)] lg:grid lg:grid-cols-[40vw_minmax(0,1fr)_40vw] lg:gap-x-0">
         {content.cards.map((card, index) => (

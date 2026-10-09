@@ -35,7 +35,7 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
     resetScene,
     onAnimationComplete,
   } = useMenuScene(reducedMotion)
-  const { gap, headerInset } = getMenuDimensions(snapshot)
+  const { gap, headerInset, padding } = getMenuDimensions(snapshot)
   const compact = Boolean(expanded && !reducedMotion && snapshot)
   const sceneTransition = createSceneTransition(expanded, reducedMotion, pendingLocale !== null)
 
@@ -69,11 +69,7 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
         snapshot={snapshot}
         gap={gap}
         compact={compact}
-        expanded={expanded}
-        reducedMotion={reducedMotion}
-        hasPendingLocale={pendingLocale !== null}
         sceneTransition={sceneTransition}
-        onAnimationComplete={onAnimationComplete}
       >
         <SiteHeader
           ref={header}
@@ -96,13 +92,14 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
         snapshot={snapshot}
         ref={dialogRef}
         audioRef={audioElement}
-        gap={gap}
+        padding={padding}
         headerInset={headerInset}
         sceneTransition={sceneTransition}
         hoveredLink={hoveredLink}
         setHoveredLink={setHoveredLink}
         onClose={(id) => closeMenu(id)}
         onSelectLocale={selectLocale}
+        onExitComplete={onAnimationComplete}
       />
       <LocaleTransition
         locale={pendingLocale}

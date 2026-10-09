@@ -11,7 +11,7 @@ export interface NavigationProps {
 export function LanguageSwitch({ content, locale, onChange, canHover }: NavigationProps) {
   return (
     <div
-      className="flex items-center text-[12px] tracking-[0.08em]"
+      className="flex items-center text-sm tracking-[0.08em] md:text-base"
       role="group"
       aria-label={content.language}
     >

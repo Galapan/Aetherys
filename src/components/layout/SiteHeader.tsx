@@ -31,7 +31,7 @@ export function SiteHeader({
       style={{ visibility: mounted ? 'hidden' : undefined }}
     >
       <a
-        className="brand pointer-events-auto inline-flex min-h-11 items-center text-[26px] font-medium tracking-[-0.055em]"
+        className="brand pointer-events-auto inline-flex min-h-11 items-center text-[28px] font-medium tracking-[-0.055em]"
         href="#inicio"
         aria-label={content.home}
       >
@@ -46,7 +46,7 @@ export function SiteHeader({
         />
         <m.button
           ref={triggerRef}
-          className="pointer-events-auto flex min-h-11 items-center gap-4 rounded border-0 bg-transparent px-2 text-[18px] leading-[1.4] tracking-[0.08em] whitespace-nowrap text-inherit uppercase"
+          className="pointer-events-auto flex min-h-11 items-center gap-4 rounded border-0 bg-transparent px-2 text-[20px] leading-[1.4] tracking-[0.08em] whitespace-nowrap text-inherit uppercase"
           type="button"
           aria-label={content.openMenu}
           aria-expanded={mounted}

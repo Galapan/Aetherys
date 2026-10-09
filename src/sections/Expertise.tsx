@@ -1,3 +1,4 @@
+import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
 import { useEffect, useRef, useState } from 'react'
 import { m, useAnimate, useAnimationFrame, useInView, useMotionValue } from 'framer-motion'
 import type { ExpertiseContent } from '../content/expertise'
@@ -28,15 +29,12 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
   useEffect(() => {
     if (!introVisible || reducedMotion) return
     const controls = animate([
-      ['.expertise__cover', { opacity: 1, scaleX: 1 }, { duration: 0 }],
       ['.expertise__copy', { y: '110%' }, { duration: 0 }],
-      ['.expertise__cover', { scaleX: 0 }, { duration: 0.65, ease: [0.22, 1, 0.36, 1] }],
       ['.expertise__copy', { y: '0%' }, { duration: 0.75, at: 0.4, ease: [0.22, 1, 0.36, 1] }],
     ])
     return () => {
       controls.stop()
       // Restore readable content on preference changes and StrictMode cleanup.
-      animate('.expertise__cover', { opacity: 0 }, { duration: 0 })
       animate('.expertise__copy', { y: '0%' }, { duration: 0 })
     }
   }, [animate, introVisible, reducedMotion, content])
@@ -98,11 +96,7 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
           id="expertise-heading"
           className="text-burgundy relative m-0 mb-8 table text-[12px] leading-[1.4] font-medium tracking-[0.08em]"
         >
-          {content.eyebrow}
-          <span
-            className="expertise__cover bg-burgundy absolute -inset-x-0.5 inset-y-0 origin-left opacity-0"
-            aria-hidden="true"
-          />
+          <SectionTitleReveal text={content.eyebrow} reducedMotion={reducedMotion} />
         </h2>
         <div className="mb-12 grid gap-6 md:grid-cols-[7fr_5fr] lg:mb-16">
           <div className="overflow-hidden">

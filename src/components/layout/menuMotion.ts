@@ -1,5 +1,6 @@
 const expoOut = [0.16, 1, 0.3, 1] as const
-const sceneDuration = 0.7
+// Approximate phases observed in the supplied desktop and narrow-screen recordings.
+const closeDelay = 0.65
 
 export function createSceneTransition(
   expanded: boolean,
@@ -7,21 +8,29 @@ export function createSceneTransition(
   hasPendingLocale: boolean,
 ) {
   return {
-    duration: reducedMotion || hasPendingLocale ? 0 : sceneDuration,
-    delay: expanded || reducedMotion || hasPendingLocale ? 0 : 0.12,
+    duration: reducedMotion || hasPendingLocale ? 0 : expanded ? 0.8 : 0.45,
+    delay: reducedMotion || hasPendingLocale ? 0 : expanded ? 0.3 : closeDelay,
     ease: expoOut,
   }
 }
 
 export type SceneTransition = ReturnType<typeof createSceneTransition>
 
+export function createPanelTransition(expanded: boolean, sceneTransition: SceneTransition) {
+  return {
+    ...sceneTransition,
+    duration: expanded && sceneTransition.duration > 0 ? 0.55 : sceneTransition.duration,
+  }
+}
+
 export function getMenuDimensions(snapshot: { width: number; height: number } | null) {
   return snapshot
     ? {
         gap: Math.min(32, Math.max(16, snapshot.width * 0.042)),
-        headerInset: Math.min(80, snapshot.height * 0.08),
+        headerInset: snapshot.width >= 1024 ? 64 : snapshot.width >= 768 ? 40 : 24,
+        padding: snapshot.width >= 1024 ? 64 : snapshot.width >= 640 ? 32 : 20,
       }
-    : { gap: 0, headerInset: 0 }
+    : { gap: 0, headerInset: 0, padding: 20 }
 }
 
 export function createReveal(
@@ -32,10 +41,10 @@ export function createReveal(
 ) {
   return {
     initial: reducedMotion ? (false as const) : { opacity: 0, y: masked ? '110%' : '12px' },
-    animate: { opacity: expanded ? 1 : 0, y: reducedMotion || expanded ? '0%' : '-30%' },
+    animate: { opacity: expanded ? 1 : 0, y: reducedMotion || expanded ? '0%' : '-110%' },
     transition: {
-      duration: reducedMotion ? 0 : expanded ? 0.65 : 0.22,
-      delay: reducedMotion || !expanded ? 0 : delay,
+      duration: reducedMotion ? 0 : expanded ? 0.65 : 0.25,
+      delay: reducedMotion ? 0 : expanded ? delay + 0.3 : closeDelay,
       ease: expoOut,
     },
   }

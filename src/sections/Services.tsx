@@ -1,8 +1,7 @@
+import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
 import { useEffect, useRef } from 'react'
 import {
   m,
-  stagger,
-  useAnimate,
   useAnimationFrame,
   useInView,
   useMotionValue,
@@ -84,14 +83,12 @@ function ServiceFeature({
 
   return (
     <li ref={element} className="overflow-hidden">
-      <span className="services__item-text block">
-        <m.span
-          className="block pr-10"
-          style={{ x: interactive ? x : 0, opacity: interactive ? opacity : 1 }}
-        >
-          {item}
-        </m.span>
-      </span>
+      <m.span
+        className="block pr-10"
+        style={{ x: interactive ? x : 0, opacity: interactive ? opacity : 1 }}
+      >
+        {item}
+      </m.span>
     </li>
   )
 }
@@ -111,29 +108,8 @@ function ServiceRow({
   pointerY: MotionValue<number | null>
   scrollY: MotionValue<number>
 }) {
-  const [scope, animate] = useAnimate()
-  const visible = useInView(scope, { once: true, amount: 0.2 })
-
-  useEffect(() => {
-    if (!visible || reducedMotion) return
-    // Only mask text after Motion has initialized; the default markup stays readable.
-    const controls = animate([
-      ['.services__item-text', { y: '105%', opacity: 0 }, { duration: 0 }],
-      [
-        '.services__item-text',
-        { y: '0%', opacity: 1 },
-        { duration: 0.7, delay: stagger(0.055), ease },
-      ],
-    ])
-    return () => {
-      controls.stop()
-      animate('.services__item-text', { y: '0%', opacity: 1 }, { duration: 0 })
-    }
-  }, [animate, visible, reducedMotion, service])
-
   return (
     <article
-      ref={scope}
       className="grid grid-cols-[32px_minmax(0,1fr)] items-start gap-x-4 gap-y-6 md:grid-cols-[1fr_3fr_4fr] md:gap-x-6 lg:grid-cols-12"
       aria-labelledby={`service-${service.id}`}
     >
@@ -373,7 +349,7 @@ export function Services(props: ServicesProps) {
             id="services-heading"
             className="text-burgundy m-0 text-[12px] leading-[1.4] font-medium tracking-[0.08em] lg:col-span-3"
           >
-            {content.eyebrow}
+            <SectionTitleReveal text={content.eyebrow} reducedMotion={reducedMotion} />
           </h2>
           <p className="m-0 max-w-[62ch] text-[18px] leading-[1.6] lg:col-span-7">
             {content.introduction}

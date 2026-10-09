@@ -19,7 +19,7 @@ export function MenuCloseButton({
 }: MenuCloseButtonProps) {
   return (
     <m.button
-      className="flex min-h-11 items-center gap-4 rounded border-0 bg-transparent px-2 text-[18px] leading-[1.4] tracking-[0.08em] whitespace-nowrap text-inherit uppercase"
+      className="flex min-h-11 items-center gap-4 rounded border-0 bg-transparent px-2 text-[20px] leading-[1.4] tracking-[0.08em] whitespace-nowrap text-inherit uppercase"
       type="button"
       aria-label={content.closeMenu}
       autoFocus
@@ -43,14 +43,12 @@ function OpenLabel({
   return (
     <m.span
       className="col-start-1 row-start-1 whitespace-nowrap"
-      initial={{ opacity: 1, filter: 'blur(0px)' }}
+      initial={{ opacity: 1 }}
       animate={{
         opacity: expanded ? 0 : 1,
-        filter: expanded && !reducedMotion ? 'blur(6px)' : 'blur(0px)',
       }}
       transition={{
-        duration: reducedMotion ? 0 : expanded ? 0.28 : 0.45,
-        delay: expanded || reducedMotion ? 0 : 0.12,
+        duration: reducedMotion ? 0 : 0.3,
       }}
     >
       {content.menu}
@@ -69,11 +67,9 @@ function CloseLabel({
       initial={{ opacity: 0 }}
       animate={{
         opacity: expanded ? 1 : 0,
-        filter: !expanded && !reducedMotion ? 'blur(6px)' : 'blur(0px)',
       }}
       transition={{
-        duration: reducedMotion ? 0 : expanded ? 0.45 : 0.28,
-        delay: expanded && !reducedMotion ? 0.12 : 0,
+        duration: reducedMotion ? 0 : 0.3,
       }}
     >
       {content.close}

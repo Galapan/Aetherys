@@ -1,3 +1,4 @@
+import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { m, stagger, useAnimate, useInView } from 'framer-motion'
 import { joinUsAssets, type JoinUsContent } from '../content/joinUs'
@@ -21,7 +22,7 @@ function Reveal({
 }: {
   children: ReactNode
   className?: string
-  kind: 'eyebrow' | 'heading' | 'details'
+  kind: 'heading' | 'details'
   reducedMotion: boolean
 }) {
   const [scope, animate] = useAnimate()
@@ -30,28 +31,18 @@ function Reveal({
   useEffect(() => {
     if (!visible || reducedMotion) return
     const target = kind === 'heading' ? '.join-us__word' : '.join-us__reveal-content'
-    const controls =
-      kind === 'eyebrow'
-        ? animate([
-            ['.join-us__eyebrow-cover', { opacity: 1, scaleX: 1 }, { duration: 0 }],
-            ['.join-us__eyebrow-cover', { scaleX: 0 }, { duration: 0.6, ease }],
-          ])
-        : animate([
-            [target, { y: '110%', opacity: 0 }, { duration: 0 }],
-            [
-              target,
-              { y: '0%', opacity: 1 },
-              { duration: 0.8, delay: kind === 'heading' ? stagger(0.025) : 0, ease },
-            ],
-          ])
+    const controls = animate([
+      [target, { y: '110%', opacity: 0 }, { duration: 0 }],
+      [
+        target,
+        { y: '0%', opacity: 1 },
+        { duration: 0.8, delay: kind === 'heading' ? stagger(0.025) : 0, ease },
+      ],
+    ])
 
     return () => {
       controls.stop()
-      if (kind === 'eyebrow') {
-        animate('.join-us__eyebrow-cover', { opacity: 0 }, { duration: 0 })
-      } else {
-        animate(target, { y: 0, opacity: 1 }, { duration: 0 })
-      }
+      animate(target, { y: 0, opacity: 1 }, { duration: 0 })
     }
   }, [animate, kind, reducedMotion, visible])
 
@@ -123,16 +114,9 @@ export function JoinUs({ content, reducedMotion, canHover }: JoinUsProps) {
     >
       <RuleGrid className="absolute inset-0 z-[-1]" spanClassName="bg-grid-burgundy" />
       <div className="container">
-        <Reveal kind="eyebrow" reducedMotion={reducedMotion}>
-          <p className="text-burgundy relative m-0 mb-16 table text-[12px] leading-[1.4] tracking-[0.08em]">
-            {content.eyebrow}
-            {/* animation hook: targeted by useAnimate */}
-            <span
-              className="join-us__eyebrow-cover bg-burgundy absolute inset-0 origin-right opacity-0"
-              aria-hidden="true"
-            />
-          </p>
-        </Reveal>
+        <p className="text-burgundy relative m-0 mb-16 table text-[12px] leading-[1.4] tracking-[0.08em]">
+          <SectionTitleReveal text={content.eyebrow} reducedMotion={reducedMotion} />
+        </p>
         <div className="grid gap-12 md:grid-cols-8 md:gap-6 lg:grid-cols-12">
           <div className="min-w-0 md:col-span-4 lg:col-span-5 lg:col-start-1">
             <Reveal kind="heading" reducedMotion={reducedMotion}>

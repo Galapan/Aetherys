@@ -66,7 +66,10 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
         url.hash = id
         window.history.pushState(null, '', url)
         const target = document.getElementById(id)
+        const needsTabIndex = target && !target.hasAttribute('tabindex')
+        if (needsTabIndex) target.setAttribute('tabindex', '-1')
         target?.focus({ preventScroll: true })
+        if (needsTabIndex) target.removeAttribute('tabindex')
         target?.scrollIntoView({
           block: 'start',
           behavior: reducedMotionRef.current ? 'instant' : 'smooth',
