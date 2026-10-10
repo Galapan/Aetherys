@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { useLenis } from 'lenis/react'
 
 export interface PageSnapshot {
   scrollY: number
@@ -28,6 +29,7 @@ interface MenuScene {
 }
 
 export function useMenuScene(reducedMotion: boolean): MenuScene {
+  const lenis = useLenis()
   const [expanded, setExpanded] = useState(false)
   const [snapshot, setSnapshot] = useState<PageSnapshot | null>(null)
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -48,6 +50,7 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
     const modal = dialogRef.current
     const opener = triggerRef.current
     const previousOverflow = document.body.style.overflow
+    lenis?.stop()
     document.body.style.overflow = 'hidden'
     modal?.showModal()
     const resize = () => {
@@ -65,7 +68,12 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
       window.removeEventListener('resize', resize)
       modal?.close()
       document.body.style.overflow = previousOverflow
-      window.scrollTo({ top: restoreScroll.current, behavior: 'instant' })
+      if (lenis) {
+        lenis.start()
+        lenis.scrollTo(restoreScroll.current, { immediate: true })
+      } else {
+        window.scrollTo({ top: restoreScroll.current, behavior: 'instant' })
+      }
       const id = destination.current
       destination.current = null
       if (id) {
@@ -77,13 +85,17 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
         if (needsTabIndex) target.setAttribute('tabindex', '-1')
         target?.focus({ preventScroll: true })
         if (needsTabIndex) target.removeAttribute('tabindex')
-        target?.scrollIntoView({
-          block: 'start',
-          behavior: reducedMotionRef.current ? 'instant' : 'smooth',
-        })
+        if (target && lenis) {
+          lenis.scrollTo(target, { immediate: reducedMotionRef.current })
+        } else {
+          target?.scrollIntoView({
+            block: 'start',
+            behavior: reducedMotionRef.current ? 'instant' : 'smooth',
+          })
+        }
       } else opener?.focus({ preventScroll: true })
     }
-  }, [mounted])
+  }, [mounted, lenis])
 
   useLayoutEffect(() => {
     if (!mounted) return

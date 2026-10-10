@@ -76,6 +76,7 @@ function App() {
       <a
         className="bg-burgundy fixed top-4 left-5 z-10 -translate-y-[200%] rounded px-4 py-3 focus:translate-y-0"
         href="#main"
+        data-skip-link
       >
         {copy.skip}
       </a>

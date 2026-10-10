@@ -250,7 +250,7 @@ export function Testimonies({
                   </button>
                 </div>
                 <div
-                  className="bg-border col-span-full h-px overflow-clip md:col-auto"
+                  className="bg-border col-span-full h-[2px] overflow-clip md:col-auto"
                   aria-hidden="true"
                 >
                   <m.span

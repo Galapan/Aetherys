@@ -17,17 +17,11 @@ export interface TestimoniesContent {
 }
 
 export const testimonyImages: Record<string, string> = {
-  'bastian-alessandro': '/teamPFP/galapan.jpg',
-  'placeholder-1': '',
-  'placeholder-2': '',
+  bastian: '/teamPFP/galapan.jpg',
+  jesus: '/teamPFP/jesus.jpeg',
+  cesar: '/teamPFP/cesar.jpeg',
   'placeholder-3': '',
 }
-
-const placeholderQuotes = [
-  'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-  'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor.',
-  'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat.',
-]
 
 export const content: Record<Locale, TestimoniesContent> = {
   es: {
@@ -37,20 +31,28 @@ export const content: Record<Locale, TestimoniesContent> = {
     next: 'Testimonio siguiente',
     items: [
       {
-        id: 'bastian-alessandro',
+        id: 'bastian',
         quote:
-          'Siempre he creído que lo que no se ve bien, no vende, por eso uno de los trabajos más importantes es la primera impresión hacia nuestros clientes.',
+          'Lo que no se ve bien, no vende, por eso uno de los trabajos más importantes es la primera impresión hacia nuestros clientes.',
         name: 'Bastian Alessandro',
-        detail: 'Desarrollador web full stack',
-        imageAlt: 'Retrato de Bastian Alessandro',
+        detail: 'Desarrollador web full stack - Frontend',
+        imageAlt: 'Retrato de Bastian',
       },
-      ...placeholderQuotes.map((quote, index) => ({
-        id: `placeholder-${index + 1}`,
-        quote,
-        name: 'Lorem ipsum',
-        detail: 'Texto provisional',
-        imageAlt: 'Imagen de perfil provisional',
-      })),
+      {
+        id: 'jesus',
+        quote:
+          'Desarrollo software de extremo a extremo y lidero equipos ágiles para entregar soluciones eficientes y de gran valor.',
+        name: 'Jesus Hernandez',
+        detail: 'Desarrollador Full stack - Scrum',
+        imageAlt: 'Retrato de Jesus',
+      },
+      {
+        id: 'cesar',
+        quote: 'Comiendonos el mundo, un commit a la vez.',
+        name: 'Cesar Vazquez',
+        detail: 'Desarrollador full stack',
+        imageAlt: 'Retrato de Cesar',
+      },
     ],
   },
   en: {
@@ -60,20 +62,28 @@ export const content: Record<Locale, TestimoniesContent> = {
     next: 'Next testimony',
     items: [
       {
-        id: 'bastian-alessandro',
+        id: 'bastian',
         quote:
-          "I've always believed that what doesn't look good doesn't sell. That's why making a strong first impression on our clients is one of the most important parts of our work.",
+          'If it does not look good, it does not sell. That is why making a strong first impression on our clients is one of the most important parts of our work.',
         name: 'Bastian Alessandro',
-        detail: 'Full-stack web developer',
+        detail: 'Full-stack web developer - Frontend',
         imageAlt: 'Portrait of Bastian Alessandro',
       },
-      ...placeholderQuotes.map((quote, index) => ({
-        id: `placeholder-${index + 1}`,
-        quote,
-        name: 'Lorem ipsum',
-        detail: 'Placeholder text',
-        imageAlt: 'Placeholder profile image',
-      })),
+      {
+        id: 'jesus',
+        quote:
+          'I develop software end to end and lead agile teams to deliver efficient, high-value solutions.',
+        name: 'Jesus Hernandez',
+        detail: 'Full-stack developer - Scrum',
+        imageAlt: 'Portrait of Jesus Hernandez',
+      },
+      {
+        id: 'cesar',
+        quote: 'Taking on the world, one commit at a time.',
+        name: 'Cesar Vazquez',
+        detail: 'Full-stack developer',
+        imageAlt: 'Portrait of Cesar Vazquez',
+      },
     ],
   },
 }

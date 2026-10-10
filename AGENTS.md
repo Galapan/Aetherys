@@ -2,7 +2,7 @@
 
 ## Decisión vigente: animación con Framer Motion
 
-Usar **Framer Motion** para toda animación de UI (entrada, menú, transiciones y hovers). `framer-motion` está instalado y autorizado; sustituye el contrato GSAP/CSS anterior. No añadir animaciones con GSAP ni reintroducir transiciones CSS. Las especificaciones de movimiento viven en `docs/plans/004-motion-recordings.md` (entrada) y `docs/plans/005-navbar-portfolio.md` (navbar); §8 resume el contrato vigente.
+Usar **Framer Motion** para toda animación de UI (entrada, menú, transiciones y hovers). `framer-motion` está instalado y autorizado; sustituye el contrato GSAP/CSS anterior. No añadir animaciones con GSAP ni reintroducir transiciones CSS. **Lenis** solo controla el suavizado del scroll y la navegación por anclas; no sustituye a Framer Motion. Las especificaciones de movimiento viven en `docs/plans/004-motion-recordings.md` (entrada), `docs/plans/005-navbar-portfolio.md` (navbar) y `docs/plans/011-smooth-scroll-lenis.md` (scroll); §8 resume el contrato vigente.
 
 ## 1. Lectura, autoridad y alcance
 
@@ -29,12 +29,12 @@ Usar **Framer Motion** para toda animación de UI (entrada, menú, transiciones 
 
 Solo estos cuatro colores base están autorizados:
 
-| Token CSS | Valor | Uso |
-| --- | --- | --- |
-| --color-graphite | #101014 | Fondo principal |
-| --color-dark-gray | #1B1B23 | Superficies, bloques y tarjetas |
-| --color-burgundy | #800020 | Acentos, fondos de botones y luz secundaria |
-| --color-warm-white | #F4F1F6 | Texto, logo, iconos y reflejos |
+| Token CSS          | Valor   | Uso                                         |
+| ------------------ | ------- | ------------------------------------------- |
+| --color-graphite   | #101014 | Fondo principal                             |
+| --color-dark-gray  | #1B1B23 | Superficies, bloques y tarjetas             |
+| --color-burgundy   | #800020 | Acentos, fondos de botones y luz secundaria |
+| --color-warm-white | #F4F1F6 | Texto, logo, iconos y reflejos              |
 
 - Prohibidos: morado/violeta, azul, gris lavanda y lima. Las propuestas antiguas con esos colores quedan anuladas.
 - Se permiten transparencias y mezclas de los cuatro colores; no añadir nuevos colores de marca. Las fotografías de proyectos reales pueden conservar sus colores.
@@ -62,18 +62,19 @@ Instaladas en package.json al crear este documento:
 - Vite 8 + React 19 + TypeScript 6.
 - Tailwind CSS 4 y @tailwindcss/vite.
 - Framer Motion 13 (`framer-motion`): motor de animación de UI vigente. Los componentes DOM usan `LazyMotion` + `m` con `domMax` para soportar layout transitions; el provider global vive en `src/main.tsx`.
+- Lenis 1 (`lenis`): suavizado del scroll con `ReactLenis root` desde `src/main.tsx`; touch nativo y respeto dinámico de `prefers-reduced-motion`.
 - Three.js 0.186, @react-three/fiber 9, @react-three/drei 10 y @types/three.
 - ESLint 10 con plugins React/TypeScript; Prettier 3.
 - pnpm con pnpm-lock.yaml y `pnpm-workspace.yaml` (`minimumReleaseAge: 10080`, `trustPolicy: no-downgrade`); Git.
 
-GSAP 3 y Lenis 1 siguen en package.json pero no se importan en `src/`; no reintroducirlos sin solicitud explícita.
+GSAP no está instalado ni se usa. No añadir otro motor de animación ni otra librería de scroll sin solicitud explícita.
 
 package.json y el lockfile son la autoridad sobre versiones exactas. No actualizar por iniciativa propia.
 
 - Scripts existentes: dev, build, lint, preview. Build ejecuta `tsc -b && vite build`.
 - No existe todavía script de tests o formato; no reportarlos como disponibles.
 - vite.config.ts debe importar únicamente los plugins/configuración usados. Framer Motion y R3F pertenecen a src, no a la configuración de Vite.
-- Framer Motion con `LazyMotion` + `m` (`domMax`) para animaciones DOM y layout transitions; R3F/Three para 3D, con `useSpring` de Motion dentro de la escena. No importar el componente `motion` completo en UI. No añadir otra librería de scroll ni otro motor 3D sin solicitud explícita.
+- Framer Motion con `LazyMotion` + `m` (`domMax`) para animaciones DOM y layout transitions; Lenis solo para suavizar el scroll; R3F/Three para 3D, con `useSpring` de Motion dentro de la escena. No importar el componente `motion` completo en UI ni añadir otro motor 3D sin solicitud explícita.
 - No se necesitan inicialmente CMS, base de datos, autenticación ni backend propio.
 - No instalar router, biblioteca de iconos o traducción por comodidad; cualquier dependencia nueva requiere justificación en el plan y autorización del propietario.
 
@@ -120,18 +121,19 @@ Primera versión: una página; idioma persistido mediante `?lang=es|en`, conserv
 
 Resumen vigente; las especificaciones exactas por elemento viven en los planes y no se duplican aquí.
 
-| Elemento | Implementación vigente |
-| --- | --- |
+| Elemento         | Implementación vigente                                                                                                                                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Entrada del hero | Secuencia de ~5.4s: letras `Aetherys` enmascaradas, título legible, compresión al centro, cruz decorativa que gira y desaparece, y cortinas que abren del centro a los extremos. 8 columnas en escritorio/tablet, 4 en móvil. Detalle en `docs/plans/004-motion-recordings.md`. |
-| Navbar / menú | Compactación de la superficie (scale, y, blur) y panel modal warm-white con filas reveladas desde abajo; cabecera móvil y cierre a juego. Detalle en `docs/plans/005-navbar-portfolio.md`. |
-| Hovers | Framer Motion: botones `y -2` en 0.18s; enlaces de menú `x 8` en 0.22s solo con pointer fino/hover. |
-| 3D | `useSpring` de Framer Motion para la respuesta al puntero en `HeroScene.tsx`; el resto del 3D usa R3F. |
+| Navbar / menú    | Compactación de la superficie (scale, y, blur) y panel modal warm-white con filas reveladas desde abajo; cabecera móvil y cierre a juego. Detalle en `docs/plans/005-navbar-portfolio.md`.                                                                                      |
+| Hovers           | Framer Motion: botones `y -2` en 0.18s; enlaces de menú `x 8` en 0.22s solo con pointer fino/hover.                                                                                                                                                                             |
+| 3D               | `useSpring` de Framer Motion para la respuesta al puntero en `HeroScene.tsx`; el resto del 3D usa R3F.                                                                                                                                                                          |
+| Scroll de página | Lenis vía `ReactLenis root`: suavizado de rueda y anclas; conserva el scroll raíz nativo, el `scroll-margin` existente y el comportamiento táctil nativo. Menú/showreel pausan y reanudan Lenis. Detalle en `docs/plans/011-smooth-scroll-lenis.md`.                            |
 
-- Reduced motion: leerlo dinámicamente con `hooks/useMotionPreferences.ts` (`useSyncExternalStore` + `matchMedia`). El hook de la versión instalada de Motion solo toma el valor inicial; no usarlo para la preferencia. Sin animaciones ligadas al scroll; contenido visible y logo estático.
+- Reduced motion: leerlo dinámicamente con `hooks/useMotionPreferences.ts` (`useSyncExternalStore` + `matchMedia`). Lenis respeta `prefers-reduced-motion` dinámicamente; la navegación programática es inmediata. El hook de la versión instalada de Motion solo toma el valor inicial; no usarlo para la preferencia. Sin animaciones ligadas al scroll; contenido visible y logo estático.
 - En desmontaje: cancelar/limpiar listeners, timeouts de entrada y estado del navbar. React StrictMode no debe duplicar animaciones ni instancias.
 - No animar el mismo transform desde CSS y Motion a la vez. En 3D separar grupos padre/hijo según corresponda.
 - Actualización 3D con useFrame/refs; prohibido setState en cada frame.
-- Touch: sin dependencia de hover; metadatos visibles, scroll nativo, logo estático en MVP.
+- Touch: sin dependencia de hover; metadatos visibles, scroll nativo (`syncTouch: false`), logo estático en MVP.
 - Contenido visible por defecto; ocultarlo para entradas solo una vez inicializado el efecto. Fallos de animación no deben dejar texto invisible.
 - No cursor personalizado, audio automático, scroll horizontal, preloaders artificiales, showreel ni transiciones entre páginas en la primera versión.
 
@@ -156,7 +158,8 @@ src/
   App.tsx                        composición de página, locale y preferencias
   main.tsx                       entrada React y provider LazyMotion (domMax, strict)
   index.css                      Tailwind, tokens y estilos base
-  components/layout/             Navbar, SiteHeader, PageSurface, LanguageSwitch,
+  components/layout/             SmoothScroll (Lenis root), Navbar, SiteHeader,
+                                 PageSurface, LanguageSwitch,
                                  LocaleTransition, MenuDialog/MovingHeader/CloseButton/Link,
                                  useMenuScene y menuMotion
   components/ui/                 RuleGrid; pendiente: Button, Container, SectionHeading
@@ -232,7 +235,7 @@ El planificador entrega el plan completo en la conversación. Cada tarea debe te
 2. Base: tokens, layout responsive, diccionarios ES/EN y navegación. **Hecho; diccionarios en `content/hero.ts`.**
 3. Portada estática y contenido de servicios/proceso/empresa. **Hero hecho; Servicios, Proceso y Empresa pendientes.**
 4. Prototipo 3D: carga, material, encuadre y fallback. Validar antes de extender movimiento. **Implementado en `HeroScene.tsx` (extrusión SVG + material metálico-vítreo, 006).**
-5. Animaciones especificadas, accesibilidad y adaptación móvil. **Entrada y navbar en Framer Motion implementados.**
+5. Animaciones especificadas, accesibilidad y adaptación móvil. **Entrada y navbar en Framer Motion implementados; scroll suave con Lenis.**
 6. Contacto real, metadatos, estrategia SEO acordada y verificaciones de lanzamiento. **Pendiente.**
 7. Posteriormente: casos de estudio reales. CMS, blog, showreel o más 3D solo con alcance nuevo. **Pendiente.**
 

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
+import { useLenis } from 'lenis/react'
 import type { HeroContent } from '../../content/hero'
 
 interface ShowreelProps {
@@ -105,6 +106,7 @@ interface DialogProps {
 }
 
 function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed }: DialogProps) {
+  const lenis = useLenis()
   const dialog = useRef<HTMLDialogElement>(null)
   const video = useRef<HTMLVideoElement>(null)
   const [target, setTarget] = useState(playerFrame)
@@ -118,6 +120,7 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
     const previousPadding = document.body.style.paddingRight
     const scrollbar = window.innerWidth - document.documentElement.clientWidth
     const padding = parseFloat(getComputedStyle(document.body).paddingRight) || 0
+    lenis?.stop()
     document.body.style.overflow = 'hidden'
     document.body.style.paddingRight = `${padding + scrollbar}px`
     element?.showModal()
@@ -126,8 +129,9 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
       element?.close()
       document.body.style.overflow = previousOverflow
       document.body.style.paddingRight = previousPadding
+      lenis?.start()
     }
-  }, [])
+  }, [lenis])
 
   useEffect(() => {
     const resize = () => setTarget(playerFrame())
