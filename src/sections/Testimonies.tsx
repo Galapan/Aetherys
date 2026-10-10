@@ -126,9 +126,9 @@ function Slide({
           ))}
         </span>
       </blockquote>
-      <figcaption className="mt-8 flex min-h-[72px] items-center gap-4">
+      <figcaption className="mt-8 flex min-h-[86.4px] items-center gap-4">
         <m.div
-          className="bg-warm-white size-[72px] shrink-0 overflow-clip"
+          className="bg-warm-white size-[82.08px] shrink-0 overflow-clip rounded-[8px]"
           variants={{
             enter: { clipPath: 'inset(100% 0 0 0)', opacity: 0 },
             visible: {
@@ -143,8 +143,8 @@ function Slide({
             src={image || profileIcon}
             alt={item.imageAlt}
             className="block h-full w-full object-cover data-[placeholder=true]:p-3"
-            width={72}
-            height={72}
+            width={82}
+            height={82}
             decoding="async"
             data-placeholder={!image}
             onError={(event) => {
@@ -163,8 +163,10 @@ function Slide({
               exit: { y: '110%', opacity: 0, transition: timing(0.4) },
             }}
           >
-            <p className="m-0 text-[12px] leading-[1.4] tracking-[0.04em] uppercase">{item.name}</p>
-            <p className="text-secondary m-0 mt-1 text-[12px] leading-[1.4]">{item.detail}</p>
+            <p className="m-0 text-[14.4px] leading-[1.4] tracking-[0.04em] uppercase">
+              {item.name}
+            </p>
+            <p className="text-secondary m-0 mt-1 text-[14.4px] leading-[1.4]">{item.detail}</p>
           </m.div>
         </div>
       </figcaption>
@@ -213,41 +215,51 @@ export function Testimonies({
       <RuleGrid className="absolute inset-0 z-[-1]" />
       <div className="container">
         <div role="group" aria-label={content.carouselLabel}>
-          <div className="grid grid-cols-[1fr_auto] items-center gap-4 max-[479px]:grid-cols-1 md:grid-cols-[1fr_auto_minmax(120px,25%)] md:gap-6">
+          <div
+            className={
+              count > 1
+                ? 'grid grid-cols-[1fr_auto] items-center gap-4 max-[479px]:grid-cols-1 md:grid-cols-[1fr_auto_minmax(120px,25%)] md:gap-6'
+                : 'grid grid-cols-1 items-center gap-4'
+            }
+          >
             <h2
               id="testimonies-heading"
               className="m-0 text-[12px] leading-[1.4] font-medium tracking-[0.08em]"
             >
               <SectionTitleReveal text={content.eyebrow} reducedMotion={reducedMotion} />
             </h2>
-            <div className="flex items-center gap-1 max-[479px]:justify-self-end">
-              <button
-                className="grid size-11 cursor-pointer place-items-center border-0 bg-transparent p-0 text-inherit"
-                type="button"
-                aria-label={content.previous}
-                onClick={() => change(-1)}
-              >
-                <span aria-hidden="true">←</span>
-              </button>
-              <TestimonyCounter active={active} count={count} reducedMotion={reducedMotion} />
-              <button
-                className="grid size-11 cursor-pointer place-items-center border-0 bg-transparent p-0 text-inherit"
-                type="button"
-                aria-label={content.next}
-                onClick={() => change(1)}
-              >
-                <span aria-hidden="true">→</span>
-              </button>
-            </div>
-            <div
-              className="bg-border col-span-full h-px overflow-clip md:col-auto"
-              aria-hidden="true"
-            >
-              <m.span
-                className="bg-warm-white block h-full origin-left"
-                style={{ scaleX: reducedMotion ? 0 : progress }}
-              />
-            </div>
+            {count > 1 ? (
+              <>
+                <div className="flex items-center gap-1 max-[479px]:justify-self-end">
+                  <button
+                    className="grid size-11 cursor-pointer place-items-center border-0 bg-transparent p-0 text-inherit"
+                    type="button"
+                    aria-label={content.previous}
+                    onClick={() => change(-1)}
+                  >
+                    <span aria-hidden="true">←</span>
+                  </button>
+                  <TestimonyCounter active={active} count={count} reducedMotion={reducedMotion} />
+                  <button
+                    className="grid size-11 cursor-pointer place-items-center border-0 bg-transparent p-0 text-inherit"
+                    type="button"
+                    aria-label={content.next}
+                    onClick={() => change(1)}
+                  >
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+                <div
+                  className="bg-border col-span-full h-px overflow-clip md:col-auto"
+                  aria-hidden="true"
+                >
+                  <m.span
+                    className="bg-warm-white block h-full origin-left"
+                    style={{ scaleX: reducedMotion ? 0 : progress }}
+                  />
+                </div>
+              </>
+            ) : null}
           </div>
           <div
             className="mt-[clamp(64px,12svh,144px)] grid md:mx-[8.333%]"
