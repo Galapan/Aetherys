@@ -1,3 +1,4 @@
+import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
 import { useState, useSyncExternalStore, type RefObject } from 'react'
 import {
   AnimatePresence,
@@ -12,7 +13,6 @@ import { RuleGrid } from '../components/ui/RuleGrid'
 
 const ease = [0.22, 1, 0.36, 1] as const
 const interval = 10_000
-const transitionSpeed = 0.75
 // Neutral graphite icon, never a fabricated portrait.
 const profileIcon = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="none" stroke="#101014" stroke-width="2"><circle cx="32" cy="23" r="10"/><path d="M12 55v-5a20 20 0 0 1 40 0v5"/></g></svg>')}`
 
@@ -23,6 +23,45 @@ function subscribeVisibility(onChange: () => void) {
 
 function readVisibility() {
   return !document.hidden
+}
+
+function TestimonyCounter({
+  active,
+  count,
+  reducedMotion,
+}: {
+  active: number
+  count: number
+  reducedMotion: boolean
+}) {
+  const digits = String(active + 1).padStart(3, '0')
+
+  return (
+    <span
+      className="text-secondary inline-flex items-center gap-[0.5ch] text-[12px] leading-[1.4] whitespace-nowrap tabular-nums"
+      aria-hidden="true"
+    >
+      <span className="inline-flex h-[1.4em] overflow-clip">
+        {Array.from(digits).map((digit, index) => (
+          <span key={index} className="relative block h-[1.4em] w-[1ch] overflow-clip">
+            <m.span
+              className="block"
+              initial={false}
+              animate={{ y: `${-Number(digit) * 10}%` }}
+              transition={{ duration: reducedMotion ? 0 : active === 0 ? 0.8 : 0.5, ease }}
+            >
+              {Array.from({ length: 10 }, (_, value) => (
+                <span key={value} className="block h-[1.4em]">
+                  {value}
+                </span>
+              ))}
+            </m.span>
+          </span>
+        ))}
+      </span>
+      <span>/ {String(count).padStart(3, '0')}</span>
+    </span>
+  )
 }
 
 function Slide({
@@ -37,8 +76,8 @@ function Slide({
   const present = useIsPresent()
   const image = testimonyImages[item.id]
   const timing = (duration: number, delay = 0) => ({
-    duration: reducedMotion ? 0 : duration / transitionSpeed,
-    delay: reducedMotion ? 0 : delay / transitionSpeed,
+    duration: reducedMotion ? 0 : duration,
+    delay: reducedMotion ? 0 : delay,
     ease,
   })
 
@@ -65,14 +104,16 @@ function Slide({
                       key={index}
                       className="inline-block"
                       variants={{
-                        enter: { y: '110%' },
+                        enter: { y: '110%', opacity: 0 },
                         visible: {
                           y: '0%',
-                          transition: timing(0.55, 0.16 + index * 0.0025),
+                          opacity: 1,
+                          transition: timing(0.65, 0.18 + index * 0.0015),
                         },
                         exit: {
-                          y: '-110%',
-                          transition: timing(0.3, index * 0.0015),
+                          y: '110%',
+                          opacity: 0,
+                          transition: timing(0.4, index * 0.001),
                         },
                       }}
                     >
@@ -89,9 +130,13 @@ function Slide({
         <m.div
           className="bg-warm-white size-[72px] shrink-0 overflow-clip"
           variants={{
-            enter: { clipPath: 'inset(0 100% 0 0)' },
-            visible: { clipPath: 'inset(0 0% 0 0)', transition: timing(0.55, 0.12) },
-            exit: { clipPath: 'inset(0 0 0 100%)', transition: timing(0.4) },
+            enter: { clipPath: 'inset(100% 0 0 0)', opacity: 0 },
+            visible: {
+              clipPath: 'inset(0% 0 0 0)',
+              opacity: 1,
+              transition: timing(0.6, 0.12),
+            },
+            exit: { clipPath: 'inset(0 0 100% 0)', opacity: 0, transition: timing(0.4) },
           }}
         >
           <img
@@ -114,8 +159,8 @@ function Slide({
           <m.div
             variants={{
               enter: { y: '110%', opacity: 0 },
-              visible: { y: '0%', opacity: 1, transition: timing(0.55, 0.22) },
-              exit: { y: '-110%', opacity: 0, transition: timing(0.3) },
+              visible: { y: '0%', opacity: 1, transition: timing(0.6, 0.22) },
+              exit: { y: '110%', opacity: 0, transition: timing(0.4) },
             }}
           >
             <p className="m-0 text-[12px] leading-[1.4] tracking-[0.04em] uppercase">{item.name}</p>
@@ -173,7 +218,7 @@ export function Testimonies({
               id="testimonies-heading"
               className="m-0 text-[12px] leading-[1.4] font-medium tracking-[0.08em]"
             >
-              {content.eyebrow}
+              <SectionTitleReveal text={content.eyebrow} reducedMotion={reducedMotion} />
             </h2>
             <div className="flex items-center gap-1 max-[479px]:justify-self-end">
               <button
@@ -184,12 +229,7 @@ export function Testimonies({
               >
                 <span aria-hidden="true">←</span>
               </button>
-              <span
-                className="text-secondary text-[12px] whitespace-nowrap tabular-nums"
-                aria-hidden="true"
-              >
-                {String(active + 1).padStart(3, '0')} / {String(count).padStart(3, '0')}
-              </span>
+              <TestimonyCounter active={active} count={count} reducedMotion={reducedMotion} />
               <button
                 className="grid size-11 cursor-pointer place-items-center border-0 bg-transparent p-0 text-inherit"
                 type="button"
