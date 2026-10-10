@@ -56,7 +56,7 @@ export function MenuDialog({
   const { gap } = getMenuDimensions(snapshot)
   const links = [
     { href: '#main', label: content.homeLabel },
-    { href: '', label: content.projectsLabel },
+    { href: '/proyectos', label: content.projectsLabel },
     { href: '#manifiesto', label: copy.about },
     { href: menuContact.emailHref, label: content.contact },
   ]
