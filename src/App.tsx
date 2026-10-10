@@ -10,7 +10,8 @@ import { content as expertiseContent } from './content/expertise'
 import { content as servicesContent } from './content/services'
 import { content as processContent } from './content/process'
 import { content as testimoniesContent } from './content/testimonies'
-import { content as joinUsContent } from './content/joinUs'
+import { content as joinUsContent, joinUsAssets } from './content/joinUs'
+import { content as nextStepContent } from './content/nextStep'
 import { Navbar } from './components/layout/Navbar'
 import { RuleGrid } from './components/ui/RuleGrid'
 import { Hero } from './sections/Hero'
@@ -21,6 +22,7 @@ import { Services } from './sections/Services'
 import { Process } from './sections/Process'
 import { Testimonies } from './sections/Testimonies'
 import { JoinUs } from './sections/JoinUs'
+import { NextStep } from './sections/NextStep'
 import { HeroMark } from './features/hero/HeroMark'
 import { Showreel } from './features/hero/Showreel'
 import { ProyectosPage } from './pages/ProyectosPage'
@@ -170,6 +172,12 @@ function App() {
               />
               <JoinUs
                 content={joinUsContent[locale]}
+                reducedMotion={reducedMotion}
+                canHover={canHover}
+              />
+              <NextStep
+                content={nextStepContent[locale]}
+                contactHref={joinUsAssets.contactHref}
                 reducedMotion={reducedMotion}
                 canHover={canHover}
               />

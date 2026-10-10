@@ -126,7 +126,7 @@ Resumen vigente; las especificaciones exactas por elemento viven en los planes y
 | Entrada del hero | Secuencia de ~5.4s: letras `Aetherys` enmascaradas, título legible, compresión al centro, cruz decorativa que gira y desaparece, y cortinas que abren del centro a los extremos. 8 columnas en escritorio/tablet, 4 en móvil. Detalle en `docs/plans/004-motion-recordings.md`. |
 | Navbar / menú    | Compactación de la superficie (scale, y, blur) y panel modal warm-white con filas reveladas desde abajo; cabecera móvil y cierre a juego. Detalle en `docs/plans/005-navbar-portfolio.md`.                                                                                      |
 | Hovers           | Framer Motion: botones `y -2` en 0.18s; enlaces de menú `x 8` en 0.22s solo con pointer fino/hover.                                                                                                                                                                             |
-| 3D               | `useSpring` de Framer Motion para la respuesta al puntero en `HeroScene.tsx`; el resto del 3D usa R3F.                                                                                                                                                                          |
+| 3D               | `useSpring` de Framer Motion para la respuesta al puntero en `HeroScene.tsx` y `NextStepScene.tsx`; el resto del 3D usa R3F.                                                                                                                                                    |
 | Scroll de página | Lenis vía `ReactLenis root`: suavizado de rueda y anclas; conserva el scroll raíz nativo, el `scroll-margin` existente y el comportamiento táctil nativo. Menú/showreel pausan y reanudan Lenis. Detalle en `docs/plans/011-smooth-scroll-lenis.md`.                            |
 
 - Reduced motion: leerlo dinámicamente con `hooks/useMotionPreferences.ts` (`useSyncExternalStore` + `matchMedia`). Lenis respeta `prefers-reduced-motion` dinámicamente; la navegación programática es inmediata. El hook de la versión instalada de Motion solo toma el valor inicial; no usarlo para la preferencia. Sin animaciones ligadas al scroll; contenido visible y logo estático.
@@ -139,7 +139,8 @@ Resumen vigente; las especificaciones exactas por elemento viven en los planes y
 
 ## 9. Escena 3D y assets
 
-- Una única escena Canvas en el hero: `src/features/hero/HeroScene.tsx`. Carga diferida en `HeroMark.tsx` con `React.lazy`/`Suspense` y un `ErrorBoundary` que cae al SVG estático, con dimensiones reservadas.
+- Escena Canvas del hero: `src/features/hero/HeroScene.tsx`. Carga diferida en `HeroMark.tsx` con `React.lazy`/`Suspense` y un `ErrorBoundary` que cae al SVG estático, con dimensiones reservadas.
+- Escena Canvas de cierre: `src/features/nextstep/NextStepScene.tsx` reutiliza `heroMark.path` con material vítreo transparente sin tintes de grafito ni borgoña, buffer de transmisión warm-white que incluye el titular DOM para refractarlo, iluminación warm-white, tilt por puntero y el patrón de pausa/fallback del hero. El titular y el CTA permanecen como DOM accesible y siguen visibles si WebGL falla (decisión del propietario, 2026-10-10).
 - Geometría: el path trazado del logo vive en `content/hero.ts` (`heroMark.path`) y se extruye con `SVGLoader` de three. No fabricar una forma supuestamente equivalente.
 - Material actual (006): `meshPhysicalMaterial` (metal oscuro vino, grafito→borgoña 0.45, con `clearcoat`) y `Environment`/`Lightformer` de Drei. Sin HDRI remoto, bloom, postprocesamiento ni sombras dinámicas en MVP.
 - Cámara inicial: perspective fov 35, position [0,0,5]; centrar modelo y normalizar su dimensión mayor a 2.4 unidades. Ajustar solo si el plan identifica encuadre y valores sustitutos.
@@ -165,6 +166,7 @@ src/
   components/ui/                 RuleGrid; pendiente: Button, Container, SectionHeading
   sections/                      Hero implementado; Services, Process, About, Contact pendientes
   features/hero/                 HeroMark (lazy + fallback) y HeroScene (R3F)
+  features/nextstep/             NextStepMark (lazy + fallback) y NextStepScene (R3F vítreo)
   content/hero.ts                diccionario ES/EN y path del logo
   hooks/useMotionPreferences.ts  reduced-motion y hover dinámicos
 public/brand/                    aetherys-mark.svg

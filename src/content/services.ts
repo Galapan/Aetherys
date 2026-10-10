@@ -10,6 +10,15 @@ export const technologies = [
   { id: 'node', name: 'Node.js' },
   { id: 'pnpm', name: 'pnpm' },
   { id: 'vite', name: 'Vite' },
+  { id: 'supabase', name: 'Supabase' },
+  { id: 'next', name: 'Next.js' },
+  { id: 'express', name: 'Express.js' },
+  { id: 'prisma', name: 'Prisma' },
+  { id: 'docker', name: 'Docker' },
+  { id: 'git', name: 'Git' },
+  { id: 'github', name: 'GitHub' },
+  { id: 'figma', name: 'Figma' },
+  { id: 'vercel', name: 'Vercel' },
 ] as const
 
 export interface Service {

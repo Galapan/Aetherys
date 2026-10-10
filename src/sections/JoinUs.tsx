@@ -153,19 +153,17 @@ export function JoinUs({ content, reducedMotion, canHover }: JoinUsProps) {
                 <JoinUsVideo label={content.videoLabel} reducedMotion={reducedMotion} />
               )}
             </div>
-            <Reveal
-              kind="details"
-              className="mt-8 overflow-clip lg:mt-12"
-              reducedMotion={reducedMotion}
-            >
+            <Reveal kind="heading" className="mt-8 lg:mt-12" reducedMotion={reducedMotion}>
+              <p className="m-0 max-w-[62ch] text-[18px] leading-[1.6] text-[color-mix(in_srgb,var(--color-graphite)_78%,transparent)]">
+                <Words text={content.description} />
+              </p>
+            </Reveal>
+            <Reveal kind="details" className="mt-6 overflow-clip" reducedMotion={reducedMotion}>
               {/* animation hook: targeted by useAnimate */}
               <div className="join-us__reveal-content">
-                <p className="m-0 max-w-[62ch] text-[18px] leading-[1.6] text-[color-mix(in_srgb,var(--color-graphite)_78%,transparent)]">
-                  {content.description}
-                </p>
                 {joinUsAssets.contactHref ? (
                   <m.a
-                    className="bg-burgundy text-warm-white focus-visible:outline-graphite mt-6 inline-flex min-h-11 items-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4"
+                    className="bg-burgundy text-warm-white focus-visible:outline-graphite inline-flex min-h-11 items-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4"
                     href={joinUsAssets.contactHref}
                     whileHover={canHover && !reducedMotion ? { y: -2 } : undefined}
                     transition={{ duration: 0.18 }}
@@ -174,7 +172,7 @@ export function JoinUs({ content, reducedMotion, canHover }: JoinUsProps) {
                   </m.a>
                 ) : (
                   <button
-                    className="bg-burgundy text-warm-white focus-visible:outline-graphite mt-6 inline-flex min-h-11 items-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-default disabled:opacity-60"
+                    className="bg-burgundy text-warm-white focus-visible:outline-graphite inline-flex min-h-11 items-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-default disabled:opacity-60"
                     type="button"
                     disabled
                   >

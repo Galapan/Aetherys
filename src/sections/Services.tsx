@@ -12,13 +12,22 @@ import {
 } from 'framer-motion'
 import {
   SiAstro,
+  SiDocker,
+  SiExpress,
+  SiFigma,
   SiFramer,
+  SiGit,
+  SiGithub,
   SiJavascript,
+  SiNextdotjs,
   SiNodedotjs,
   SiPnpm,
+  SiPrisma,
   SiReact,
+  SiSupabase,
   SiTailwindcss,
   SiTypescript,
+  SiVercel,
   SiVite,
 } from 'react-icons/si'
 import type { IconType } from 'react-icons'
@@ -41,6 +50,15 @@ const icons: Record<(typeof technologies)[number]['id'], IconType> = {
   node: SiNodedotjs,
   pnpm: SiPnpm,
   vite: SiVite,
+  supabase: SiSupabase,
+  next: SiNextdotjs,
+  express: SiExpress,
+  prisma: SiPrisma,
+  docker: SiDocker,
+  git: SiGit,
+  github: SiGithub,
+  figma: SiFigma,
+  vercel: SiVercel,
 }
 const ease = [0.22, 1, 0.36, 1] as const
 const technologyEnter = { duration: 0.5, ease }
