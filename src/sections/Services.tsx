@@ -61,9 +61,10 @@ function ServiceFeature({
   const element = useRef<HTMLLIElement>(null)
   const influence = useTransform(() => {
     const y = pointerY.get()
+    // Subscribe before the initial null pointer/ref can short-circuit this calculation.
+    const scrollOffset = scrollY.get()
     const node = element.current
     if (!interactive || y === null || !node) return null
-    const scrollOffset = scrollY.get()
     const list = node.parentElement!.getBoundingClientRect()
     const bounds = node.getBoundingClientRect()
     const pageY = y + scrollOffset
@@ -77,7 +78,7 @@ function ServiceFeature({
   const targetOpacity = useTransform(influence, (value) =>
     value === null ? 1 : 0.16 + value * 0.84,
   )
-  const spring = { stiffness: 90, damping: 22, mass: 1 }
+  const spring = { stiffness: 360, damping: 30, mass: 0.25 }
   const x = useSpring(targetX, spring)
   const opacity = useSpring(targetOpacity, spring)
 
