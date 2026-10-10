@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { m } from 'framer-motion'
 import type { ProjectCard as ProjectCardData, ProjectsContent } from '../content/projects'
 
+export type ProjectsLayout = 'grid' | 'stagger'
+
 interface ProjectsProps {
   content: ProjectsContent
   reducedMotion: boolean
   canHover: boolean
+  layout?: ProjectsLayout
 }
 
 function reveal(index: number, reducedMotion: boolean) {
@@ -30,6 +33,25 @@ const desktopCardAreas = [
   'lg:[grid-area:3/3]',
 ]
 
+const gridContainerClasses =
+  'flex flex-col gap-[clamp(32px,5vw,80px)] lg:grid lg:grid-cols-[40vw_minmax(0,1fr)_40vw] lg:gap-x-0'
+
+// Stagger cards keep the height of the original 52vw cards while the width is
+// 52vw * 0.75 * 1.1 * 1.03 (aspect 1133/800 on lg, height = width * 800/1133).
+// Each next card starts at 7/8 of the previous one, so the overlap is height / 8.
+const staggerContainerClasses =
+  'flex flex-col gap-[clamp(32px,5vw,80px)] [--stagger-w:clamp(255px,44.19vw,1020px)] [--stagger-h:calc(var(--stagger-w)_*_800_/_1133)] [--stagger-overlap:calc(var(--stagger-h)_/_-8)] lg:gap-0'
+
+function cardPlacement(layout: ProjectsLayout, index: number) {
+  if (layout === 'grid') return desktopCardAreas[index] ?? ''
+  return [
+    'lg:aspect-[1133/800]',
+    'lg:w-[var(--stagger-w)]',
+    index % 2 === 0 ? 'lg:self-start' : 'lg:self-end',
+    index > 0 ? 'lg:mt-[var(--stagger-overlap)]' : '',
+  ].join(' ')
+}
+
 const markVariantClasses: Record<ProjectCardData['markVariant'], string> = {
   grotesque: 'font-grotesque font-bold tracking-[-0.04em] indent-[-0.04em]',
   contrast: 'font-contrast italic tracking-[0.02em] indent-[0.02em]',
@@ -42,6 +64,8 @@ const markVariantClasses: Record<ProjectCardData['markVariant'], string> = {
 interface ProjectCardProps {
   card: ProjectCardData
   index: number
+  total: number
+  layout: ProjectsLayout
   reducedMotion: boolean
   canHover: boolean
 }
@@ -119,7 +143,7 @@ function ProjectCardDetails({ card, active, showCategory, transition }: ProjectC
   )
 }
 
-function ProjectCard({ card, index, reducedMotion, canHover }: ProjectCardProps) {
+function ProjectCard({ card, index, total, layout, reducedMotion, canHover }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false)
   const active = canHover && !reducedMotion && hovered
   const showCategory = active || !canHover || reducedMotion
@@ -132,7 +156,8 @@ function ProjectCard({ card, index, reducedMotion, canHover }: ProjectCardProps)
     <m.article
       id={card.id}
       tabIndex={-1}
-      className={`text-warm-white [container-type:inline-size] relative aspect-[5/3] w-full scroll-mt-[calc(var(--header-height)+24px)] ${desktopCardAreas[index] ?? ''}`}
+      className={`text-warm-white [container-type:inline-size] relative aspect-[5/3] w-full scroll-mt-[calc(var(--header-height)+24px)] ${cardPlacement(layout, index)}`}
+      style={layout === 'stagger' ? { zIndex: total - index } : undefined}
       {...reveal(index, reducedMotion)}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
@@ -162,10 +187,13 @@ function ProjectCard({ card, index, reducedMotion, canHover }: ProjectCardProps)
   )
 }
 
-export function Projects({ content, reducedMotion, canHover }: ProjectsProps) {
+export function Projects({ content, reducedMotion, canHover, layout = 'grid' }: ProjectsProps) {
+  const total = content.cards.length
   return (
     <div className="relative px-[var(--page-padding)]">
-      <div className="bg-warm-white pointer-events-none relative z-2 mb-8 flex min-h-14 items-center justify-start lg:sticky lg:top-[50svh] lg:mb-0 lg:h-0 lg:min-h-0 lg:justify-center lg:bg-transparent">
+      <div
+        className={`bg-warm-white pointer-events-none relative ${layout === 'stagger' ? 'z-20' : 'z-2'} mb-8 flex min-h-14 items-center justify-start lg:sticky lg:top-[50svh] lg:mb-0 lg:h-0 lg:min-h-0 lg:justify-center lg:bg-transparent`}
+      >
         <m.h2
           id="proyectos-heading"
           className="text-burgundy m-0 text-center text-[16px] leading-[1.1] font-medium tracking-[-0.03em] lg:text-[clamp(0.75rem,1.05vw,1.125rem)]"
@@ -199,12 +227,14 @@ export function Projects({ content, reducedMotion, canHover }: ProjectsProps) {
           </span>
         </m.h2>
       </div>
-      <div className="flex flex-col gap-[clamp(32px,5vw,80px)] lg:grid lg:grid-cols-[40vw_minmax(0,1fr)_40vw] lg:gap-x-0">
+      <div className={layout === 'stagger' ? staggerContainerClasses : gridContainerClasses}>
         {content.cards.map((card, index) => (
           <ProjectCard
             key={card.id}
             card={card}
             index={index}
+            total={total}
+            layout={layout}
             reducedMotion={reducedMotion}
             canHover={canHover}
           />
