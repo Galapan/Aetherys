@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { m } from 'framer-motion'
 import type { Locale } from '../../content/hero'
 import { menuContact, menuContent } from '../../content/navigation'
@@ -19,7 +20,27 @@ export function MenuFooter({
   canHover,
   onSelectLocale,
 }: MenuFooterProps) {
-  const hover = canHover ? { y: -2, color: 'var(--color-burgundy)' } : undefined
+  const contactHoverEnabled = canHover && expanded && !reducedMotion
+  const [hover, setHover] = useState<{
+    enabled: boolean
+    contact: 'phone' | 'email' | null
+  }>({ enabled: contactHoverEnabled, contact: null })
+
+  if (hover.enabled !== contactHoverEnabled) {
+    setHover({ enabled: contactHoverEnabled, contact: null })
+  }
+
+  function contactAnimation(contact: 'phone' | 'email') {
+    const active = contactHoverEnabled && hover.enabled && hover.contact === contact
+    return {
+      initial: false as const,
+      animate: { clipPath: active ? 'inset(0% 0% 0% 0%)' : 'inset(0% 100% 0% 0%)' },
+      transition: {
+        duration: !contactHoverEnabled ? 0 : active ? 0.55 : 0.35,
+        ease: [0.4, 0, 0.2, 1] as const,
+      },
+    }
+  }
 
   return (
     <footer
@@ -41,10 +62,21 @@ export function MenuFooter({
           <m.a
             className="inline-flex min-h-8 items-center whitespace-nowrap"
             href={menuContact.phoneHref}
-            whileHover={hover}
-            transition={{ duration: 0.18 }}
+            onHoverStart={() => {
+              if (contactHoverEnabled) setHover({ enabled: true, contact: 'phone' })
+            }}
+            onHoverEnd={() => setHover({ enabled: contactHoverEnabled, contact: null })}
           >
-            {menuContact.phone}
+            <span className="relative">
+              {menuContact.phone}
+              <m.span
+                aria-hidden="true"
+                className="text-burgundy pointer-events-none absolute inset-0"
+                {...contactAnimation('phone')}
+              >
+                {menuContact.phone}
+              </m.span>
+            </span>
           </m.a>
         </m.div>
       </div>
@@ -53,10 +85,21 @@ export function MenuFooter({
           <m.a
             className="inline-flex min-h-8 items-center break-all"
             href={menuContact.emailHref}
-            whileHover={hover}
-            transition={{ duration: 0.18 }}
+            onHoverStart={() => {
+              if (contactHoverEnabled) setHover({ enabled: true, contact: 'email' })
+            }}
+            onHoverEnd={() => setHover({ enabled: contactHoverEnabled, contact: null })}
           >
-            {menuContact.email}
+            <span className="relative">
+              {menuContact.email}
+              <m.span
+                aria-hidden="true"
+                className="text-burgundy pointer-events-none absolute inset-0"
+                {...contactAnimation('email')}
+              >
+                {menuContact.email}
+              </m.span>
+            </span>
           </m.a>
         </m.div>
       </div>

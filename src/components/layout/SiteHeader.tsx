@@ -25,9 +25,10 @@ export function SiteHeader({
   onOpen,
 }: SiteHeaderProps) {
   return (
+    // Blend the whole transparent header with the actual pixels behind it, including images.
     <header
       ref={headerRef}
-      className="pointer-events-none sticky top-0 z-2 container flex h-[var(--header-height)] max-w-none items-center justify-between bg-transparent text-[color-mix(in_srgb,var(--color-warm-white)_var(--header-mix),var(--color-burgundy))] [--header-mix:100%] [--page-padding:clamp(20px,1.85vw,32px)]"
+      className="text-warm-white pointer-events-none sticky top-0 z-2 container flex h-[var(--header-height)] max-w-none items-center justify-between bg-transparent mix-blend-difference [--page-padding:clamp(20px,1.85vw,32px)]"
       style={{ visibility: mounted ? 'hidden' : undefined }}
     >
       <a
@@ -52,10 +53,14 @@ export function SiteHeader({
           aria-expanded={mounted}
           aria-controls="navigation-menu"
           onClick={onOpen}
-          whileHover={canHover ? { y: -2 } : undefined}
+          animate={{ y: 0 }}
+          whileHover={canHover && !mounted ? { y: -2 } : undefined}
           transition={{ duration: 0.18 }}
         >
-          <span className="grid w-[84px] items-center justify-items-end" aria-hidden="true">
+          <span
+            className="grid w-[84px] shrink-0 grid-cols-[minmax(0,1fr)] items-center justify-items-end"
+            aria-hidden="true"
+          >
             <span className="col-start-1 row-start-1 whitespace-nowrap">{content.menu}</span>
           </span>
           <span className="grid w-5 gap-[5px]" aria-hidden="true">

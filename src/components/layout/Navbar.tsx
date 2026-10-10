@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useMotionValueEvent, type MotionValue } from 'framer-motion'
 import { MenuDialog } from './MenuDialog'
 import { LocaleTransition } from './LocaleTransition'
 import type { NavigationProps } from './LanguageSwitch'
@@ -13,10 +12,9 @@ import type { Locale } from '../../content/hero'
 interface NavbarProps extends NavigationProps {
   children: ReactNode
   reducedMotion: boolean
-  headerInvert: MotionValue<number>
 }
 
-export function Navbar({ children, reducedMotion, headerInvert, ...props }: NavbarProps) {
+export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
   const { content } = props
   const canHover = Boolean(props.canHover && !reducedMotion)
   const [pendingLocale, setPendingLocale] = useState<Locale | null>(null)
@@ -40,16 +38,6 @@ export function Navbar({ children, reducedMotion, headerInvert, ...props }: Navb
   const sceneTransition = createSceneTransition(expanded, reducedMotion, pendingLocale !== null)
 
   useEffect(() => () => audioElement.current?.pause(), [])
-
-  function applyHeaderMix(value: number) {
-    header.current?.style.setProperty('--header-mix', `${((1 - value) * 100).toFixed(2)}%`)
-  }
-
-  useMotionValueEvent(headerInvert, 'change', applyHeaderMix)
-
-  useEffect(() => {
-    applyHeaderMix(headerInvert.get())
-  }, [headerInvert])
 
   function openMenu() {
     if (mounted) return

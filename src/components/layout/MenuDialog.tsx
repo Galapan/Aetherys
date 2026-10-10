@@ -67,6 +67,9 @@ export function MenuDialog({
       id="navigation-menu"
       className="text-graphite fixed inset-0 m-0 h-dvh max-h-dvh w-full max-w-none overflow-hidden border-0 bg-transparent p-0 [color-scheme:light] [--color-border:color-mix(in_srgb,var(--color-graphite)_14%,transparent)] [--color-secondary:color-mix(in_srgb,var(--color-graphite)_78%,transparent)] [--focus-outline:var(--color-graphite)] [--switch-pressed:var(--color-graphite)] backdrop:bg-transparent"
       aria-label={content.navigation}
+      style={
+        snapshot ? { left: snapshot.pageLeft, right: 'auto', width: snapshot.width } : undefined
+      }
       onKeyDown={containFocus}
       onCancel={(event) => {
         event.preventDefault()
@@ -77,11 +80,18 @@ export function MenuDialog({
         <m.div
           className="absolute inset-0 origin-center overflow-hidden rounded will-change-transform"
           initial={reducedMotion ? false : { scaleX: 1, scaleY: 1 }}
-          animate={{
-            scaleX: expanded ? 1 - (gap * 2) / snapshot.width : 1,
-            scaleY: expanded ? 1 - (gap * 2) / snapshot.height : 1,
+          animate={expanded ? 'open' : 'closed'}
+          variants={{
+            open: {
+              scaleX: 1 - (gap * 2) / snapshot.width,
+              scaleY: 1 - (gap * 2) / snapshot.height,
+            },
+            closed: { scaleX: 1, scaleY: 1 },
           }}
           transition={sceneTransition}
+          onAnimationComplete={(definition) => {
+            if (definition === 'closed' && !expanded) onExitComplete()
+          }}
         >
           <m.div
             className="bg-warm-white pointer-events-none absolute inset-0"
@@ -90,23 +100,20 @@ export function MenuDialog({
             animate={expanded ? 'open' : 'closed'}
             variants={{ open: { opacity: 1 }, closed: { opacity: 0 } }}
             transition={createPanelTransition(expanded, sceneTransition)}
-            onAnimationComplete={(definition) => {
-              if (definition === 'closed') onExitComplete()
-            }}
+          />
+          <MenuMovingHeader
+            content={content}
+            snapshot={snapshot}
+            expanded={expanded}
+            reducedMotion={reducedMotion}
+            canHover={canHover}
+            padding={padding}
+            headerInset={headerInset}
+            sceneTransition={sceneTransition}
+            audioRef={audioRef}
+            onClose={() => onClose()}
           />
           <div className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain">
-            <MenuMovingHeader
-              content={content}
-              snapshot={snapshot}
-              expanded={expanded}
-              reducedMotion={reducedMotion}
-              canHover={canHover}
-              padding={padding}
-              headerInset={headerInset}
-              sceneTransition={sceneTransition}
-              audioRef={audioRef}
-              onClose={() => onClose()}
-            />
             <div className="relative flex min-h-full flex-col px-5 pt-[100px] pb-[max(24px,env(safe-area-inset-bottom))] sm:px-8 md:pt-[132px] md:pb-10 lg:px-16 lg:pt-[168px] lg:pb-16">
               <div className="grid flex-1 grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] content-center items-start gap-x-6 gap-y-8 py-12 sm:grid-cols-12 sm:gap-y-0 md:py-16">
                 <nav

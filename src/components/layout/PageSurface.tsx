@@ -1,4 +1,4 @@
-import type { ReactNode, RefObject } from 'react'
+import { useLayoutEffect, type ReactNode, type RefObject } from 'react'
 import { m } from 'framer-motion'
 import type { PageSnapshot } from './useMenuScene'
 import type { SceneTransition } from './menuMotion'
@@ -20,6 +20,11 @@ export function PageSurface({
   sceneTransition,
   children,
 }: PageSurfaceProps) {
+  useLayoutEffect(() => {
+    // Scroll the frozen viewport itself so sticky children retain their viewport position.
+    if (pageRef.current) pageRef.current.scrollTop = snapshot?.scrollY ?? 0
+  }, [pageRef, snapshot?.scrollY, snapshot?.width, snapshot?.height])
+
   return (
     <div style={{ height: snapshot?.documentHeight }}>
       <m.div
@@ -30,7 +35,7 @@ export function PageSurface({
         transition={sceneTransition}
         style={createFixedPageStyle(snapshot)}
       >
-        <div style={createScrollOffset(snapshot)}>{children}</div>
+        <div>{children}</div>
       </m.div>
     </div>
   )
@@ -47,14 +52,12 @@ function createFixedPageStyle(snapshot: PageSnapshot | null) {
   return snapshot
     ? {
         position: 'fixed' as const,
-        inset: 0,
+        top: 0,
+        left: snapshot.pageLeft,
+        width: snapshot.width,
         height: snapshot.height,
         minHeight: 0,
         overflow: 'hidden' as const,
       }
     : undefined
-}
-
-function createScrollOffset(snapshot: PageSnapshot | null) {
-  return snapshot ? { transform: `translateY(-${snapshot.scrollY}px)` } : undefined
 }

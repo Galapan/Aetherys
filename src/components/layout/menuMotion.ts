@@ -1,6 +1,4 @@
 const expoOut = [0.16, 1, 0.3, 1] as const
-// Approximate phases observed in the supplied desktop and narrow-screen recordings.
-const closeDelay = 0.65
 
 export function createSceneTransition(
   expanded: boolean,
@@ -9,12 +7,20 @@ export function createSceneTransition(
 ) {
   return {
     duration: reducedMotion || hasPendingLocale ? 0 : expanded ? 0.8 : 0.45,
-    delay: reducedMotion || hasPendingLocale ? 0 : expanded ? 0.3 : closeDelay,
+    delay: 0,
     ease: expoOut,
   }
 }
 
 export type SceneTransition = ReturnType<typeof createSceneTransition>
+
+export function createLabelTransition(sceneTransition: SceneTransition) {
+  return {
+    duration: sceneTransition.duration,
+    delay: 0,
+    ease: [0.4, 0, 0.2, 1] as const,
+  }
+}
 
 export function createPanelTransition(expanded: boolean, sceneTransition: SceneTransition) {
   return {
@@ -44,7 +50,7 @@ export function createReveal(
     animate: { opacity: expanded ? 1 : 0, y: reducedMotion || expanded ? '0%' : '-110%' },
     transition: {
       duration: reducedMotion ? 0 : expanded ? 0.65 : 0.25,
-      delay: reducedMotion ? 0 : expanded ? delay + 0.3 : closeDelay,
+      delay: reducedMotion || !expanded ? 0 : delay,
       ease: expoOut,
     },
   }

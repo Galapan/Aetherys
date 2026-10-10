@@ -39,10 +39,10 @@ export function MenuMovingHeader({
         left: snapshot.headerLeft,
         right: snapshot.headerRight,
       }}
-      initial={{ y: 0, color: 'var(--color-warm-white)' }}
+      initial={reducedMotion ? false : { y: 0, color: snapshot.headerColor }}
       animate={{
         y: expanded ? headerInset - snapshot.headerTop : 0,
-        color: expanded ? 'var(--color-graphite)' : 'var(--color-warm-white)',
+        color: expanded ? snapshot.menuColor : snapshot.headerColor,
       }}
       transition={sceneTransition}
     >
@@ -71,6 +71,7 @@ export function MenuMovingHeader({
           expanded={expanded}
           reducedMotion={reducedMotion}
           sceneTransition={sceneTransition}
+          initialOffsetY={snapshot.triggerOffsetY}
           onClose={onClose}
         />
       </m.div>

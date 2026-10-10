@@ -4,10 +4,15 @@ export interface PageSnapshot {
   scrollY: number
   height: number
   width: number
+  pageLeft: number
+  scrollbarWidth: number
   documentHeight: number
   headerTop: number
   headerLeft: number
   headerRight: number
+  headerColor: string
+  menuColor: string
+  triggerOffsetY: number
 }
 
 interface MenuScene {
@@ -31,6 +36,7 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
   const destination = useRef<string | null>(null)
   const restoreScroll = useRef(0)
   const reducedMotionRef = useRef(reducedMotion)
+  const source = useRef<{ header: HTMLElement | null; page: HTMLDivElement | null } | null>(null)
   const mounted = snapshot !== null
 
   useEffect(() => {
@@ -44,15 +50,16 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     modal?.showModal()
-    const resize = () =>
+    const resize = () => {
       setSnapshot(
         (previous) =>
           previous && {
             ...previous,
-            width: document.documentElement.clientWidth,
+            width: window.innerWidth - previous.scrollbarWidth - previous.pageLeft,
             height: window.innerHeight,
           },
       )
+    }
     window.addEventListener('resize', resize)
     return () => {
       window.removeEventListener('resize', resize)
@@ -78,22 +85,58 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
     }
   }, [mounted])
 
+  useLayoutEffect(() => {
+    if (!mounted) return
+    const content = source.current?.page?.firstElementChild
+    if (!(content instanceof HTMLElement)) return
+    const documentHeight = content.offsetHeight
+    const page = source.current?.page
+    const pageRect = page?.getBoundingClientRect()
+    const brand = source.current?.header?.querySelector('.brand')?.getBoundingClientRect()
+    const button = triggerRef.current?.getBoundingClientRect()
+    setSnapshot((previous) => {
+      if (!previous || !pageRect || !page || !brand || !button) return previous
+      const scaleX = pageRect.width / parseFloat(page.style.width)
+      const scaleY = pageRect.height / parseFloat(page.style.height)
+      const headerLeft = (brand.left - pageRect.left) / scaleX
+      const headerRight = previous.width - (button.right - pageRect.left) / scaleX
+      const headerTop = (brand.top - pageRect.top) / scaleY
+      if (
+        previous.documentHeight === documentHeight &&
+        Math.abs(previous.headerLeft - headerLeft) < 0.01 &&
+        Math.abs(previous.headerRight - headerRight) < 0.01 &&
+        Math.abs(previous.headerTop - headerTop) < 0.01
+      )
+        return previous
+      return { ...previous, documentHeight, headerLeft, headerRight, headerTop }
+    })
+  }, [mounted, snapshot?.width, snapshot?.height])
+
   function openMenu(header: HTMLElement | null, page: HTMLDivElement | null) {
     if (mounted) return
     const brand = header?.querySelector('.brand')?.getBoundingClientRect()
     const button = triggerRef.current?.getBoundingClientRect()
+    const pageRect = page?.getBoundingClientRect()
+    const pageLeft = pageRect?.left ?? 0
+    const width = pageRect?.width ?? document.documentElement.clientWidth
+    source.current = { header, page }
     restoreScroll.current = window.scrollY
     closing.current = false
     setSnapshot({
       scrollY: window.scrollY,
-      width: document.documentElement.clientWidth,
+      width,
+      pageLeft,
+      scrollbarWidth: window.innerWidth - width - pageLeft,
       height: window.innerHeight,
       documentHeight: page?.offsetHeight ?? document.body.scrollHeight,
-      headerTop: Math.max(18, brand?.top ?? 18),
-      headerLeft: brand?.left ?? 20,
-      headerRight:
-        document.documentElement.clientWidth -
-        (button?.right ?? document.documentElement.clientWidth - 20),
+      headerTop: brand?.top ?? 18,
+      headerLeft: (brand?.left ?? pageLeft + 20) - pageLeft,
+      headerRight: pageLeft + width - (button?.right ?? pageLeft + width - 20),
+      headerColor: header ? getComputedStyle(header).color : 'var(--color-warm-white)',
+      menuColor: dialogRef.current
+        ? getComputedStyle(dialogRef.current).color
+        : getComputedStyle(document.documentElement).getPropertyValue('--color-graphite').trim(),
+      triggerOffsetY: button && brand ? button.top - brand.top : 0,
     })
     setExpanded(true)
   }
