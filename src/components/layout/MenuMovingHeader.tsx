@@ -12,7 +12,7 @@ interface MenuMovingHeaderProps {
   expanded: boolean
   reducedMotion: boolean
   canHover: boolean
-  gap: number
+  padding: number
   headerInset: number
   sceneTransition: SceneTransition
   audioRef: RefObject<HTMLAudioElement | null>
@@ -25,7 +25,7 @@ export function MenuMovingHeader({
   expanded,
   reducedMotion,
   canHover,
-  gap,
+  padding,
   headerInset,
   sceneTransition,
   audioRef,
@@ -39,17 +39,17 @@ export function MenuMovingHeader({
         left: snapshot.headerLeft,
         right: snapshot.headerRight,
       }}
-      initial={{ y: 0, color: 'var(--color-warm-white)' }}
+      initial={reducedMotion ? false : { y: 0, color: snapshot.headerColor }}
       animate={{
-        y: expanded && !reducedMotion ? gap + headerInset - snapshot.headerTop : 0,
-        color: expanded ? 'var(--color-graphite)' : 'var(--color-warm-white)',
+        y: expanded ? headerInset - snapshot.headerTop : 0,
+        color: expanded ? snapshot.menuColor : snapshot.headerColor,
       }}
       transition={sceneTransition}
     >
       <m.span
-        className="brand inline-flex min-h-11 items-center text-[26px] font-medium tracking-[-0.055em]"
+        className="brand inline-flex min-h-11 items-center text-[28px] font-medium tracking-[-0.055em]"
         initial={{ x: 0 }}
-        animate={{ x: expanded && !reducedMotion ? gap * 2 - snapshot.headerLeft : 0 }}
+        animate={{ x: expanded ? padding - snapshot.headerLeft : 0 }}
         transition={sceneTransition}
       >
         {content.brand}
@@ -57,7 +57,7 @@ export function MenuMovingHeader({
       <m.div
         className="flex items-center gap-[clamp(6px,1.8vw,12px)] md:gap-4"
         initial={{ x: 0 }}
-        animate={{ x: expanded && !reducedMotion ? snapshot.headerRight - gap * 2 : 0 }}
+        animate={{ x: expanded ? snapshot.headerRight - padding : 0 }}
         transition={sceneTransition}
       >
         <AudioToggle
@@ -71,6 +71,7 @@ export function MenuMovingHeader({
           expanded={expanded}
           reducedMotion={reducedMotion}
           sceneTransition={sceneTransition}
+          initialOffsetY={snapshot.triggerOffsetY}
           onClose={onClose}
         />
       </m.div>

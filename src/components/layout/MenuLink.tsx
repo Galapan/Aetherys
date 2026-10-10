@@ -2,7 +2,7 @@ import { m } from 'framer-motion'
 import { createReveal } from './menuMotion'
 
 interface MenuLinkProps {
-  id: string
+  href: string
   label: string
   index: number
   expanded: boolean
@@ -10,13 +10,13 @@ interface MenuLinkProps {
   canHover: boolean
   hoveredLink: number | null
   setHoveredLink: (index: number | null) => void
-  onClose: (id: string) => void
+  onClose: (id?: string) => void
 }
 
 const rollEase = [0.42, 0, 0.58, 1] as const
 
 export function MenuLink({
-  id,
+  href,
   label,
   index,
   expanded,
@@ -29,19 +29,28 @@ export function MenuLink({
   return (
     <div className="-m-1 overflow-hidden p-1">
       <m.a
-        className="flex min-h-16 items-center justify-between gap-4 overflow-hidden py-2 text-[clamp(2.25rem,5vw,4rem)] leading-[1.1] font-medium tracking-[-0.04em] uppercase"
-        href={`#${id}`}
+        className="block w-fit max-w-full py-2 text-[clamp(1.625rem,4.2vw,2rem)] leading-[1.15] font-normal tracking-[-0.045em] uppercase aria-disabled:cursor-default md:text-[clamp(2rem,3.3vw,3.5rem)]"
+        href={href || undefined}
+        role={href ? undefined : 'link'}
+        aria-disabled={!href || undefined}
         onClick={(event) => {
-          event.preventDefault()
-          onClose(id)
+          if (!href) return
+          if (href.startsWith('#')) {
+            event.preventDefault()
+            onClose(href.slice(1))
+          } else onClose()
         }}
         {...createReveal(expanded, reducedMotion, 0.35 + index * 0.075, true)}
         onHoverStart={() => {
-          if (canHover) setHoveredLink(index)
+          if (canHover && href) setHoveredLink(index)
         }}
         onHoverEnd={() => setHoveredLink(null)}
+        onFocus={() => {
+          if (href) setHoveredLink(index)
+        }}
+        onBlur={() => setHoveredLink(null)}
       >
-        <span className="block h-[1.1em] overflow-hidden">
+        <span className="block h-[1.15em] overflow-hidden">
           <m.span
             className="flex flex-col"
             initial={{ y: '0%' }}
@@ -51,8 +60,8 @@ export function MenuLink({
               ease: rollEase,
             }}
           >
-            <span className="block leading-[1.1]">{label}</span>
-            <span className="text-burgundy block leading-[1.1]" aria-hidden="true">
+            <span className="block leading-[1.15]">{label}</span>
+            <span className="text-burgundy block leading-[1.15]" aria-hidden="true">
               {label}
             </span>
           </m.span>

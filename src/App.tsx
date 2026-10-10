@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { m, useMotionValue, useScroll, useTransform } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useMotionPreferences } from './hooks/useMotionPreferences'
 import { useLocalTime } from './hooks/useLocalTime'
 import { useHeroEntrance } from './hooks/useHeroEntrance'
@@ -43,21 +43,7 @@ function App() {
   const entering = useHeroEntrance(reducedMotion)
   const copy = content[locale]
 
-  const projectsRef = useRef<HTMLDivElement>(null)
   const testimoniesRef = useRef<HTMLElement>(null)
-  const { scrollYProgress } = useScroll(
-    isProjectsPage ? {} : { target: projectsRef, offset: ['start end', 'start start'] },
-  )
-  const lightHeaderInvert = useTransform(scrollYProgress, [0.82, 0.9], [0, 1], { clamp: true })
-  const { scrollYProgress: testimoniesProgress } = useScroll(
-    isProjectsPage ? {} : { target: testimoniesRef, offset: ['start start', 'end start'] },
-  )
-  const homeHeaderInvert = useTransform(() => {
-    const progress = testimoniesProgress.get()
-    return progress > 0 && progress < 1 ? 0 : lightHeaderInvert.get()
-  })
-  const projectsHeaderInvert = useMotionValue(1)
-  const headerInvert = isProjectsPage ? projectsHeaderInvert : homeHeaderInvert
 
   useEffect(() => {
     const sync = () => {
@@ -99,7 +85,6 @@ function App() {
         onChange={changeLocale}
         reducedMotion={reducedMotion}
         canHover={canHover}
-        headerInvert={headerInvert}
       >
         <main id="main" tabIndex={-1}>
           {isProjectsPage ? (
@@ -150,7 +135,6 @@ function App() {
                 <Manifesto content={manifestoContent[locale]} reducedMotion={reducedMotion} />
               </div>
               <section
-                ref={projectsRef}
                 id="proyectos"
                 tabIndex={-1}
                 className="bg-warm-white text-graphite relative z-1 mt-[-100svh] scroll-mt-[calc(var(--header-height)+24px)] pt-[clamp(48px,6vw,96px)] pb-[clamp(80px,9vw,144px)]"

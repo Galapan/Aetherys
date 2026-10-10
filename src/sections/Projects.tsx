@@ -196,8 +196,11 @@ interface ProjectHeadingProps {
   reducedMotion: boolean
 }
 
-const headingClasses =
+const staggerHeadingClasses =
   'text-graphite lg:text-warm-white m-0 text-center text-[64px] leading-[1.1] font-medium uppercase tracking-[-0.03em] lg:text-[clamp(3rem,4.2vw,4.5rem)]'
+
+const gridHeadingClasses =
+  'text-burgundy m-0 text-center text-[16px] leading-[1.1] font-medium tracking-[-0.03em] lg:text-[clamp(0.75rem,1.05vw,1.125rem)]'
 
 function ProjectHeading({
   content,
@@ -208,7 +211,11 @@ function ProjectHeading({
 }: ProjectHeadingProps) {
   if (layout === 'stagger') {
     return (
-      <m.h2 id="proyectos-heading" className={headingClasses} {...reveal(0.2, reducedMotion)}>
+      <m.h2
+        id="proyectos-heading"
+        className={staggerHeadingClasses}
+        {...reveal(0.2, reducedMotion)}
+      >
         <span
           className="inline-flex items-baseline gap-[clamp(16px,2vw,40px)]"
           style={{ perspective: '400px' }}
@@ -241,9 +248,20 @@ function ProjectHeading({
   }
 
   return (
-    <m.h2 id="proyectos-heading" className={headingClasses} {...reveal(0.2, reducedMotion)}>
-      <span className="relative inline-block">
+    <m.h2 id="proyectos-heading" className={gridHeadingClasses} {...reveal(0.2, reducedMotion)}>
+      <span className="relative inline-block pb-[7px]">
         {content.eyebrow}
+        <m.span
+          className="absolute right-0 bottom-0 left-0 h-px origin-left bg-current"
+          initial={reducedMotion ? false : { scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: false, amount: 0.4 }}
+          transition={{
+            duration: reducedMotion ? 0 : 0.6,
+            delay: reducedMotion ? 0 : 0.85,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+        />
         <m.span
           className="absolute inset-0 origin-top bg-[var(--eyebrow-cover,var(--color-burgundy))]"
           aria-hidden="true"
@@ -311,7 +329,11 @@ export function Projects({ content, reducedMotion, canHover, layout = 'grid' }: 
   return (
     <div className="relative px-[var(--page-padding)]">
       <div
-        className={`bg-warm-white pointer-events-none relative ${layout === 'stagger' ? 'z-20' : 'z-2'} mb-8 flex min-h-14 items-center justify-start lg:sticky lg:top-[50svh] lg:mx-auto lg:mb-0 lg:h-0 lg:min-h-0 lg:w-fit lg:justify-center lg:bg-transparent lg:mix-blend-difference lg:will-change-transform`}
+        className={`bg-warm-white pointer-events-none relative mb-8 flex min-h-14 items-center justify-start lg:sticky lg:top-[50svh] lg:mb-0 lg:h-0 lg:min-h-0 lg:justify-center lg:bg-transparent ${
+          layout === 'stagger'
+            ? 'z-20 lg:mx-auto lg:w-fit lg:mix-blend-difference lg:will-change-transform'
+            : 'z-2'
+        }`}
       >
         <ProjectHeading
           content={content}

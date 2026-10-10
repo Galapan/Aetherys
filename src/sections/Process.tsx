@@ -1,3 +1,4 @@
+import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
 import { useRef, useSyncExternalStore } from 'react'
 import { m, useScroll, useSpring, useTransform } from 'framer-motion'
 import type { MotionValue } from 'framer-motion'
@@ -12,11 +13,11 @@ interface ProcessProps {
 const wideQuery = '(min-width: 768px)'
 
 // The rises begin farther apart and converge to one panel-height per step.
-// Adjacent spans keep the fill moving from one bar straight into the next.
+// Longer adjacent spans give each step more scroll before the next begins.
 const spans: [number, number][] = [
-  [0.25, 0.4],
-  [0.4, 0.55],
-  [0.55, 0.7],
+  [0.25, 0.48],
+  [0.48, 0.71],
+  [0.71, 0.94],
 ]
 
 function subscribeWide(onChange: () => void) {
@@ -134,18 +135,15 @@ export function Process({ content, reducedMotion }: ProcessProps) {
   const wide = useWide()
   // Both layouts scrub through the steps; reduced motion uses normal document flow.
   const pinned = !reducedMotion
-  // Entry uses the first quarter of the scroll; color starts after the frame pins.
+  // Entry and step reveals share the shortened scroll range.
   const { scrollYProgress } = useScroll({ target: stage, offset: ['start end', 'end end'] })
-  const progress = useSpring(
-    scrollYProgress,
-    wide ? { stiffness: 180, damping: 30, mass: 0.5 } : { stiffness: 500, damping: 32, mass: 0.5 },
-  )
+  const progress = useSpring(scrollYProgress, { stiffness: 500, damping: 30, mass: 0.15 })
 
   return (
     <section
       id="proceso"
       tabIndex={-1}
-      className="bg-warm-white text-graphite focus-visible:outline-graphite relative z-1 scroll-mt-[calc(var(--header-height)+24px)] overflow-clip [--process-scroll-height:320svh] focus-visible:outline-2 focus-visible:outline-offset-4 max-md:[--process-scroll-height:640svh]"
+      className="bg-warm-white text-graphite focus-visible:outline-graphite relative z-1 scroll-mt-[calc(var(--header-height)+24px)] overflow-clip [--process-scroll-height:180svh] focus-visible:outline-2 focus-visible:outline-offset-4 max-md:[--process-scroll-height:240svh]"
       aria-labelledby="process-heading"
     >
       <RuleGrid className="absolute inset-0" spanClassName="bg-grid-burgundy" />
@@ -171,7 +169,7 @@ export function Process({ content, reducedMotion }: ProcessProps) {
               id="process-heading"
               className="text-burgundy relative m-0 table text-[16px] leading-[1.4] font-medium tracking-[0.08em]"
             >
-              {content.eyebrow}
+              <SectionTitleReveal text={content.eyebrow} reducedMotion={reducedMotion} />
             </h2>
           </div>
           <ol
