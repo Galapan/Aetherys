@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { m } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, m } from 'framer-motion'
 import type { ProjectCard as ProjectCardData, ProjectsContent } from '../content/projects'
 
 export type ProjectsLayout = 'grid' | 'stagger'
@@ -36,16 +36,16 @@ const desktopCardAreas = [
 const gridContainerClasses =
   'flex flex-col gap-[clamp(32px,5vw,80px)] lg:grid lg:grid-cols-[40vw_minmax(0,1fr)_40vw] lg:gap-x-0'
 
-// Stagger cards keep the height of the original 52vw cards while the width is
-// 52vw * 0.75 * 1.1 * 1.03 (aspect 1133/800 on lg, height = width * 800/1133).
+// Stagger cards are 10% shorter than the original 52vw cards (aspect 1133/720
+// on lg, height = width * 720/1133; base aspect 50/27 below lg).
 // Each next card starts at 7/8 of the previous one, so the overlap is height / 8.
 const staggerContainerClasses =
-  'flex flex-col gap-[clamp(32px,5vw,80px)] [--stagger-w:clamp(255px,44.19vw,1020px)] [--stagger-h:calc(var(--stagger-w)_*_800_/_1133)] [--stagger-overlap:calc(var(--stagger-h)_/_-8)] lg:gap-0'
+  'flex flex-col gap-[clamp(32px,5vw,80px)] [--stagger-w:clamp(255px,44.19vw,1020px)] [--stagger-h:calc(var(--stagger-w)_*_720_/_1133)] [--stagger-overlap:calc(var(--stagger-h)_/_-8)] lg:gap-0'
 
 function cardPlacement(layout: ProjectsLayout, index: number) {
   if (layout === 'grid') return desktopCardAreas[index] ?? ''
   return [
-    'lg:aspect-[1133/800]',
+    'lg:aspect-[1133/720]',
     'lg:w-[var(--stagger-w)]',
     index % 2 === 0 ? 'lg:self-start' : 'lg:self-end',
     index > 0 ? 'lg:mt-[var(--stagger-overlap)]' : '',
@@ -155,8 +155,9 @@ function ProjectCard({ card, index, total, layout, reducedMotion, canHover }: Pr
   return (
     <m.article
       id={card.id}
+      data-project-index={index}
       tabIndex={-1}
-      className={`text-warm-white [container-type:inline-size] relative aspect-[5/3] w-full scroll-mt-[calc(var(--header-height)+24px)] ${cardPlacement(layout, index)}`}
+      className={`text-warm-white [container-type:inline-size] relative ${layout === 'stagger' ? 'aspect-[50/27]' : 'aspect-[5/3]'} w-full scroll-mt-[calc(var(--header-height)+24px)] ${cardPlacement(layout, index)}`}
       style={layout === 'stagger' ? { zIndex: total - index } : undefined}
       {...reveal(index, reducedMotion)}
       onHoverStart={() => setHovered(true)}
@@ -187,47 +188,143 @@ function ProjectCard({ card, index, total, layout, reducedMotion, canHover }: Pr
   )
 }
 
+interface ProjectHeadingProps {
+  content: ProjectsContent
+  activeTitle: string
+  activeYear?: string
+  layout: ProjectsLayout
+  reducedMotion: boolean
+}
+
+const headingClasses =
+  'text-graphite lg:text-warm-white m-0 text-center text-[64px] leading-[1.1] font-medium uppercase tracking-[-0.03em] lg:text-[clamp(3rem,4.2vw,4.5rem)]'
+
+function ProjectHeading({
+  content,
+  activeTitle,
+  activeYear,
+  layout,
+  reducedMotion,
+}: ProjectHeadingProps) {
+  if (layout === 'stagger') {
+    return (
+      <m.h2 id="proyectos-heading" className={headingClasses} {...reveal(0.2, reducedMotion)}>
+        <span
+          className="inline-flex items-baseline gap-[clamp(16px,2vw,40px)]"
+          style={{ perspective: '400px' }}
+        >
+          <span className="text-[12px] leading-[1.4] tracking-[0.08em] uppercase">
+            {content.sideLabel}
+          </span>
+          <span className="inline-flex">
+            <AnimatePresence mode="wait" initial={false}>
+              <m.span
+                key={activeTitle}
+                className="inline-block"
+                initial={reducedMotion ? false : { opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reducedMotion ? undefined : { opacity: 0, y: -24 }}
+                transition={{ duration: reducedMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                /{activeTitle}
+              </m.span>
+            </AnimatePresence>
+          </span>
+          {activeYear && (
+            <span className="text-[12px] leading-[1.4] tracking-[0.08em] uppercase">
+              {activeYear}
+            </span>
+          )}
+        </span>
+      </m.h2>
+    )
+  }
+
+  return (
+    <m.h2 id="proyectos-heading" className={headingClasses} {...reveal(0.2, reducedMotion)}>
+      <span className="relative inline-block">
+        {content.eyebrow}
+        <m.span
+          className="absolute inset-0 origin-top bg-[var(--eyebrow-cover,var(--color-burgundy))]"
+          aria-hidden="true"
+          initial={{ scaleY: reducedMotion ? 0 : 1 }}
+          whileInView={{ scaleY: 0 }}
+          viewport={{ once: false, amount: 0.6 }}
+          transition={{
+            duration: reducedMotion ? 0 : 0.75,
+            delay: reducedMotion ? 0 : 0.4,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+        />
+      </span>
+    </m.h2>
+  )
+}
+
 export function Projects({ content, reducedMotion, canHover, layout = 'grid' }: ProjectsProps) {
   const total = content.cards.length
+  const [activeIndex, setActiveIndex] = useState(0)
+  const deckRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (layout !== 'stagger') return
+
+    const deck = deckRef.current
+    if (!deck) return
+
+    const headings = Array.from(deck.querySelectorAll<HTMLElement>('[data-project-index]'))
+    let frame = 0
+    const syncActiveProject = () => {
+      frame = 0
+      const reference = window.innerHeight * 0.5
+      let bestIndex = 0
+      let bestDistance = Number.POSITIVE_INFINITY
+      headings.forEach((el) => {
+        const rect = el.getBoundingClientRect()
+        const distance = Math.abs(rect.top + rect.height / 2 - reference)
+        if (distance < bestDistance) {
+          bestDistance = distance
+          bestIndex = Number(el.dataset.projectIndex)
+        }
+      })
+      setActiveIndex(bestIndex)
+    }
+    const scheduleSync = () => {
+      if (frame) return
+      frame = requestAnimationFrame(syncActiveProject)
+    }
+
+    syncActiveProject()
+    window.addEventListener('scroll', scheduleSync, { passive: true })
+    window.addEventListener('resize', scheduleSync)
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', scheduleSync)
+      window.removeEventListener('resize', scheduleSync)
+    }
+  }, [layout])
+
+  const activeCard = content.cards[activeIndex]
+  const activeTitle = activeCard?.title ?? content.cards[0]?.title ?? content.eyebrow
+  const activeYear = activeCard?.year ?? content.cards[0]?.year
+
   return (
     <div className="relative px-[var(--page-padding)]">
       <div
-        className={`bg-warm-white pointer-events-none relative ${layout === 'stagger' ? 'z-20' : 'z-2'} mb-8 flex min-h-14 items-center justify-start lg:sticky lg:top-[50svh] lg:mb-0 lg:h-0 lg:min-h-0 lg:justify-center lg:bg-transparent`}
+        className={`bg-warm-white pointer-events-none relative ${layout === 'stagger' ? 'z-20' : 'z-2'} mb-8 flex min-h-14 items-center justify-start lg:sticky lg:top-[50svh] lg:mx-auto lg:mb-0 lg:h-0 lg:min-h-0 lg:w-fit lg:justify-center lg:bg-transparent lg:mix-blend-difference lg:will-change-transform`}
       >
-        <m.h2
-          id="proyectos-heading"
-          className="text-burgundy m-0 text-center text-[16px] leading-[1.1] font-medium tracking-[-0.03em] lg:text-[clamp(0.75rem,1.05vw,1.125rem)]"
-          {...reveal(0.2, reducedMotion)}
-        >
-          <span className="relative inline-block pb-[7px]">
-            {content.eyebrow}
-            <m.span
-              className="absolute right-0 bottom-0 left-0 h-px origin-left bg-current"
-              initial={reducedMotion ? false : { scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: false, amount: 0.4 }}
-              transition={{
-                duration: reducedMotion ? 0 : 0.6,
-                delay: reducedMotion ? 0 : 0.85,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-            />
-            <m.span
-              className="absolute inset-0 origin-top bg-[var(--eyebrow-cover,var(--color-burgundy))]"
-              aria-hidden="true"
-              initial={{ scaleY: reducedMotion ? 0 : 1 }}
-              whileInView={{ scaleY: 0 }}
-              viewport={{ once: false, amount: 0.6 }}
-              transition={{
-                duration: reducedMotion ? 0 : 0.75,
-                delay: reducedMotion ? 0 : 0.4,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-            />
-          </span>
-        </m.h2>
+        <ProjectHeading
+          content={content}
+          activeTitle={activeTitle}
+          activeYear={activeYear}
+          layout={layout}
+          reducedMotion={reducedMotion}
+        />
       </div>
-      <div className={layout === 'stagger' ? staggerContainerClasses : gridContainerClasses}>
+      <div
+        ref={deckRef}
+        className={layout === 'stagger' ? staggerContainerClasses : gridContainerClasses}
+      >
         {content.cards.map((card, index) => (
           <ProjectCard
             key={card.id}

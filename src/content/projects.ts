@@ -15,12 +15,14 @@ export interface ProjectCard {
 
 export interface ProjectsContent {
   eyebrow: string
+  sideLabel: string
   cards: ProjectCard[]
 }
 
 export const content: Record<Locale, ProjectsContent> = {
   es: {
     eyebrow: '/PROYECTOS',
+    sideLabel: 'WEB',
     cards: [
       {
         title: 'Sigsor',
@@ -86,6 +88,7 @@ export const content: Record<Locale, ProjectsContent> = {
   },
   en: {
     eyebrow: '/PROJECTS',
+    sideLabel: 'WEB',
     cards: [
       {
         title: 'Sigsor',
