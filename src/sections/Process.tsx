@@ -51,8 +51,9 @@ function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: Ste
   )
   const [from, to] = spans[index] ?? [0, 1]
   const reveal = useTransform(progress, [from, to], [0, 1], { clamp: true })
-  const rightInset = useTransform(reveal, [0, 1], [100, 0])
-  const clipPath = useTransform(rightInset, (value) => `inset(0% ${value}% 0% 0%)`)
+  const panelScale = useTransform(reveal, (value) => Math.max(value, 0.001))
+  const panelCounterScale = useTransform(reveal, (value) => 1 / Math.max(value, 0.05))
+  const panelContentOpacity = useTransform(reveal, [0.04, 0.05], [0, 1], { clamp: true })
   const dateY = useTransform(reveal, mobile ? [0, 0.15] : [0.15, 0.55], ['110%', '0%'])
   const copyY = useTransform(reveal, mobile ? [0, 0.25] : [0.3, 0.8], ['110%', '0%'])
   // Mobile keeps all three headers visible and crossfades copy in one shared area.
@@ -92,17 +93,25 @@ function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: Ste
           .join(' ')}
       >
         <m.div
-          className="bg-burgundy text-warm-white flex min-h-[var(--process-panel-height)] items-center px-[clamp(24px,2.6vw,40px)]"
-          style={{ clipPath: scroll ? clipPath : 'inset(0% 0% 0% 0%)' }}
+          className="bg-burgundy text-warm-white relative min-h-[var(--process-panel-height)] origin-left overflow-hidden"
+          style={{ scaleX: scroll ? panelScale : 1 }}
         >
-          <h3 className="m-0 flex items-baseline gap-[clamp(8px,1vw,16px)] whitespace-nowrap">
-            <span className="text-warm-white block leading-[1.1] font-medium tracking-[-0.02em] text-[var(--process-type-size)]">
-              {step.index}
-            </span>
-            <span className="block leading-[1.1] font-medium tracking-[-0.02em] text-[var(--process-type-size)] uppercase">
-              {step.title}
-            </span>
-          </h3>
+          <m.div
+            className="absolute inset-0 flex origin-left items-center px-[clamp(24px,2.6vw,40px)]"
+            style={{
+              scaleX: scroll ? panelCounterScale : 1,
+              opacity: scroll ? panelContentOpacity : 1,
+            }}
+          >
+            <h3 className="m-0 flex items-baseline gap-[clamp(8px,1vw,16px)] whitespace-nowrap">
+              <span className="text-warm-white block leading-[1.1] font-medium tracking-[-0.02em] text-[var(--process-type-size)]">
+                {step.index}
+              </span>
+              <span className="block leading-[1.1] font-medium tracking-[-0.02em] text-[var(--process-type-size)] uppercase">
+                {step.title}
+              </span>
+            </h3>
+          </m.div>
         </m.div>
       </div>
       <m.div

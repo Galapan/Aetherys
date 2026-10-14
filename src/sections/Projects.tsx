@@ -77,34 +77,26 @@ interface ProjectCardVisualProps {
     duration: number
     ease: readonly [0.22, 1, 0.36, 1]
   }
-  reducedMotion: boolean
 }
 
-function ProjectCardMedia({ card, active, transition, reducedMotion }: ProjectCardVisualProps) {
+function ProjectCardMedia({ card, active, transition }: ProjectCardVisualProps) {
   return (
-    <>
-      <m.img
-        className="block h-full w-full object-cover"
-        src={card.image}
-        alt={card.imageAlt}
-        loading="lazy"
-        decoding="async"
-        width={1200}
-        height={675}
-        initial={false}
-        animate={{ scale: active ? 1.1 : 1, filter: active ? 'blur(3px)' : 'blur(0px)' }}
-        transition={transition}
-      />
-      <m.span
-        className={`text-warm-white pointer-events-none absolute inset-0 z-1 grid place-items-center text-[20cqw] leading-none select-none text-shadow-[0_2px_14px_color-mix(in_srgb,var(--color-graphite)_55%,transparent)] ${markVariantClasses[card.markVariant]}`}
-        aria-hidden="true"
-        initial={false}
-        animate={{ opacity: active ? 0 : 1 }}
-        transition={{ ...transition, duration: reducedMotion ? 0 : 0.4 }}
-      >
-        {card.mark}
-      </m.span>
-    </>
+    <m.img
+      className="block h-full w-full object-cover"
+      src={card.image}
+      alt={card.imageAlt}
+      loading="lazy"
+      decoding="async"
+      width={1200}
+      height={675}
+      initial={false}
+      animate={{
+        scaleX: active ? 1.17 : 1,
+        scaleY: active ? 1.222 : 1,
+        filter: active ? 'blur(3px)' : 'blur(0px)',
+      }}
+      transition={transition}
+    />
   )
 }
 
@@ -116,9 +108,7 @@ function ProjectCardDetails({ card, active, showCategory, transition }: ProjectC
   return (
     <m.div
       className="text-warm-white pointer-events-none absolute right-[22px] bottom-[22px] left-[22px] z-1 text-shadow-[0_2px_10px_var(--color-graphite),0_1px_3px_var(--color-graphite)]"
-      layout
       initial={false}
-      style={{ left: active ? 42 : 22, right: active ? 42 : 22 }}
       animate={{ y: active ? -20 : 0 }}
       transition={transition}
     >
@@ -128,13 +118,29 @@ function ProjectCardDetails({ card, active, showCategory, transition }: ProjectC
         animate={{ y: showCategory ? -40 : 0 }}
         transition={transition}
       >
-        <h3 className="font-medium uppercase before:content-['/']">{card.title}</h3>
-        {card.year && <span className="shrink-0">{card.year}</span>}
+        <m.h3
+          className="font-medium uppercase before:content-['/']"
+          initial={false}
+          animate={{ x: active ? 20 : 0 }}
+          transition={transition}
+        >
+          {card.title}
+        </m.h3>
+        {card.year && (
+          <m.span
+            className="shrink-0"
+            initial={false}
+            animate={{ x: active ? -20 : 0 }}
+            transition={transition}
+          >
+            {card.year}
+          </m.span>
+        )}
       </m.div>
       <m.div
         className="bg-warm-white text-graphite absolute bottom-0 w-fit max-w-full rounded px-[10px] py-[6px] text-[clamp(10px,2cqw,12px)] leading-[1.4] uppercase text-shadow-none"
         initial={false}
-        animate={{ opacity: showCategory ? 1 : 0, y: showCategory ? 0 : 16 }}
+        animate={{ opacity: showCategory ? 1 : 0, x: active ? 20 : 0, y: showCategory ? 0 : 16 }}
         transition={{ ...transition, delay: active ? 0.12 : 0 }}
       >
         {card.category}
@@ -163,27 +169,30 @@ function ProjectCard({ card, index, total, layout, reducedMotion, canHover }: Pr
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
     >
-      {/* Keep the hit area fixed while only the visual surface retracts. */}
+      {/* Keep the hit area fixed while the image surface retracts on the compositor. */}
       <m.div
-        className="bg-burgundy text-warm-white absolute inset-0 overflow-hidden rounded-lg"
+        className="absolute inset-0 overflow-hidden rounded-lg"
         initial={false}
-        animate={{ clipPath: `inset(${active ? 20 : 0}px round 8px)` }}
+        animate={{ scaleX: active ? 0.94 : 1, scaleY: active ? 0.9 : 1 }}
         transition={transition}
       >
-        <ProjectCardMedia
-          card={card}
-          active={active}
-          transition={transition}
-          reducedMotion={reducedMotion}
-        />
-        <ProjectCardDetails
-          card={card}
-          active={active}
-          showCategory={showCategory}
-          transition={transition}
-          reducedMotion={reducedMotion}
-        />
+        <ProjectCardMedia card={card} active={active} transition={transition} />
       </m.div>
+      <m.span
+        className={`text-warm-white pointer-events-none absolute inset-0 z-1 grid place-items-center text-[20cqw] leading-none select-none text-shadow-[0_2px_14px_color-mix(in_srgb,var(--color-graphite)_55%,transparent)] ${markVariantClasses[card.markVariant]}`}
+        aria-hidden="true"
+        initial={false}
+        animate={{ opacity: active ? 0 : 1 }}
+        transition={{ ...transition, duration: reducedMotion ? 0 : 0.4 }}
+      >
+        {card.mark}
+      </m.span>
+      <ProjectCardDetails
+        card={card}
+        active={active}
+        showCategory={showCategory}
+        transition={transition}
+      />
     </m.article>
   )
 }

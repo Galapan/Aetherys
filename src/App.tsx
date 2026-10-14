@@ -118,7 +118,7 @@ function App() {
                         ease: 'easeOut',
                       }}
                     >
-                      <HeroMark />
+                      <HeroMark entering={entering} />
                     </m.div>
                   </div>
                   <div className="pointer-events-none relative z-2 container flex w-full max-w-none items-center justify-between gap-6 pb-8 [--page-padding:clamp(20px,1.85vw,32px)]">
@@ -126,7 +126,12 @@ function App() {
                       {copy.eyebrow}
                     </p>
                     <div className="relative flex items-center justify-end">
-                      <Showreel content={copy} reducedMotion={reducedMotion} canHover={canHover} />
+                      <Showreel
+                        content={copy}
+                        reducedMotion={reducedMotion}
+                        canHover={canHover}
+                        entering={entering}
+                      />
                       <span className="text-warm-white flex shrink-0 items-center text-[clamp(13px,1.2vw,15px)] leading-[1.2] font-semibold tracking-[0.02em] whitespace-nowrap tabular-nums">
                         <span className="sr-only">{`${copy.localTime}: `}</span>
                         <time dateTime={localTime.machine}>{localTime.display}</time>

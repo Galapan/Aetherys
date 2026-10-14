@@ -1,26 +1,12 @@
-import {
-  useCallback,
-  useEffect,
-  useEffectEvent,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
-import {
-  CanvasTexture,
-  Color,
-  LinearFilter,
-  SRGBColorSpace,
-  type Group,
-  type Texture,
-} from 'three'
+import { CanvasTexture, Color, LinearFilter, SRGBColorSpace, type Group, type Texture } from 'three'
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import { heroMark } from '../../content/hero'
 import { useMotionPreferences } from '../../hooks/useMotionPreferences'
+import { RenderQuality, RenderReady } from '../RenderQuality'
 
 const EXTRUDE_OPTIONS = {
   depth: 13,
@@ -40,18 +26,16 @@ function HeadingRefractionBackground({
   onTextureReady: (texture: CanvasTexture) => void
 }) {
   const { gl, invalidate } = useThree()
-  const canvas = useMemo(() => document.createElement('canvas'), [])
-  const texture = useMemo(() => {
-    const background = new CanvasTexture(canvas)
-    background.colorSpace = SRGBColorSpace
-    background.minFilter = LinearFilter
-    background.magFilter = LinearFilter
-    background.generateMipmaps = false
-    return background
-  }, [canvas])
 
   useEffect(() => {
     let active = true
+    const canvas = document.createElement('canvas')
+    const texture = new CanvasTexture(canvas)
+    texture.colorSpace = SRGBColorSpace
+    texture.minFilter = LinearFilter
+    texture.magFilter = LinearFilter
+    texture.generateMipmaps = false
+
     const draw = () => {
       if (!active) return
       const heading = document.getElementById('next-step-heading')
@@ -111,10 +95,9 @@ function HeadingRefractionBackground({
       active = false
       observer.disconnect()
       window.removeEventListener('resize', draw)
+      texture.dispose()
     }
-  }, [canvas, gl, headingKey, invalidate, onTextureReady, texture])
-
-  useEffect(() => () => texture.dispose(), [texture])
+  }, [gl, headingKey, invalidate, onTextureReady])
 
   return null
 }
@@ -236,31 +219,14 @@ function Mark({ background }: { background: Texture | Color }) {
   )
 }
 
-function RenderQuality({ onContextLost }: { onContextLost: () => void }) {
-  const { gl, size, setDpr, invalidate } = useThree()
-  const onContextLostEvent = useEffectEvent(onContextLost)
-
-  useEffect(() => {
-    setDpr(Math.min(3, Math.max(1, 1080 / Math.max(1, size.height))))
-    invalidate()
-  }, [invalidate, setDpr, size.height])
-
-  useEffect(() => {
-    const canvas = gl.domElement
-    const handleContextLost = () => onContextLostEvent()
-    canvas.addEventListener('webglcontextlost', handleContextLost, { once: true })
-    return () => canvas.removeEventListener('webglcontextlost', handleContextLost)
-  }, [gl])
-
-  return null
-}
-
 export default function NextStepScene({
   fallback,
   heading,
+  onReady,
 }: {
   fallback: ReactNode
   heading: [string, string, string]
+  onReady?: () => void
 }) {
   const [lost, setLost] = useState(false)
   const [refractionBackground, setRefractionBackground] = useState<CanvasTexture | null>(null)
@@ -284,10 +250,8 @@ export default function NextStepScene({
       fallback={fallback}
     >
       <RenderQuality onContextLost={handleContextLost} />
-      <HeadingRefractionBackground
-        headingKey={headingKey}
-        onTextureReady={handleTextureReady}
-      />
+      {onReady && <RenderReady onReady={onReady} />}
+      <HeadingRefractionBackground headingKey={headingKey} onTextureReady={handleTextureReady} />
       <ambientLight color={warmWhite} intensity={0.3} />
       <Environment resolution={512} frames={1}>
         <Lightformer color={warmWhite} intensity={5} position={[-4, 1, 2]} scale={[1.2, 8, 1]} />

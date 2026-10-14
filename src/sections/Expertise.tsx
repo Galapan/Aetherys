@@ -1,8 +1,46 @@
 import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
-import { useEffect, useRef, useState } from 'react'
-import { m, useAnimate, useAnimationFrame, useInView, useMotionValue } from 'framer-motion'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import {
+  m,
+  useAnimate,
+  useAnimationFrame,
+  useInView,
+  useMotionValue,
+  type MotionValue,
+} from 'framer-motion'
 import type { ExpertiseContent } from '../content/expertise'
 import { RuleGrid } from '../components/ui/RuleGrid'
+
+function subscribeVisibility(onChange: () => void) {
+  document.addEventListener('visibilitychange', onChange)
+  return () => document.removeEventListener('visibilitychange', onChange)
+}
+
+function readVisibility() {
+  return !document.hidden
+}
+
+function ExpertiseRailDriver({
+  x,
+  groupWidthRef,
+  currentSpeedRef,
+  targetSpeedRef,
+}: {
+  x: MotionValue<number>
+  groupWidthRef: { current: number }
+  currentSpeedRef: { current: number }
+  targetSpeedRef: { current: number }
+}) {
+  useAnimationFrame((_, delta) => {
+    if (!groupWidthRef.current) return
+    const elapsed = Math.min(delta, 64) / 1000
+    const smoothing = 1 - Math.exp(-elapsed / 0.5)
+    currentSpeedRef.current += (targetSpeedRef.current - currentSpeedRef.current) * smoothing
+    x.set((x.get() - elapsed * currentSpeedRef.current) % groupWidthRef.current)
+  })
+
+  return null
+}
 
 interface ExpertiseProps {
   content: ExpertiseContent
@@ -18,7 +56,7 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
   const railVisible = useInView(rail)
   const [repeats, setRepeats] = useState(1)
   const groupWidth = useRef(0)
-  const pageVisible = useRef(!document.hidden)
+  const pageVisible = useSyncExternalStore(subscribeVisibility, readVisibility)
   const cruiseSpeed = useRef(0)
   const currentSpeed = useRef(0)
   const targetSpeed = useRef(0)
@@ -66,23 +104,10 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
     const observer = new ResizeObserver(measure)
     observer.observe(element)
     observer.observe(railElement)
-    const onVisibility = () => {
-      pageVisible.current = !document.hidden
-    }
-    document.addEventListener('visibilitychange', onVisibility)
     return () => {
       observer.disconnect()
-      document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [content.cards.length, moving, repeats, x])
-
-  useAnimationFrame((_, delta) => {
-    if (!moving || !railVisible || !pageVisible.current || !groupWidth.current) return
-    const elapsed = Math.min(delta, 64) / 1000
-    const smoothing = 1 - Math.exp(-elapsed / 0.5)
-    currentSpeed.current += (targetSpeed.current - currentSpeed.current) * smoothing
-    x.set((x.get() - elapsed * currentSpeed.current) % groupWidth.current)
-  })
 
   return (
     <section
@@ -127,6 +152,14 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
           }
         }}
       >
+        {moving && railVisible && pageVisible && (
+          <ExpertiseRailDriver
+            x={x}
+            groupWidthRef={groupWidth}
+            currentSpeedRef={currentSpeed}
+            targetSpeedRef={targetSpeed}
+          />
+        )}
         <m.div className={`flex ${moving ? 'w-max' : 'w-full'}`} style={{ x: moving ? x : 0 }}>
           {(moving ? [false, true] : [false]).map((duplicate) => (
             <ul

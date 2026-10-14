@@ -1,12 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useEffectEvent,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
@@ -14,6 +6,7 @@ import { Color, type Group } from 'three'
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import { heroMark } from '../../content/hero'
 import { useMotionPreferences } from '../../hooks/useMotionPreferences'
+import { RenderQuality, RenderReady } from '../RenderQuality'
 
 const EXTRUDE_OPTIONS = {
   depth: 13,
@@ -143,27 +136,13 @@ function Mark() {
   )
 }
 
-function RenderQuality({ onContextLost }: { onContextLost: () => void }) {
-  const { gl, size, setDpr, invalidate } = useThree()
-  const onContextLostEvent = useEffectEvent(onContextLost)
-
-  useEffect(() => {
-    // Target a 1080px-high drawing buffer, with a bounded cost on small screens.
-    setDpr(Math.min(3, Math.max(1, 1080 / Math.max(1, size.height))))
-    invalidate()
-  }, [invalidate, setDpr, size.height])
-
-  useEffect(() => {
-    const canvas = gl.domElement
-    const handleContextLost = () => onContextLostEvent()
-    canvas.addEventListener('webglcontextlost', handleContextLost, { once: true })
-    return () => canvas.removeEventListener('webglcontextlost', handleContextLost)
-  }, [gl])
-
-  return null
-}
-
-export default function HeroScene({ fallback }: { fallback: ReactNode }) {
+export default function HeroScene({
+  fallback,
+  onReady,
+}: {
+  fallback: ReactNode
+  onReady?: () => void
+}) {
   const [lost, setLost] = useState(false)
   const handleContextLost = useCallback(() => setLost(true), [])
   const colors = getComputedStyle(document.documentElement)
@@ -178,6 +157,7 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
       fallback={fallback}
     >
       <RenderQuality onContextLost={handleContextLost} />
+      {onReady && <RenderReady onReady={onReady} />}
       <ambientLight color={white} intensity={0.25} />
       <Environment resolution={512} frames={1}>
         <Lightformer color={white} intensity={5} position={[-4, 1, 2]} scale={[1.2, 8, 1]} />

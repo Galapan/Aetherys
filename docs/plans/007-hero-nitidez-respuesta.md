@@ -38,3 +38,11 @@ inmóviles superpuestas en el centro del símbolo. No copiar su contenido ni ass
   y 1920×1080; ES/EN, resolución del canvas, respuesta y reposo frontal, menú,
   reduced-motion dinámico, touch, fallo WebGL, pausa de renders. Playwright disponible
   en el runtime local para comprobaciones de comportamiento, sin instalar framework.
+
+## Addendum — calidad adaptativa (2026-10-13)
+
+El objetivo de resolución y el límite máximo DPR 3 permanecen vigentes. Por decisión del
+propietario, el acuerdo de optimización del 2026-10-13 añade degradación unidireccional bajo
+carga sostenida durante frames activos, por escalones hasta DPR 1.5 (o el objetivo por tamaño
+si es menor). No se aumenta la calidad durante la misma sesión de Canvas; así se evita
+oscilación de rendimiento.

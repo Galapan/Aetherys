@@ -144,7 +144,7 @@ Resumen vigente; las especificaciones exactas por elemento viven en los planes y
 - Geometría: el path trazado del logo vive en `content/hero.ts` (`heroMark.path`) y se extruye con `SVGLoader` de three. No fabricar una forma supuestamente equivalente.
 - Material actual (006): `meshPhysicalMaterial` (metal oscuro vino, grafito→borgoña 0.45, con `clearcoat`) y `Environment`/`Lightformer` de Drei. Sin HDRI remoto, bloom, postprocesamiento ni sombras dinámicas en MVP.
 - Cámara inicial: perspective fov 35, position [0,0,5]; centrar modelo y normalizar su dimensión mayor a 2.4 unidades. Ajustar solo si el plan identifica encuadre y valores sustitutos.
-- Canvas con DPR limitado a [1,1.5]. Pausar frames cuando sale del viewport o document.hidden; render bajo demanda cuando no hay movimiento.
+- Canvas con objetivo de 1080px físicos de alto (`clamp(1080 / height, 1, 3)`) y degradación adaptativa por carga hasta DPR 1.5; ver `docs/plans/007-hero-nitidez-respuesta.md` y el acuerdo de optimización del 2026-10-13. Pausar frames cuando sale del viewport o `document.hidden`; render bajo demanda cuando no hay movimiento.
 - Fallback si WebGL no está disponible, falla el contexto o el asset no carga. El texto y CTA no dependen del Canvas.
 - Objetivos iniciales: modelo <=1MB, <=50k triángulos; ninguna textura >1024px sin motivo documentado. Son presupuestos a medir, no resultados garantizados.
 - Logo vectorial real en `public/brand/aetherys-mark.svg`; el fallback estático de la escena lo usa. `public/brand/aetherys-mark.webp` y `public/models/aetherys-mark.glb` solo si el propietario los aporta.
@@ -166,6 +166,7 @@ src/
   components/ui/                 RuleGrid; pendiente: Button, Container, SectionHeading
   sections/                      Hero implementado; Services, Process, About, Contact pendientes
   features/hero/                 HeroMark (lazy + fallback) y HeroScene (R3F)
+  features/RenderQuality.tsx     calidad adaptativa compartida de Canvas WebGL
   features/nextstep/             NextStepMark (lazy + fallback) y NextStepScene (R3F vítreo)
   content/hero.ts                diccionario ES/EN y path del logo
   hooks/useMotionPreferences.ts  reduced-motion y hover dinámicos

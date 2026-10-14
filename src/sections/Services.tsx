@@ -1,5 +1,5 @@
 import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useSyncExternalStore } from 'react'
 import {
   m,
   useAnimationFrame,
@@ -64,6 +64,16 @@ const ease = [0.22, 1, 0.36, 1] as const
 const technologyEnter = { duration: 0.5, ease }
 const technologyLeave = { duration: 0.4, ease }
 const technologySpring = { type: 'spring', stiffness: 180, damping: 20, mass: 0.85 } as const
+const serviceFeatureSpring = { stiffness: 180, damping: 20, mass: 1 }
+
+function subscribeVisibility(onChange: () => void) {
+  document.addEventListener('visibilitychange', onChange)
+  return () => document.removeEventListener('visibilitychange', onChange)
+}
+
+function readVisibility() {
+  return !document.hidden
+}
 
 function ServiceFeature({
   item,
@@ -96,9 +106,8 @@ function ServiceFeature({
   const targetOpacity = useTransform(influence, (value) =>
     value === null ? 1 : 0.16 + value * 0.84,
   )
-  const spring = { stiffness: 360, damping: 30, mass: 0.25 }
-  const x = useSpring(targetX, spring)
-  const opacity = useSpring(targetOpacity, spring)
+  const x = useSpring(targetX, serviceFeatureSpring)
+  const opacity = useSpring(targetOpacity, serviceFeatureSpring)
 
   return (
     <li ref={element} className="overflow-hidden">
@@ -162,13 +171,43 @@ function ServiceRow({
   )
 }
 
+function TechnologyRailDriver({
+  x,
+  widthRef,
+  currentSpeedRef,
+  cruiseSpeedRef,
+  hoveredRef,
+  focusedRef,
+  canHover,
+}: {
+  x: MotionValue<number>
+  widthRef: { current: number }
+  currentSpeedRef: { current: number }
+  cruiseSpeedRef: { current: number }
+  hoveredRef: { current: boolean }
+  focusedRef: { current: boolean }
+  canHover: boolean
+}) {
+  useAnimationFrame((_, delta) => {
+    if (!widthRef.current) return
+    const elapsed = Math.min(delta, 64) / 1000
+    const targetSpeed =
+      (hoveredRef.current && canHover) || focusedRef.current ? 0 : cruiseSpeedRef.current
+    const smoothing = 1 - Math.exp(-elapsed / 0.5)
+    currentSpeedRef.current += (targetSpeed - currentSpeedRef.current) * smoothing
+    x.set((x.get() - elapsed * currentSpeedRef.current) % widthRef.current)
+  })
+
+  return null
+}
+
 function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
   const interactive = canHover && !reducedMotion
   const rail = useRef<HTMLDivElement>(null)
   const group = useRef<HTMLUListElement>(null)
   const visible = useInView(rail)
   const width = useRef(0)
-  const pageVisible = useRef(!document.hidden)
+  const pageVisible = useSyncExternalStore(subscribeVisibility, readVisibility)
   const hovered = useRef(false)
   const focused = useRef(false)
   const cruiseSpeed = useRef(0)
@@ -191,28 +230,13 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
       cruiseSpeed.current = width.current / technologies.length / 4
       x.set(0)
     }
-    const onVisibility = () => {
-      pageVisible.current = !document.hidden
-    }
     measure()
-    onVisibility()
     const observer = new ResizeObserver(measure)
     observer.observe(element)
-    document.addEventListener('visibilitychange', onVisibility)
     return () => {
       observer.disconnect()
-      document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [reducedMotion, x])
-
-  useAnimationFrame((_, delta) => {
-    if (reducedMotion || !visible || !pageVisible.current || !width.current) return
-    const elapsed = Math.min(delta, 64) / 1000
-    const targetSpeed = (hovered.current && canHover) || focused.current ? 0 : cruiseSpeed.current
-    const smoothing = 1 - Math.exp(-elapsed / 0.5)
-    currentSpeed.current += (targetSpeed - currentSpeed.current) * smoothing
-    x.set((x.get() - elapsed * currentSpeed.current) % width.current)
-  })
 
   return (
     <div className="mx-[calc(50%-50vw)] mt-12 w-screen lg:mt-16">
@@ -235,6 +259,17 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
           focused.current = false
         }}
       >
+        {!reducedMotion && visible && pageVisible && (
+          <TechnologyRailDriver
+            x={x}
+            widthRef={width}
+            currentSpeedRef={currentSpeed}
+            cruiseSpeedRef={cruiseSpeed}
+            hoveredRef={hovered}
+            focusedRef={focused}
+            canHover={canHover}
+          />
+        )}
         <m.div
           className={`flex ${reducedMotion ? 'w-full' : 'w-max'}`}
           style={{ x: reducedMotion ? 0 : x }}

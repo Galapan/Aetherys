@@ -13,6 +13,7 @@ import { RuleGrid } from '../components/ui/RuleGrid'
 
 const ease = [0.22, 1, 0.36, 1] as const
 const interval = 10_000
+const wideQuery = '(min-width: 768px)'
 // Neutral graphite icon, never a fabricated portrait.
 const profileIcon = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="none" stroke="#101014" stroke-width="2"><circle cx="32" cy="23" r="10"/><path d="M12 55v-5a20 20 0 0 1 40 0v5"/></g></svg>')}`
 
@@ -23,6 +24,36 @@ function subscribeVisibility(onChange: () => void) {
 
 function readVisibility() {
   return !document.hidden
+}
+
+function subscribeWide(onChange: () => void) {
+  const query = window.matchMedia(wideQuery)
+  query.addEventListener('change', onChange)
+  return () => query.removeEventListener('change', onChange)
+}
+
+function readWide() {
+  return window.matchMedia(wideQuery).matches
+}
+
+function useWide() {
+  return useSyncExternalStore(subscribeWide, readWide)
+}
+
+function ProgressDriver({
+  progress,
+  onCycle,
+}: {
+  progress: ReturnType<typeof useMotionValue<number>>
+  onCycle: () => void
+}) {
+  useAnimationFrame((_, delta) => {
+    const next = progress.get() + Math.min(delta, 64) / interval
+    if (next >= 1) onCycle()
+    else progress.set(next)
+  })
+
+  return null
 }
 
 function TestimonyCounter({
@@ -68,10 +99,12 @@ function Slide({
   item,
   animateEntry,
   reducedMotion,
+  detailed,
 }: {
   item: Testimony
   animateEntry: boolean
   reducedMotion: boolean
+  detailed: boolean
 }) {
   const present = useIsPresent()
   const image = testimonyImages[item.id]
@@ -97,30 +130,51 @@ function Slide({
             <span key={wordIndex}>
               {wordIndex > 0 ? ' ' : null}
               <span className="mb-[-0.12em] inline-block overflow-clip pb-[0.12em] align-top">
-                {Array.from(word).map((letter) => {
-                  const index = letterIndex++
-                  return (
-                    <m.span
-                      key={index}
-                      className="inline-block"
-                      variants={{
-                        enter: { y: '110%', opacity: 0 },
-                        visible: {
-                          y: '0%',
-                          opacity: 1,
-                          transition: timing(0.65, 0.18 + index * 0.0015),
-                        },
-                        exit: {
-                          y: '110%',
-                          opacity: 0,
-                          transition: timing(0.4, index * 0.001),
-                        },
-                      }}
-                    >
-                      {letter}
-                    </m.span>
-                  )
-                })}
+                {detailed ? (
+                  Array.from(word).map((letter) => {
+                    const index = letterIndex++
+                    return (
+                      <m.span
+                        key={index}
+                        className="inline-block"
+                        variants={{
+                          enter: { y: '110%', opacity: 0 },
+                          visible: {
+                            y: '0%',
+                            opacity: 1,
+                            transition: timing(0.65, 0.18 + index * 0.0015),
+                          },
+                          exit: {
+                            y: '110%',
+                            opacity: 0,
+                            transition: timing(0.4, index * 0.001),
+                          },
+                        }}
+                      >
+                        {letter}
+                      </m.span>
+                    )
+                  })
+                ) : (
+                  <m.span
+                    className="inline-block"
+                    variants={{
+                      enter: { y: '110%', opacity: 0 },
+                      visible: {
+                        y: '0%',
+                        opacity: 1,
+                        transition: timing(0.65, 0.18 + wordIndex * 0.02),
+                      },
+                      exit: {
+                        y: '110%',
+                        opacity: 0,
+                        transition: timing(0.4, wordIndex * 0.012),
+                      },
+                    }}
+                  >
+                    {word}
+                  </m.span>
+                )}
               </span>
             </span>
           ))}
@@ -185,6 +239,7 @@ export function Testimonies({
 }) {
   const visible = useInView(sectionRef, { amount: 0.35 })
   const pageVisible = useSyncExternalStore(subscribeVisibility, readVisibility)
+  const wide = useWide()
   const [active, setActive] = useState(0)
   const [hasChanged, setHasChanged] = useState(false)
   const progress = useMotionValue(0)
@@ -196,13 +251,6 @@ export function Testimonies({
     setHasChanged(true)
     setActive((current) => (current + direction + count) % count)
   }
-
-  useAnimationFrame((_, delta) => {
-    if (!playing || count < 2) return
-    const next = progress.get() + Math.min(delta, 64) / interval
-    if (next >= 1) change(1)
-    else progress.set(next)
-  })
 
   return (
     <section
@@ -266,6 +314,9 @@ export function Testimonies({
             aria-live={playing ? 'off' : 'polite'}
             aria-atomic="true"
           >
+            {playing && count > 1 && (
+              <ProgressDriver progress={progress} onCycle={() => change(1)} />
+            )}
             {/* Reserve the tallest quote so automatic changes never move the page. */}
             <div
               className="pointer-events-none invisible col-start-1 row-start-1 m-0 grid min-w-0"
@@ -286,6 +337,7 @@ export function Testimonies({
                 item={content.items[active]}
                 animateEntry={hasChanged}
                 reducedMotion={reducedMotion}
+                detailed={wide}
               />
             </AnimatePresence>
           </div>

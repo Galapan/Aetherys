@@ -1,13 +1,15 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { useLenis } from 'lenis/react'
+import { useInView } from 'framer-motion'
 import type { HeroContent } from '../../content/hero'
 
 interface ShowreelProps {
   content: HeroContent
   reducedMotion: boolean
   canHover: boolean
+  entering: boolean
 }
 
 interface Frame {
@@ -33,10 +35,22 @@ function playerFrame(): Frame {
   }
 }
 
-export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
+function subscribeVisibility(onChange: () => void) {
+  document.addEventListener('visibilitychange', onChange)
+  return () => document.removeEventListener('visibilitychange', onChange)
+}
+
+function readVisibility() {
+  return !document.hidden
+}
+
+export function Showreel({ content, reducedMotion, canHover, entering }: ShowreelProps) {
   const trigger = useRef<HTMLButtonElement>(null)
   const returnFocus = useRef(false)
   const [origin, setOrigin] = useState<Frame | null>(null)
+  const visible = useInView(trigger, { amount: 0 })
+  const pageVisible = useSyncExternalStore(subscribeVisibility, readVisibility)
+  const playPreview = !entering && visible && pageVisible && origin === null
 
   useEffect(() => {
     if (origin === null && returnFocus.current) {
@@ -44,6 +58,13 @@ export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
       trigger.current?.focus({ preventScroll: true })
     }
   }, [origin])
+
+  useEffect(() => {
+    const video = trigger.current?.querySelector('video')
+    if (!video) return
+    if (playPreview) void video.play().catch(() => {})
+    else video.pause()
+  }, [playPreview])
 
   return (
     <>
@@ -67,15 +88,16 @@ export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
           className="relative grid aspect-video place-items-center overflow-hidden"
           aria-hidden="true"
         >
-          <video
-            className="absolute inset-0 h-full w-full scale-[1.04] object-cover blur-[1px]"
-            src={content.showreel.video}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-          />
+          {playPreview && (
+            <video
+              className="absolute inset-0 h-full w-full scale-[1.04] object-cover blur-[1px]"
+              src={content.showreel.video}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+            />
+          )}
           <span className="absolute inset-0 bg-[color-mix(in_srgb,var(--color-graphite)_58%,transparent)]" />
           <span className="relative text-xs tracking-[0.08em] text-[var(--color-warm-white)]">
             {content.showreel.label.replace(/^\//, '')}
