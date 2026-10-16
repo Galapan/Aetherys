@@ -1,14 +1,16 @@
 import type { ProjectsContent } from '../content/projects'
+import type { Locale } from '../content/hero'
 import { Projects } from '../sections/Projects'
 import { RuleGrid } from '../components/ui/RuleGrid'
 
 interface ProyectosPageProps {
   content: ProjectsContent
+  locale: Locale
   reducedMotion: boolean
   canHover: boolean
 }
 
-export function ProyectosPage({ content, reducedMotion, canHover }: ProyectosPageProps) {
+export function ProyectosPage({ content, locale, reducedMotion, canHover }: ProyectosPageProps) {
   return (
     <section
       id="proyectos"
@@ -19,6 +21,7 @@ export function ProyectosPage({ content, reducedMotion, canHover }: ProyectosPag
       <RuleGrid className="absolute inset-x-0 top-0 h-full" spanClassName="bg-grid-burgundy" />
       <Projects
         content={content}
+        locale={locale}
         reducedMotion={reducedMotion}
         canHover={canHover}
         layout="stagger"

@@ -1,6 +1,6 @@
 import { m } from 'framer-motion'
 import type { Locale } from '../../content/hero'
-import { content as projectsContent } from '../../content/projects'
+import { content as projectsContent, projectHref } from '../../content/projects'
 import { menuContent } from '../../content/navigation'
 import { createReveal } from './menuMotion'
 
@@ -28,9 +28,8 @@ export function MenuProjects({ locale, expanded, reducedMotion }: MenuProjectsPr
         {projects.map((project, index) => (
           <li key={project.id} className="max-w-full overflow-hidden">
             <m.a
-              role="link"
-              aria-disabled="true"
-              className="bg-graphite/5 block max-w-full cursor-default rounded px-3 py-2 text-sm leading-[1.4] wrap-break-word uppercase md:text-base"
+              href={projectHref(project.slug, locale)}
+              className="bg-graphite/5 focus-visible:outline-graphite [@media(hover:hover)]:hover:text-burgundy block max-w-full rounded px-3 py-2 text-sm leading-[1.4] wrap-break-word uppercase focus-visible:outline-2 focus-visible:outline-offset-4 md:text-base"
               {...createReveal(expanded, reducedMotion, 0.48 + index * 0.055, true)}
             >
               {project.title}

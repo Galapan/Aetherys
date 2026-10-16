@@ -5,7 +5,7 @@ import { useLocalTime } from './hooks/useLocalTime'
 import { useHeroEntrance } from './hooks/useHeroEntrance'
 import { content, type Locale } from './content/hero'
 import { content as manifestoContent } from './content/manifesto'
-import { content as projectsContent } from './content/projects'
+import { content as projectsContent, findProject, findProjectIndex } from './content/projects'
 import { content as expertiseContent } from './content/expertise'
 import { content as servicesContent } from './content/services'
 import { content as processContent } from './content/process'
@@ -26,6 +26,7 @@ import { NextStep } from './sections/NextStep'
 import { HeroMark } from './features/hero/HeroMark'
 import { Showreel } from './features/hero/Showreel'
 import { ProyectosPage } from './pages/ProyectosPage'
+import { ProyectoDetailPage } from './pages/ProyectoDetailPage'
 
 function readLocale(): Locale {
   return new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'es'
@@ -36,10 +37,28 @@ function readPath(): string {
   return path === '' ? '/' : path
 }
 
+type Route = { kind: 'home' } | { kind: 'projects' } | { kind: 'project'; slug: string }
+
+function parseRoute(path: string): Route {
+  if (path === '/proyectos') return { kind: 'projects' }
+  const match = /^\/proyectos\/([^/]+)$/.exec(path)
+  if (match) return { kind: 'project', slug: decodeURIComponent(match[1]) }
+  return { kind: 'home' }
+}
+
 function App() {
   const [locale, setLocale] = useState<Locale>(readLocale)
   const [path, setPath] = useState<string>(readPath)
-  const isProjectsPage = path === '/proyectos'
+  const route = parseRoute(path)
+  const isLightPage = route.kind !== 'home'
+  const projectContent = projectsContent[locale]
+  const projectSlug = route.kind === 'project' ? route.slug : undefined
+  const project = projectSlug ? findProject(projectContent, projectSlug) : undefined
+  const projectIndex = projectSlug ? findProjectIndex(projectContent, projectSlug) : -1
+  const nextProject =
+    project && projectIndex >= 0
+      ? projectContent.cards[(projectIndex + 1) % projectContent.cards.length]
+      : undefined
   const { reducedMotion, canHover } = useMotionPreferences()
   const localTime = useLocalTime()
   const entering = useHeroEntrance(reducedMotion)
@@ -58,9 +77,9 @@ function App() {
 
   useEffect(() => {
     document.documentElement.lang = locale
-    document.title = copy.title
+    document.title = project ? `${project.title} — ${copy.brand}` : copy.title
     document.querySelector('meta[name="description"]')?.setAttribute('content', copy.description)
-  }, [locale, copy])
+  }, [locale, copy, project])
 
   function changeLocale(next: Locale) {
     if (next === locale) return
@@ -72,7 +91,7 @@ function App() {
 
   return (
     <div
-      className={`${isProjectsPage ? 'bg-warm-white' : 'bg-dark-gray'} isolate min-h-svh`}
+      className={`${isLightPage ? 'bg-warm-white' : 'bg-dark-gray'} isolate min-h-svh`}
       id="inicio"
     >
       <a
@@ -90,9 +109,19 @@ function App() {
         canHover={canHover}
       >
         <main id="main" tabIndex={-1}>
-          {isProjectsPage ? (
+          {route.kind === 'project' && project && nextProject ? (
+            <ProyectoDetailPage
+              card={project}
+              nextCard={nextProject}
+              content={projectContent}
+              locale={locale}
+              reducedMotion={reducedMotion}
+              canHover={canHover}
+            />
+          ) : route.kind !== 'home' ? (
             <ProyectosPage
-              content={projectsContent[locale]}
+              content={projectContent}
+              locale={locale}
               reducedMotion={reducedMotion}
               canHover={canHover}
             />
@@ -148,7 +177,8 @@ function App() {
                   spanClassName="bg-grid-burgundy"
                 />
                 <Projects
-                  content={projectsContent[locale]}
+                  content={projectContent}
+                  locale={locale}
                   reducedMotion={reducedMotion}
                   canHover={canHover}
                 />

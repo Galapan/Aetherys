@@ -2,6 +2,7 @@ import type { KeyboardEvent, RefObject } from 'react'
 import { m } from 'framer-motion'
 import type { HeroContent, Locale } from '../../content/hero'
 import { menuContact, menuContent, menuSocials } from '../../content/navigation'
+import { projectsHref } from '../../content/projects'
 import type { NavigationProps } from './LanguageSwitch'
 import { MenuFooter } from './MenuFooter'
 import { MenuLink } from './MenuLink'
@@ -56,7 +57,7 @@ export function MenuDialog({
   const { gap } = getMenuDimensions(snapshot)
   const links = [
     { href: '#main', label: content.homeLabel },
-    { href: '/proyectos', label: content.projectsLabel },
+    { href: projectsHref(navigation.locale), label: content.projectsLabel },
     { href: '#manifiesto', label: copy.about },
     { href: menuContact.emailHref, label: content.contact },
   ]

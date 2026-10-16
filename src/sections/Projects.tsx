@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
-import type { ProjectCard as ProjectCardData, ProjectsContent } from '../content/projects'
+import type { Locale } from '../content/hero'
+import {
+  projectHref,
+  projectLogoPaths,
+  type ProjectCard as ProjectCardData,
+  type ProjectsContent,
+} from '../content/projects'
 
 export type ProjectsLayout = 'grid' | 'stagger'
 
 interface ProjectsProps {
   content: ProjectsContent
+  locale: Locale
   reducedMotion: boolean
   canHover: boolean
   layout?: ProjectsLayout
@@ -66,6 +73,7 @@ interface ProjectCardProps {
   index: number
   total: number
   layout: ProjectsLayout
+  locale: Locale
   reducedMotion: boolean
   canHover: boolean
 }
@@ -81,6 +89,8 @@ interface ProjectCardVisualProps {
 }
 
 function ProjectCardMedia({ card, active, transition, reducedMotion }: ProjectCardVisualProps) {
+  const logo = projectLogoPaths[card.slug]
+
   return (
     <>
       <m.img
@@ -95,15 +105,31 @@ function ProjectCardMedia({ card, active, transition, reducedMotion }: ProjectCa
         animate={{ scale: active ? 1.1 : 1, filter: active ? 'blur(3px)' : 'blur(0px)' }}
         transition={transition}
       />
-      <m.span
-        className={`text-warm-white pointer-events-none absolute inset-0 z-1 grid place-items-center text-[20cqw] leading-none select-none text-shadow-[0_2px_14px_color-mix(in_srgb,var(--color-graphite)_55%,transparent)] ${markVariantClasses[card.markVariant]}`}
-        aria-hidden="true"
-        initial={false}
-        animate={{ opacity: active ? 0 : 1 }}
-        transition={{ ...transition, duration: reducedMotion ? 0 : 0.4 }}
-      >
-        {card.mark}
-      </m.span>
+      {logo ? (
+        <m.img
+          className="pointer-events-none absolute inset-0 z-1 m-auto max-h-[27.5%] max-w-[min(35cqw,210px)] object-contain"
+          src={logo}
+          alt=""
+          aria-hidden="true"
+          width={420}
+          height={120}
+          loading="lazy"
+          decoding="async"
+          initial={false}
+          animate={{ opacity: active ? 0 : 1 }}
+          transition={{ ...transition, duration: reducedMotion ? 0 : 0.4 }}
+        />
+      ) : (
+        <m.span
+          className={`text-warm-white pointer-events-none absolute inset-0 z-1 grid place-items-center text-[20cqw] leading-none select-none text-shadow-[0_2px_14px_color-mix(in_srgb,var(--color-graphite)_55%,transparent)] ${markVariantClasses[card.markVariant]}`}
+          aria-hidden="true"
+          initial={false}
+          animate={{ opacity: active ? 0 : 1 }}
+          transition={{ ...transition, duration: reducedMotion ? 0 : 0.4 }}
+        >
+          {card.mark}
+        </m.span>
+      )}
     </>
   )
 }
@@ -143,7 +169,15 @@ function ProjectCardDetails({ card, active, showCategory, transition }: ProjectC
   )
 }
 
-function ProjectCard({ card, index, total, layout, reducedMotion, canHover }: ProjectCardProps) {
+function ProjectCard({
+  card,
+  index,
+  total,
+  layout,
+  locale,
+  reducedMotion,
+  canHover,
+}: ProjectCardProps) {
   const [hovered, setHovered] = useState(false)
   const active = canHover && !reducedMotion && hovered
   const showCategory = active || !canHover || reducedMotion
@@ -163,27 +197,32 @@ function ProjectCard({ card, index, total, layout, reducedMotion, canHover }: Pr
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
     >
-      {/* Keep the hit area fixed while only the visual surface retracts. */}
-      <m.div
-        className="bg-burgundy text-warm-white absolute inset-0 overflow-hidden rounded-lg"
-        initial={false}
-        animate={{ clipPath: `inset(${active ? 20 : 0}px round 8px)` }}
-        transition={transition}
+      <a
+        className="focus-visible:outline-burgundy block h-full w-full rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4"
+        href={projectHref(card.slug, locale)}
       >
-        <ProjectCardMedia
-          card={card}
-          active={active}
+        {/* Keep the hit area fixed while only the visual surface retracts. */}
+        <m.div
+          className="bg-burgundy text-warm-white absolute inset-0 overflow-hidden rounded-lg"
+          initial={false}
+          animate={{ clipPath: `inset(${active ? 20 : 0}px round 8px)` }}
           transition={transition}
-          reducedMotion={reducedMotion}
-        />
-        <ProjectCardDetails
-          card={card}
-          active={active}
-          showCategory={showCategory}
-          transition={transition}
-          reducedMotion={reducedMotion}
-        />
-      </m.div>
+        >
+          <ProjectCardMedia
+            card={card}
+            active={active}
+            transition={transition}
+            reducedMotion={reducedMotion}
+          />
+          <ProjectCardDetails
+            card={card}
+            active={active}
+            showCategory={showCategory}
+            transition={transition}
+            reducedMotion={reducedMotion}
+          />
+        </m.div>
+      </a>
     </m.article>
   )
 }
@@ -279,7 +318,13 @@ function ProjectHeading({
   )
 }
 
-export function Projects({ content, reducedMotion, canHover, layout = 'grid' }: ProjectsProps) {
+export function Projects({
+  content,
+  locale,
+  reducedMotion,
+  canHover,
+  layout = 'grid',
+}: ProjectsProps) {
   const total = content.cards.length
   const [activeIndex, setActiveIndex] = useState(0)
   const deckRef = useRef<HTMLDivElement>(null)
@@ -354,6 +399,7 @@ export function Projects({ content, reducedMotion, canHover, layout = 'grid' }: 
             index={index}
             total={total}
             layout={layout}
+            locale={locale}
             reducedMotion={reducedMotion}
             canHover={canHover}
           />
