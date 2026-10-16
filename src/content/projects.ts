@@ -1,14 +1,35 @@
 import type { Locale } from './hero'
+import { routes, withLocale } from '@/routes'
 
 export type MarkVariant = 'grotesque' | 'contrast' | 'geometric' | 'mono' | 'slab' | 'display'
 
 export const projectLogoPaths: Record<string, string> = {
-  sigsor: '/proyectos/proyecto-sigsor-logo.svg',
-  impulso: '/proyectos/proyecto-impulso-logo.svg',
-  smyt: '/proyectos/proyecto-smyt-logo.svg',
-  flow: '/proyectos/proyecto-flow-logo.svg',
-  buap: '/proyectos/proyecto-buap-logo.svg',
-  gaucho: '/proyectos/proyecto-gaucho-logo.svg',
+  sigsor: '/media/projects/proyecto-sigsor-logo.svg',
+  impulso: '/media/projects/proyecto-impulso-logo.svg',
+  smyt: '/media/projects/proyecto-smyt-logo.svg',
+  flow: '/media/projects/proyecto-flow-logo.svg',
+  buap: '/media/projects/proyecto-buap-logo.webp',
+  gaucho: '/media/projects/proyecto-gaucho-logo.svg',
+}
+
+// Downscaled variants generated next to each full-size background (-960/-1600.webp).
+// FLOW is only 798px wide, so it ships the original alone.
+const responsiveWidths = [960, 1600]
+const fullWidths: Record<string, number> = {
+  sigsor: 3410,
+  impulso: 2944,
+  smyt: 2944,
+  buap: 3413,
+  gaucho: 3620,
+}
+
+export function projectImageSrcSet(card: Pick<ProjectCard, 'slug' | 'image'>): string | undefined {
+  const full = fullWidths[card.slug]
+  if (!full) return undefined
+  const base = card.image.replace(/\.webp$/, '')
+  return [...responsiveWidths.map((w) => `${base}-${w}.webp ${w}w`), `${card.image} ${full}w`].join(
+    ', ',
+  )
 }
 
 export interface ProjectCard {
@@ -48,7 +69,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'Desarrollo web',
         id: 'proyecto-sigsor',
-        image: '/proyectos/proyecto-sigsor-fondo.jpg',
+        image: '/media/projects/proyecto-sigsor-fondo.webp',
         imageAlt: 'Captura de pantalla de Sigsor',
         mark: 'S',
         markVariant: 'grotesque',
@@ -59,7 +80,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'Plataforma SaaS',
         id: 'proyecto-impulso',
-        image: '/proyectos/proyecto-impulso-fondo.jpeg',
+        image: '/media/projects/proyecto-impulso-fondo.webp',
         imageAlt: 'Captura de pantalla de Impulso',
         mark: 'I',
         markVariant: 'contrast',
@@ -70,7 +91,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'Plataforma SaaS',
         id: 'proyecto-proyecto-03',
-        image: '/proyectos/proyecto-smyt-fondo.jpeg',
+        image: '/media/projects/proyecto-smyt-fondo.webp',
         imageAlt: 'Captura de pantalla de SMyT',
         mark: 'S',
         markVariant: 'geometric',
@@ -81,7 +102,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'Desarrollo web',
         id: 'proyecto-flow',
-        image: '/proyectos/proyecto-flow-fondo.jpg',
+        image: '/media/projects/proyecto-flow-fondo.webp',
         imageAlt: 'Captura de pantalla de FLOW',
         mark: 'f',
         markVariant: 'mono',
@@ -92,7 +113,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'Modernización de sistemas',
         id: 'proyecto-buap',
-        image: '/proyectos/proyecto-buap-fondo.jpg',
+        image: '/media/projects/proyecto-buap-fondo.webp',
         imageAlt: 'Captura de pantalla de BUAP',
         mark: 'B',
         markVariant: 'slab',
@@ -103,7 +124,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'Plataforma SaaS',
         id: 'proyecto-gaucho',
-        image: '/proyectos/proyecto-gaucho-fondo.jpg',
+        image: '/media/projects/proyecto-gaucho-fondo.webp',
         imageAlt: 'Captura de pantalla de Gaucho',
         mark: 'G',
         markVariant: 'display',
@@ -124,7 +145,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'Web development',
         id: 'proyecto-sigsor',
-        image: '/proyectos/proyecto-sigsor-fondo.jpg',
+        image: '/media/projects/proyecto-sigsor-fondo.webp',
         imageAlt: 'Screenshot of Sigsor',
         mark: 'S',
         markVariant: 'grotesque',
@@ -135,7 +156,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'SaaS platform',
         id: 'proyecto-impulso',
-        image: '/proyectos/proyecto-impulso-fondo.jpeg',
+        image: '/media/projects/proyecto-impulso-fondo.webp',
         imageAlt: 'Screenshot of Impulso',
         mark: 'I',
         markVariant: 'contrast',
@@ -146,7 +167,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'AI integration',
         id: 'proyecto-proyecto-03',
-        image: '/proyectos/proyecto-smyt-fondo.jpeg',
+        image: '/media/projects/proyecto-smyt-fondo.webp',
         imageAlt: 'Screenshot of SMyT',
         mark: 'S',
         markVariant: 'geometric',
@@ -157,7 +178,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'Web development',
         id: 'proyecto-flow',
-        image: '/proyectos/proyecto-flow-fondo.jpg',
+        image: '/media/projects/proyecto-flow-fondo.webp',
         imageAlt: 'Screenshot of FLOW',
         mark: 'f',
         markVariant: 'mono',
@@ -168,7 +189,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'Systems modernisation',
         id: 'proyecto-buap',
-        image: '/proyectos/proyecto-buap-fondo.jpg',
+        image: '/media/projects/proyecto-buap-fondo.webp',
         imageAlt: 'Screenshot of BUAP',
         mark: 'B',
         markVariant: 'slab',
@@ -179,7 +200,7 @@ export const content: Record<Locale, ProjectsContent> = {
         year: '2026',
         category: 'SaaS platform',
         id: 'proyecto-gaucho',
-        image: '/proyectos/proyecto-gaucho-fondo.jpg',
+        image: '/media/projects/proyecto-gaucho-fondo.webp',
         imageAlt: 'Screenshot of Gaucho',
         mark: 'G',
         markVariant: 'display',
@@ -189,11 +210,11 @@ export const content: Record<Locale, ProjectsContent> = {
 }
 
 export function projectHref(slug: string, locale: Locale): string {
-  return locale === 'en' ? `/proyectos/${slug}?lang=en` : `/proyectos/${slug}`
+  return withLocale(`${routes.projects}/${encodeURIComponent(slug)}`, locale)
 }
 
 export function projectsHref(locale: Locale): string {
-  return locale === 'en' ? '/proyectos?lang=en' : '/proyectos'
+  return withLocale(routes.projects, locale)
 }
 
 export function findProject(content: ProjectsContent, slug: string): ProjectCard | undefined {

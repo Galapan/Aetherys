@@ -44,7 +44,7 @@ Solo estos cuatro colores base están autorizados:
 - No usar borgoña para texto pequeño sobre grafito. Botón principal: fondo borgoña, texto blanco cálido y borde blanco cálido al 35%; foco blanco cálido de 2px con separación de 4px.
 - Logo: una A estilizada de trazos blancos continuos, curvas superiores y huecos internos, según imagen entregada. Conservar su geometría; no sustituirla por una A tipográfica ni rediseñarla.
 - La imagen adjunta tenía fondo azul oscuro: ese fondo NO pertenece a la nueva paleta.
-- Logo en uso: `public/brand/aetherys-mark.svg`; su path trazado desde el raster del propietario vive en `content/hero.ts` (`heroMark.path`). No asumir que `src/assets/hero.png` sea el logo correcto sin inspección.
+- Logo en uso: `public/media/brand/aetherys-mark.svg`; su path trazado desde el raster del propietario vive en `content/hero.ts` (`heroMark.path`). No asumir que `src/assets/hero.png` sea el logo correcto sin inspección.
 - Pendiente: el vector original del propietario, si desea sustituir la traza actual.
 
 ## 4. Referencia y adaptación
@@ -147,7 +147,7 @@ Resumen vigente; las especificaciones exactas por elemento viven en los planes y
 - Canvas con DPR limitado a [1,1.5]. Pausar frames cuando sale del viewport o document.hidden; render bajo demanda cuando no hay movimiento.
 - Fallback si WebGL no está disponible, falla el contexto o el asset no carga. El texto y CTA no dependen del Canvas.
 - Objetivos iniciales: modelo <=1MB, <=50k triángulos; ninguna textura >1024px sin motivo documentado. Son presupuestos a medir, no resultados garantizados.
-- Logo vectorial real en `public/brand/aetherys-mark.svg`; el fallback estático de la escena lo usa. `public/brand/aetherys-mark.webp` y `public/models/aetherys-mark.glb` solo si el propietario los aporta.
+- Logo vectorial real en `public/media/brand/aetherys-mark.svg`; el fallback estático de la escena lo usa. `public/media/brand/aetherys-mark.webp` y `public/models/aetherys-mark.glb` solo si el propietario los aporta.
 - No descargar ni reutilizar recursos de Metabole. No generar splash arts ni comprar assets sin tarea explícita.
 
 ## 10. Organización objetivo del código
@@ -169,7 +169,7 @@ src/
   features/nextstep/             NextStepMark (lazy + fallback) y NextStepScene (R3F vítreo)
   content/hero.ts                diccionario ES/EN y path del logo
   hooks/useMotionPreferences.ts  reduced-motion y hover dinámicos
-public/brand/                    aetherys-mark.svg
+public/media/brand/                    aetherys-mark.svg
 docs/plans/                      decisiones y especificaciones duraderas; planes de trabajo por solicitud se entregan en conversación (§11)
 docs/verification/               evidencia histórica y referencias para el propietario; no requisito de cierre para el ejecutor
 ```

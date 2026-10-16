@@ -1,8 +1,8 @@
-import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
+import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { m, stagger, useAnimate, useInView } from 'framer-motion'
-import { joinUsAssets, type JoinUsContent } from '../content/joinUs'
-import { RuleGrid } from '../components/ui/RuleGrid'
+import { joinUsAssets, type JoinUsContent } from '@/content/joinUs'
+import { RuleGrid } from '@/components/ui/RuleGrid'
 
 interface JoinUsProps {
   content: JoinUsContent

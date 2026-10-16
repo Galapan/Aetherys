@@ -1,37 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, m } from 'framer-motion'
-import type { Locale } from '../content/hero'
-import {
-  projectHref,
-  projectLogoPaths,
-  type ProjectCard as ProjectCardData,
-  type ProjectsContent,
-} from '../content/projects'
-
-export type ProjectsLayout = 'grid' | 'stagger'
+import { m } from 'framer-motion'
+import type { Locale } from '@/content/hero'
+import type { ProjectsContent } from '@/content/projects'
+import { ProjectCard } from './projects/ProjectCard'
+import { reveal } from './projects/reveal'
 
 interface ProjectsProps {
   content: ProjectsContent
   locale: Locale
   reducedMotion: boolean
   canHover: boolean
-  layout?: ProjectsLayout
 }
 
-function reveal(index: number, reducedMotion: boolean) {
-  return {
-    initial: reducedMotion ? false : { opacity: 0, y: 32 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, amount: 0.3 },
-    transition: {
-      duration: reducedMotion ? 0 : 0.7,
-      delay: reducedMotion ? 0 : index * 0.08,
-      ease: 'easeOut' as const,
-    },
-  }
-}
-
-const desktopCardAreas = [
+const cardAreas = [
   'lg:[grid-area:1/1]',
   'lg:[grid-area:2/1]',
   'lg:[grid-area:1/3]',
@@ -40,256 +20,14 @@ const desktopCardAreas = [
   'lg:[grid-area:3/3]',
 ]
 
-const gridContainerClasses =
-  'flex flex-col gap-[clamp(32px,5vw,80px)] lg:grid lg:grid-cols-[40vw_minmax(0,1fr)_40vw] lg:gap-x-0'
-
-// Stagger cards are 10% shorter than the original 52vw cards (aspect 1133/720
-// on lg, height = width * 720/1133; base aspect 50/27 below lg).
-// Each next card starts at 7/8 of the previous one, so the overlap is height / 8.
-const staggerContainerClasses =
-  'flex flex-col gap-[clamp(32px,5vw,80px)] [--stagger-w:clamp(255px,44.19vw,1020px)] [--stagger-h:calc(var(--stagger-w)_*_720_/_1133)] [--stagger-overlap:calc(var(--stagger-h)_/_-8)] lg:gap-0'
-
-function cardPlacement(layout: ProjectsLayout, index: number) {
-  if (layout === 'grid') return desktopCardAreas[index] ?? ''
-  return [
-    'lg:aspect-[1133/720]',
-    'lg:w-[var(--stagger-w)]',
-    index % 2 === 0 ? 'lg:self-start' : 'lg:self-end',
-    index > 0 ? 'lg:mt-[var(--stagger-overlap)]' : '',
-  ].join(' ')
-}
-
-const markVariantClasses: Record<ProjectCardData['markVariant'], string> = {
-  grotesque: 'font-grotesque font-bold tracking-[-0.04em] indent-[-0.04em]',
-  contrast: 'font-contrast italic tracking-[0.02em] indent-[0.02em]',
-  geometric: 'font-geometric font-light tracking-[0.16em] indent-[0.16em]',
-  mono: 'font-mono-mark font-medium tracking-[-0.06em] indent-[-0.06em]',
-  slab: 'font-slab font-bold tracking-[0.02em] indent-[0.02em]',
-  display: 'font-display font-bold tracking-[-0.02em] indent-[-0.02em]',
-}
-
-interface ProjectCardProps {
-  card: ProjectCardData
-  index: number
-  total: number
-  layout: ProjectsLayout
-  locale: Locale
-  reducedMotion: boolean
-  canHover: boolean
-}
-
-interface ProjectCardVisualProps {
-  card: ProjectCardData
-  active: boolean
-  transition: {
-    duration: number
-    ease: readonly [0.22, 1, 0.36, 1]
-  }
-  reducedMotion: boolean
-}
-
-function ProjectCardMedia({ card, active, transition, reducedMotion }: ProjectCardVisualProps) {
-  const logo = projectLogoPaths[card.slug]
-
-  return (
-    <>
-      <m.img
-        className="block h-full w-full object-cover"
-        src={card.image}
-        alt={card.imageAlt}
-        loading="lazy"
-        decoding="async"
-        width={1200}
-        height={675}
-        initial={false}
-        animate={{ scale: active ? 1.1 : 1, filter: active ? 'blur(3px)' : 'blur(0px)' }}
-        transition={transition}
-      />
-      {logo ? (
-        <m.img
-          className="pointer-events-none absolute inset-0 z-1 m-auto max-h-[27.5%] max-w-[min(35cqw,210px)] object-contain"
-          src={logo}
-          alt=""
-          aria-hidden="true"
-          width={420}
-          height={120}
-          loading="lazy"
-          decoding="async"
-          initial={false}
-          animate={{ opacity: active ? 0 : 1 }}
-          transition={{ ...transition, duration: reducedMotion ? 0 : 0.4 }}
-        />
-      ) : (
-        <m.span
-          className={`text-warm-white pointer-events-none absolute inset-0 z-1 grid place-items-center text-[20cqw] leading-none select-none text-shadow-[0_2px_14px_color-mix(in_srgb,var(--color-graphite)_55%,transparent)] ${markVariantClasses[card.markVariant]}`}
-          aria-hidden="true"
-          initial={false}
-          animate={{ opacity: active ? 0 : 1 }}
-          transition={{ ...transition, duration: reducedMotion ? 0 : 0.4 }}
-        >
-          {card.mark}
-        </m.span>
-      )}
-    </>
-  )
-}
-
-interface ProjectCardDetailsProps extends ProjectCardVisualProps {
-  showCategory: boolean
-}
-
-function ProjectCardDetails({ card, active, showCategory, transition }: ProjectCardDetailsProps) {
-  return (
-    <m.div
-      className="text-warm-white pointer-events-none absolute right-[22px] bottom-[22px] left-[22px] z-1 text-shadow-[0_2px_10px_var(--color-graphite),0_1px_3px_var(--color-graphite)]"
-      layout
-      initial={false}
-      style={{ left: active ? 42 : 22, right: active ? 42 : 22 }}
-      animate={{ y: active ? -20 : 0 }}
-      transition={transition}
-    >
-      <m.div
-        className="flex items-baseline justify-between gap-4 text-[clamp(11px,2.8cqw,15px)] leading-[1.4]"
-        initial={false}
-        animate={{ y: showCategory ? -40 : 0 }}
-        transition={transition}
-      >
-        <h3 className="font-medium uppercase before:content-['/']">{card.title}</h3>
-        {card.year && <span className="shrink-0">{card.year}</span>}
-      </m.div>
-      <m.div
-        className="bg-warm-white text-graphite absolute bottom-0 w-fit max-w-full rounded px-[10px] py-[6px] text-[clamp(10px,2cqw,12px)] leading-[1.4] uppercase text-shadow-none"
-        initial={false}
-        animate={{ opacity: showCategory ? 1 : 0, y: showCategory ? 0 : 16 }}
-        transition={{ ...transition, delay: active ? 0.12 : 0 }}
-      >
-        {card.category}
-      </m.div>
-    </m.div>
-  )
-}
-
-function ProjectCard({
-  card,
-  index,
-  total,
-  layout,
-  locale,
-  reducedMotion,
-  canHover,
-}: ProjectCardProps) {
-  const [hovered, setHovered] = useState(false)
-  const active = canHover && !reducedMotion && hovered
-  const showCategory = active || !canHover || reducedMotion
-  const transition = {
-    duration: reducedMotion ? 0 : 0.95,
-    ease: [0.22, 1, 0.36, 1] as const,
-  }
-
-  return (
-    <m.article
-      id={card.id}
-      data-project-index={index}
-      tabIndex={-1}
-      className={`text-warm-white [container-type:inline-size] relative ${layout === 'stagger' ? 'aspect-[50/27]' : 'aspect-[5/3]'} w-full scroll-mt-[calc(var(--header-height)+24px)] ${cardPlacement(layout, index)}`}
-      style={layout === 'stagger' ? { zIndex: total - index } : undefined}
-      {...reveal(index, reducedMotion)}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
-    >
-      <a
-        className="focus-visible:outline-burgundy block h-full w-full rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4"
-        href={projectHref(card.slug, locale)}
-      >
-        {/* Keep the hit area fixed while only the visual surface retracts. */}
-        <m.div
-          className="bg-burgundy text-warm-white absolute inset-0 overflow-hidden rounded-lg"
-          initial={false}
-          animate={{ clipPath: `inset(${active ? 20 : 0}px round 8px)` }}
-          transition={transition}
-        >
-          <ProjectCardMedia
-            card={card}
-            active={active}
-            transition={transition}
-            reducedMotion={reducedMotion}
-          />
-          <ProjectCardDetails
-            card={card}
-            active={active}
-            showCategory={showCategory}
-            transition={transition}
-            reducedMotion={reducedMotion}
-          />
-        </m.div>
-      </a>
-    </m.article>
-  )
-}
-
-interface ProjectHeadingProps {
-  content: ProjectsContent
-  activeTitle: string
-  activeYear?: string
-  layout: ProjectsLayout
-  reducedMotion: boolean
-}
-
-const staggerHeadingClasses =
-  'text-graphite lg:text-warm-white m-0 text-center text-[64px] leading-[1.1] font-medium uppercase tracking-[-0.03em] lg:text-[clamp(3rem,4.2vw,4.5rem)]'
-
-const gridHeadingClasses =
+const headingClasses =
   'text-burgundy m-0 text-center text-[16px] leading-[1.1] font-medium tracking-[-0.03em] lg:text-[clamp(0.75rem,1.05vw,1.125rem)]'
 
-function ProjectHeading({
-  content,
-  activeTitle,
-  activeYear,
-  layout,
-  reducedMotion,
-}: ProjectHeadingProps) {
-  if (layout === 'stagger') {
-    return (
-      <m.h2
-        id="proyectos-heading"
-        className={staggerHeadingClasses}
-        {...reveal(0.2, reducedMotion)}
-      >
-        <span
-          className="inline-flex items-baseline gap-[clamp(16px,2vw,40px)]"
-          style={{ perspective: '400px' }}
-        >
-          <span className="text-[12px] leading-[1.4] tracking-[0.08em] uppercase">
-            {content.sideLabel}
-          </span>
-          <span className="inline-flex">
-            <AnimatePresence mode="wait" initial={false}>
-              <m.span
-                key={activeTitle}
-                className="inline-block"
-                initial={reducedMotion ? false : { opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reducedMotion ? undefined : { opacity: 0, y: -24 }}
-                transition={{ duration: reducedMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-              >
-                /{activeTitle}
-              </m.span>
-            </AnimatePresence>
-          </span>
-          {activeYear && (
-            <span className="text-[12px] leading-[1.4] tracking-[0.08em] uppercase">
-              {activeYear}
-            </span>
-          )}
-        </span>
-      </m.h2>
-    )
-  }
-
+function ProjectsHeading({ label, reducedMotion }: { label: string; reducedMotion: boolean }) {
   return (
-    <m.h2 id="proyectos-heading" className={gridHeadingClasses} {...reveal(0.2, reducedMotion)}>
+    <m.h2 id="proyectos-heading" className={headingClasses} {...reveal(0.2, reducedMotion)}>
       <span className="relative inline-block pb-[7px]">
-        {content.eyebrow}
+        {label}
         <m.span
           className="absolute right-0 bottom-0 left-0 h-px origin-left bg-current"
           initial={reducedMotion ? false : { scaleX: 0 }}
@@ -318,90 +56,24 @@ function ProjectHeading({
   )
 }
 
-export function Projects({
-  content,
-  locale,
-  reducedMotion,
-  canHover,
-  layout = 'grid',
-}: ProjectsProps) {
-  const total = content.cards.length
-  const [activeIndex, setActiveIndex] = useState(0)
-  const deckRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (layout !== 'stagger') return
-
-    const deck = deckRef.current
-    if (!deck) return
-
-    const headings = Array.from(deck.querySelectorAll<HTMLElement>('[data-project-index]'))
-    let frame = 0
-    const syncActiveProject = () => {
-      frame = 0
-      const reference = window.innerHeight * 0.5
-      let bestIndex = 0
-      let bestDistance = Number.POSITIVE_INFINITY
-      headings.forEach((el) => {
-        const rect = el.getBoundingClientRect()
-        const distance = Math.abs(rect.top + rect.height / 2 - reference)
-        if (distance < bestDistance) {
-          bestDistance = distance
-          bestIndex = Number(el.dataset.projectIndex)
-        }
-      })
-      setActiveIndex(bestIndex)
-    }
-    const scheduleSync = () => {
-      if (frame) return
-      frame = requestAnimationFrame(syncActiveProject)
-    }
-
-    syncActiveProject()
-    window.addEventListener('scroll', scheduleSync, { passive: true })
-    window.addEventListener('resize', scheduleSync)
-    return () => {
-      if (frame) cancelAnimationFrame(frame)
-      window.removeEventListener('scroll', scheduleSync)
-      window.removeEventListener('resize', scheduleSync)
-    }
-  }, [layout])
-
-  const activeCard = content.cards[activeIndex]
-  const activeTitle = activeCard?.title ?? content.cards[0]?.title ?? content.eyebrow
-  const activeYear = activeCard?.year ?? content.cards[0]?.year
-
+/** Home section: 3×2 grid around a sticky eyebrow. The full deck lives in ProyectosPage. */
+export function Projects({ content, locale, reducedMotion, canHover }: ProjectsProps) {
   return (
     <div className="relative px-[var(--page-padding)]">
-      <div
-        className={`bg-warm-white pointer-events-none relative mb-8 flex min-h-14 items-center justify-start lg:sticky lg:top-[50svh] lg:mb-0 lg:h-0 lg:min-h-0 lg:justify-center lg:bg-transparent ${
-          layout === 'stagger'
-            ? 'z-20 lg:mx-auto lg:w-fit lg:mix-blend-difference lg:will-change-transform'
-            : 'z-2'
-        }`}
-      >
-        <ProjectHeading
-          content={content}
-          activeTitle={activeTitle}
-          activeYear={activeYear}
-          layout={layout}
-          reducedMotion={reducedMotion}
-        />
+      <div className="bg-warm-white pointer-events-none relative z-2 mb-8 flex min-h-14 items-center justify-start lg:sticky lg:top-[50svh] lg:mb-0 lg:h-0 lg:min-h-0 lg:justify-center lg:bg-transparent">
+        <ProjectsHeading label={content.eyebrow} reducedMotion={reducedMotion} />
       </div>
-      <div
-        ref={deckRef}
-        className={layout === 'stagger' ? staggerContainerClasses : gridContainerClasses}
-      >
+      <div className="flex flex-col gap-[clamp(32px,5vw,80px)] lg:grid lg:grid-cols-[40vw_minmax(0,1fr)_40vw] lg:gap-x-0">
         {content.cards.map((card, index) => (
           <ProjectCard
             key={card.id}
             card={card}
             index={index}
-            total={total}
-            layout={layout}
             locale={locale}
             reducedMotion={reducedMotion}
             canHover={canHover}
+            className={`aspect-[5/3] ${cardAreas[index] ?? ''}`}
+            sizes="(min-width: 1024px) 40vw, 100vw"
           />
         ))}
       </div>

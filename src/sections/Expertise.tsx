@@ -1,8 +1,8 @@
-import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
+import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import { useEffect, useRef, useState } from 'react'
 import { m, useAnimate, useAnimationFrame, useInView, useMotionValue } from 'framer-motion'
-import type { ExpertiseContent } from '../content/expertise'
-import { RuleGrid } from '../components/ui/RuleGrid'
+import type { ExpertiseContent } from '@/content/expertise'
+import { RuleGrid } from '@/components/ui/RuleGrid'
 
 interface ExpertiseProps {
   content: ExpertiseContent

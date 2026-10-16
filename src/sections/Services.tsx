@@ -1,4 +1,4 @@
-import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
+import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import { useEffect, useRef } from 'react'
 import {
   m,
@@ -31,8 +31,8 @@ import {
   SiVite,
 } from 'react-icons/si'
 import type { IconType } from 'react-icons'
-import { technologies, type Service, type ServicesContent } from '../content/services'
-import { RuleGrid } from '../components/ui/RuleGrid'
+import { technologies, type Service, type ServicesContent } from '@/content/services'
+import { RuleGrid } from '@/components/ui/RuleGrid'
 
 interface ServicesProps {
   content: ServicesContent

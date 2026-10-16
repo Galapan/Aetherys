@@ -1,5 +1,5 @@
 import { m } from 'framer-motion'
-import type { HeroContent } from '../../content/hero'
+import type { HeroContent } from '@/content/hero'
 import { createLabelTransition, type SceneTransition } from './menuMotion'
 
 interface MenuCloseButtonProps {

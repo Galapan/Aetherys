@@ -6,8 +6,8 @@ import { createSceneTransition, getMenuDimensions } from './menuMotion'
 import { PageSurface } from './PageSurface'
 import { SiteHeader } from './SiteHeader'
 import { useMenuScene } from './useMenuScene'
-import { audioSrc } from '../ui/AudioToggle'
-import type { Locale } from '../../content/hero'
+import { audioSrc } from '@/components/ui/AudioToggle'
+import type { Locale } from '@/content/hero'
 
 interface NavbarProps extends NavigationProps {
   children: ReactNode

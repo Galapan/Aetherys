@@ -1,5 +1,5 @@
 import { Component, lazy, Suspense, type ReactNode } from 'react'
-import { heroMark } from '../../content/hero'
+import { heroMark } from '@/content/hero'
 
 const HeroScene = lazy(() => import('./HeroScene'))
 

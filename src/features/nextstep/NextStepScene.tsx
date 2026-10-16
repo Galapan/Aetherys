@@ -10,17 +10,10 @@ import {
 import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
-import {
-  CanvasTexture,
-  Color,
-  LinearFilter,
-  SRGBColorSpace,
-  type Group,
-  type Texture,
-} from 'three'
+import { CanvasTexture, Color, LinearFilter, SRGBColorSpace, type Group, type Texture } from 'three'
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
-import { heroMark } from '../../content/hero'
-import { useMotionPreferences } from '../../hooks/useMotionPreferences'
+import { heroMark } from '@/content/hero'
+import { useMotionPreferences } from '@/hooks/useMotionPreferences'
 
 const EXTRUDE_OPTIONS = {
   depth: 13,
@@ -284,10 +277,7 @@ export default function NextStepScene({
       fallback={fallback}
     >
       <RenderQuality onContextLost={handleContextLost} />
-      <HeadingRefractionBackground
-        headingKey={headingKey}
-        onTextureReady={handleTextureReady}
-      />
+      <HeadingRefractionBackground headingKey={headingKey} onTextureReady={handleTextureReady} />
       <ambientLight color={warmWhite} intensity={0.3} />
       <Environment resolution={512} frames={1}>
         <Lightformer color={warmWhite} intensity={5} position={[-4, 1, 2]} scale={[1.2, 8, 1]} />

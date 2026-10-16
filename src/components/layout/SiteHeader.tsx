@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
 import { m } from 'framer-motion'
-import type { HeroContent } from '../../content/hero'
-import { AudioToggle } from '../ui/AudioToggle'
+import type { HeroContent } from '@/content/hero'
+import { AudioToggle } from '@/components/ui/AudioToggle'
 
 interface SiteHeaderProps {
   ref: RefObject<HTMLElement | null>

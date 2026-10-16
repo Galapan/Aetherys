@@ -1,8 +1,8 @@
 import { m } from 'framer-motion'
-import type { NextStepContent } from '../content/nextStep'
-import { testimonyImages } from '../content/testimonies'
-import { RuleGrid } from '../components/ui/RuleGrid'
-import { NextStepMark } from '../features/nextstep/NextStepMark'
+import type { NextStepContent } from '@/content/nextStep'
+import { testimonyImages } from '@/content/testimonies'
+import { RuleGrid } from '@/components/ui/RuleGrid'
+import { NextStepMark } from '@/features/nextstep/NextStepMark'
 
 interface NextStepProps {
   content: NextStepContent

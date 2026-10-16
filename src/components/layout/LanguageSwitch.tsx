@@ -1,4 +1,4 @@
-import type { HeroContent, Locale } from '../../content/hero'
+import type { HeroContent, Locale } from '@/content/hero'
 import { m } from 'framer-motion'
 
 export interface NavigationProps {

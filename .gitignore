@@ -13,7 +13,7 @@ dist-ssr
 *.local
 
 # Originales de imagenes de proyectos, sin optimizar, solo en local.
-# Las versiones que se publican viven en public/proyectos/.
+# Las versiones que se publican viven en public/media/projects/.
 proyectos-originales/
 
 # Editor directories and files

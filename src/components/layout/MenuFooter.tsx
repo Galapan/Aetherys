@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { m } from 'framer-motion'
-import type { Locale } from '../../content/hero'
-import { menuContact, menuContent } from '../../content/navigation'
+import type { Locale } from '@/content/hero'
+import { menuContact, menuContent } from '@/content/navigation'
 import { LanguageSwitch, type NavigationProps } from './LanguageSwitch'
 import { createReveal } from './menuMotion'
 

@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useRef } from 'react'
 import { animate, m, useMotionValue, useMotionValueEvent, useScroll } from 'framer-motion'
-import type { HeroContent } from '../content/hero'
+import type { HeroContent } from '@/content/hero'
 
 interface HeroProps {
   content: HeroContent

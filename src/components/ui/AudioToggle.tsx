@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
 import { m } from 'framer-motion'
-import type { HeroContent } from '../../content/hero'
+import type { HeroContent } from '@/content/hero'
 
 // Drop the owner's file at public/audio/aetherys.mp3 (see docs/AGENTS notes).
 // Kept as a runtime path instead of an import so the build does not depend on the asset.
-export const audioSrc = '/audio/aetherys.mp3'
+export const audioSrc = '/media/audio/aetherys.mp3'
 
 const BAR_HEIGHTS = [7, 13, 18, 10]
 const BAR_DURATIONS = [1.4, 1.7, 1.25, 1.55]

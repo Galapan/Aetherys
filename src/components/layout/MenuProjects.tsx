@@ -1,7 +1,7 @@
 import { m } from 'framer-motion'
-import type { Locale } from '../../content/hero'
-import { content as projectsContent, projectHref } from '../../content/projects'
-import { menuContent } from '../../content/navigation'
+import type { Locale } from '@/content/hero'
+import { content as projectsContent, projectHref } from '@/content/projects'
+import { menuContent } from '@/content/navigation'
 import { createReveal } from './menuMotion'
 
 interface MenuProjectsProps {

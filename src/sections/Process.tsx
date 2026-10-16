@@ -1,9 +1,9 @@
-import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
+import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import { useRef, useSyncExternalStore } from 'react'
 import { m, useScroll, useSpring, useTransform } from 'framer-motion'
 import type { MotionValue } from 'framer-motion'
-import type { ProcessContent, ProcessStep } from '../content/process'
-import { RuleGrid } from '../components/ui/RuleGrid'
+import type { ProcessContent, ProcessStep } from '@/content/process'
+import { RuleGrid } from '@/components/ui/RuleGrid'
 
 interface ProcessProps {
   content: ProcessContent

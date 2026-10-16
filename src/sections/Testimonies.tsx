@@ -1,4 +1,4 @@
-import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
+import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import { useState, useSyncExternalStore, type RefObject } from 'react'
 import {
   AnimatePresence,
@@ -8,8 +8,8 @@ import {
   useIsPresent,
   useMotionValue,
 } from 'framer-motion'
-import { testimonyImages, type TestimoniesContent, type Testimony } from '../content/testimonies'
-import { RuleGrid } from '../components/ui/RuleGrid'
+import { testimonyImages, type TestimoniesContent, type Testimony } from '@/content/testimonies'
+import { RuleGrid } from '@/components/ui/RuleGrid'
 
 const ease = [0.22, 1, 0.36, 1] as const
 const interval = 10_000

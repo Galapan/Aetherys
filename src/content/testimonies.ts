@@ -17,9 +17,9 @@ export interface TestimoniesContent {
 }
 
 export const testimonyImages: Record<string, string> = {
-  bastian: '/teamPFP/galapan.jpg',
-  jesus: '/teamPFP/jesus.jpeg',
-  cesar: '/teamPFP/cesar.jpeg',
+  bastian: '/media/team/galapan.jpg',
+  jesus: '/media/team/jesus.jpeg',
+  cesar: '/media/team/cesar.jpeg',
   'placeholder-3': '',
 }
 

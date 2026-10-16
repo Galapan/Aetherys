@@ -12,8 +12,8 @@ import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three
 import { useSpring } from 'framer-motion'
 import { Color, type Group } from 'three'
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
-import { heroMark } from '../../content/hero'
-import { useMotionPreferences } from '../../hooks/useMotionPreferences'
+import { heroMark } from '@/content/hero'
+import { useMotionPreferences } from '@/hooks/useMotionPreferences'
 
 const EXTRUDE_OPTIONS = {
   depth: 13,

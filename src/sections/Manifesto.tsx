@@ -1,6 +1,6 @@
-import { SectionTitleReveal } from '../components/ui/SectionTitleReveal'
+import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import { m } from 'framer-motion'
-import type { ManifestoContent } from '../content/manifesto'
+import type { ManifestoContent } from '@/content/manifesto'
 
 interface ManifestoProps {
   content: ManifestoContent

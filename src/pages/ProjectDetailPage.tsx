@@ -1,15 +1,16 @@
 import { m } from 'framer-motion'
-import type { Locale } from '../content/hero'
+import type { Locale } from '@/content/hero'
 import {
   projectHref,
   projectsHref,
+  projectImageSrcSet,
   projectLogoPaths,
   type ProjectCard,
   type ProjectsContent,
-} from '../content/projects'
-import { RuleGrid } from '../components/ui/RuleGrid'
+} from '@/content/projects'
+import { RuleGrid } from '@/components/ui/RuleGrid'
 
-interface ProyectoDetailPageProps {
+interface ProjectDetailPageProps {
   card: ProjectCard
   nextCard: ProjectCard
   content: ProjectsContent
@@ -34,14 +35,14 @@ const secondaryGraphite = 'text-[color-mix(in_srgb,var(--color-graphite)_78%,tra
 
 const navLinkClasses = `inline-flex min-h-11 items-center text-[12px] leading-[1.4] tracking-[0.08em] uppercase text-graphite focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-graphite`
 
-export function ProyectoDetailPage({
+export function ProjectDetailPage({
   card,
   nextCard,
   content,
   locale,
   reducedMotion,
   canHover,
-}: ProyectoDetailPageProps) {
+}: ProjectDetailPageProps) {
   const meta = [card.year, card.category].filter(Boolean).join(' · ')
 
   return (
@@ -61,6 +62,8 @@ export function ProyectoDetailPage({
         <img
           className="absolute inset-0 h-full w-full object-cover"
           src={card.image}
+          srcSet={projectImageSrcSet(card)}
+          sizes="100vw"
           alt={card.imageAlt}
           width={1200}
           height={675}

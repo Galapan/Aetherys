@@ -1,5 +1,5 @@
 import { LanguageTransition } from './LanguageTransition'
-import type { HeroContent, Locale } from '../../content/hero'
+import type { HeroContent, Locale } from '@/content/hero'
 
 interface LocaleTransitionProps {
   locale: Locale | null
