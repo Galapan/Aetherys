@@ -8,8 +8,8 @@ interface ManifestoProps {
 }
 
 const reveal = (delay: number, reducedMotion: boolean) => ({
-  initial: reducedMotion ? false : { opacity: 0, y: 24 },
-  whileInView: { opacity: 1, y: 0 },
+  initial: reducedMotion ? false : { opacity: 0, transform: 'translateY(24px)' },
+  whileInView: { opacity: 1, transform: 'translateY(0px)' },
   viewport: { once: true, amount: 0.4 },
   transition: {
     duration: reducedMotion ? 0 : 0.8,
@@ -22,7 +22,7 @@ export function Manifesto({ content, reducedMotion }: ManifestoProps) {
   return (
     <section
       id="manifiesto"
-      className="pointer-events-none relative z-1 min-h-[200svh] ps-[calc(var(--page-padding)+clamp(0px,5vw,72px))] pe-[var(--page-padding)]"
+      className="pointer-events-none relative z-1 min-h-[260svh] ps-[calc(var(--page-padding)+clamp(0px,5vw,72px))] pe-[var(--page-padding)]"
       aria-labelledby="manifiesto-heading"
     >
       <div className="sticky top-0 flex h-svh w-full max-w-[560px] flex-col items-start justify-center gap-8 py-16 md:max-w-[780px] md:py-20 lg:max-w-[960px] lg:py-26">

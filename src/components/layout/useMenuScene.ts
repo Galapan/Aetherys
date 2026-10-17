@@ -50,9 +50,12 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
     const modal = dialogRef.current
     const headerLayer = headerLayerRef.current
     const opener = triggerRef.current
-    const previousOverflow = document.body.style.overflow
+    const root = document.documentElement
+    const previousOverflow = root.style.overflow
     lenis?.stop()
-    document.body.style.overflow = 'hidden'
+    // Lock the root, not the body: once Lenis clips <html>, an overflowing body becomes its own
+    // scroller and sticky layers (like the stage foot) drop out of the viewport.
+    root.style.overflow = 'hidden'
     modal?.showModal()
     // Shown after the modal so it stacks above it in the top layer and keeps blending with the
     // page and the menu panel beneath, exactly like the page header it replaces.
@@ -73,7 +76,7 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
       window.removeEventListener('resize', resize)
       if (headerLayer?.matches(':popover-open')) headerLayer.hidePopover()
       modal?.close()
-      document.body.style.overflow = previousOverflow
+      root.style.overflow = previousOverflow
       if (lenis) {
         lenis.start()
         lenis.scrollTo(restoreScroll.current, { immediate: true })

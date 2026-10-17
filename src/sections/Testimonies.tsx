@@ -237,7 +237,9 @@ export function Testimonies({
   reducedMotion: boolean
   sectionRef: RefObject<HTMLElement | null>
 }) {
-  const visible = useInView(sectionRef, { amount: 0.35 })
+  // The section is taller than the viewport, so visibility is measured on the pinned stage.
+  const stage = useRef<HTMLDivElement>(null)
+  const visible = useInView(stage, { amount: 0.35 })
   const pageVisible = useSyncExternalStore(subscribeVisibility, readVisibility)
   const [active, setActive] = useState(0)
   const [hasChanged, setHasChanged] = useState(false)
@@ -290,12 +292,13 @@ export function Testimonies({
     <section
       ref={sectionRef}
       id="testimonies"
-      className="bg-graphite text-warm-white relative isolate z-1 min-h-svh scroll-mt-[var(--header-height)] pt-20 pb-[60svh] md:pt-26 lg:pt-36"
+      className="bg-graphite text-warm-white relative isolate z-1 min-h-[260svh] scroll-mt-[var(--header-height)]"
       tabIndex={-1}
       aria-labelledby="testimonies-heading"
     >
       <RuleGrid className="absolute inset-0 z-[-1]" />
-      <div className="container">
+      {/* Pinned while JoinUs rises over it, like the manifesto under the projects. */}
+      <div ref={stage} className="sticky top-0 container min-h-svh pt-20 md:pt-26 lg:pt-36">
         <div role="group" aria-label={content.carouselLabel}>
           <div
             className={

@@ -122,6 +122,14 @@ interface DialogProps {
   onClosed: () => void
 }
 
+// Opening blurs the page first, then grows the player out of the trigger to the centre.
+// Closing is the reverse: the player shrinks back onto the trigger with a slow start and a
+// long settle, while the page clears early in the move instead of waiting for it to land.
+const PLAYER_OPEN = { duration: 0.75, ease: [0.76, 0, 0.24, 1] } as const
+const PLAYER_CLOSE = { duration: 0.95, ease: [0.8, 0, 0.15, 1] } as const
+const SHADE_IN = { duration: 0.3, ease: 'easeOut' } as const
+const SHADE_OUT = { duration: 0.4, delay: 0.05, ease: 'easeInOut' } as const
+
 function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed }: DialogProps) {
   const lenis = useLenis()
   const dialog = useRef<HTMLDialogElement>(null)
@@ -134,18 +142,22 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
 
   useLayoutEffect(() => {
     const element = dialog.current
-    const previousOverflow = document.body.style.overflow
+    const root = document.documentElement
+    const previousOverflow = root.style.overflow
     const previousPadding = document.body.style.paddingRight
-    const scrollbar = window.innerWidth - document.documentElement.clientWidth
+    const scrollbar = window.innerWidth - root.clientWidth
     const padding = parseFloat(getComputedStyle(document.body).paddingRight) || 0
     lenis?.stop()
-    document.body.style.overflow = 'hidden'
+    // Lock the root, not the body: once Lenis clips <html>, an overflowing body becomes its
+    // own scroller and the sticky stage foot (the trigger's row) drops out of the viewport,
+    // so the player would close towards an off-screen trigger.
+    root.style.overflow = 'hidden'
     document.body.style.paddingRight = `${padding + scrollbar}px`
     element?.showModal()
-    element?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true })
+    video.current?.focus({ preventScroll: true })
     return () => {
       element?.close()
-      document.body.style.overflow = previousOverflow
+      root.style.overflow = previousOverflow
       document.body.style.paddingRight = previousPadding
       lenis?.start()
     }
@@ -192,14 +204,21 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
         className="pointer-events-auto absolute inset-0 bg-[color-mix(in_srgb,var(--color-graphite)_62%,transparent)]"
         initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
         animate={{ opacity: closing ? 0 : 1, backdropFilter: closing ? 'blur(0px)' : 'blur(16px)' }}
-        transition={{ duration: reducedMotion ? 0 : 0.5 }}
+        transition={reducedMotion ? { duration: 0 } : closing ? SHADE_OUT : SHADE_IN}
         onClick={close}
       />
       <m.div
         className="absolute rounded-lg bg-[var(--color-graphite)] shadow-[0_24px_100px_color-mix(in_srgb,var(--color-graphite)_65%,transparent)]"
         initial={{ ...(reducedMotion ? target : origin) }}
         animate={{ ...(destination ?? target) }}
-        transition={{ duration: reducedMotion ? 0 : 0.75, ease: [0.76, 0, 0.24, 1] }}
+        transition={
+          reducedMotion
+            ? { duration: 0 }
+            : closing
+              ? PLAYER_CLOSE
+              : // The player waits for the page to blur before it grows.
+                { ...PLAYER_OPEN, delay: SHADE_IN.duration }
+        }
         onAnimationComplete={() => {
           if (closing) onClosed()
         }}
@@ -228,25 +247,6 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
             event.currentTarget.currentTime = 0
           }}
         />
-        <m.div
-          className="absolute inset-x-0 bottom-[calc(100%+12px)] flex items-center justify-between gap-4 text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: closing ? 0 : 1 }}
-          transition={{
-            duration: reducedMotion ? 0 : 0.2,
-            delay: reducedMotion || closing ? 0 : 0.5,
-          }}
-        >
-          <span>
-            {content.brand}{' '}
-            <span className="ml-2 text-[10px] tracking-[0.08em] text-[var(--color-secondary)] md:ml-4">
-              {content.showreel.label}
-            </span>
-          </span>
-          <button type="button" onClick={close} aria-label={content.close}>
-            {content.close}
-          </button>
-        </m.div>
       </m.div>
     </dialog>
   )

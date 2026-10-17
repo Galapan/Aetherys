@@ -86,7 +86,6 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
           audioRef={audioElement}
           content={content}
           reducedMotion={reducedMotion}
-          canHover={canHover}
           mounted={mounted}
           homeHref={isHome ? '#inicio' : homeHref}
           onOpen={openMenu}

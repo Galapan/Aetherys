@@ -110,7 +110,7 @@ export function JoinUs({ content, reducedMotion, canHover }: JoinUsProps) {
   return (
     <section
       id="join-us"
-      className="bg-warm-white text-graphite focus-visible:outline-graphite relative isolate z-1 min-h-svh scroll-mt-[calc(var(--header-height)+24px)] py-20 [color-scheme:light] focus-visible:outline-2 focus-visible:outline-offset-4 md:py-26 lg:py-36"
+      className="bg-warm-white text-graphite focus-visible:outline-graphite relative isolate z-2 -mt-[100svh] min-h-svh scroll-mt-[calc(var(--header-height)+24px)] py-20 [color-scheme:light] focus-visible:outline-2 focus-visible:outline-offset-4 md:py-26 lg:py-36"
       tabIndex={-1}
       aria-labelledby="join-us-heading"
     >

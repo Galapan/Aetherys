@@ -171,7 +171,6 @@ src/
   hooks/useMotionPreferences.ts  reduced-motion y hover dinámicos
 public/media/brand/                    aetherys-mark.svg
 docs/plans/                      decisiones y especificaciones duraderas; planes de trabajo por solicitud se entregan en conversación (§11)
-docs/verification/               evidencia histórica y referencias para el propietario; no requisito de cierre para el ejecutor
 ```
 
 Una sola fuente de tokens y diccionarios. No dispersar colores literales ni copias de contenido entre componentes. Evitar abstracciones genéricas que solo tengan un consumidor salvo frontera clara como la escena diferida.

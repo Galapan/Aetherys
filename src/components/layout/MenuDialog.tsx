@@ -202,7 +202,6 @@ export function MenuDialog({
             snapshot={snapshot}
             expanded={expanded}
             reducedMotion={reducedMotion}
-            canHover={canHover}
             padding={padding}
             headerInset={headerInset}
             sceneTransition={sceneTransition}
