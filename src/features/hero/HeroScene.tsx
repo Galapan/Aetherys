@@ -45,6 +45,12 @@ function GridRefractionBackground({
   useEffect(() => {
     // Owned by this effect, so drawing into them never mutates a hook value.
     const canvas = document.createElement('canvas')
+    // Sized and read once: resizing a canvas reallocates it, which scroll redraws can't afford.
+    const resolution = 1024
+    canvas.width = resolution
+    canvas.height = resolution
+    const context = canvas.getContext('2d')
+    const background = readToken('--color-graphite')
     const texture = new CanvasTexture(canvas)
     texture.colorSpace = SRGBColorSpace
     texture.minFilter = LinearFilter
@@ -74,13 +80,9 @@ function GridRefractionBackground({
       if (nextLayout === layout) return
       layout = nextLayout
 
-      const resolution = 1024
-      canvas.width = resolution
-      canvas.height = resolution
-      const context = canvas.getContext('2d')
       if (!context) return
 
-      context.fillStyle = readToken('--color-graphite')
+      context.fillStyle = background
       context.fillRect(0, 0, resolution, resolution)
 
       const scale = resolution / canvasBounds.height

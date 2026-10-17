@@ -1,18 +1,31 @@
 import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
-import { useState, useSyncExternalStore, type RefObject } from 'react'
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type RefObject,
+} from 'react'
 import {
   AnimatePresence,
   m,
-  useAnimationFrame,
+  stagger,
+  useAnimate,
   useInView,
-  useIsPresent,
-  useMotionValue,
+  usePresence,
+  type AnimationPlaybackControls,
 } from 'framer-motion'
 import { testimonyImages, type TestimoniesContent, type Testimony } from '@/content/testimonies'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 
 const ease = [0.22, 1, 0.36, 1] as const
 const interval = 10_000
+// Entry start states. Letters and the name rise from below their clip; the portrait wipes up.
+const hiddenRise: CSSProperties = { transform: 'translateY(110%)', opacity: 0 }
+const hiddenPortrait: CSSProperties = { clipPath: 'inset(100% 0 0 0)', opacity: 0 }
+const emptyBar: CSSProperties = { transform: 'scaleX(0)' }
 // Neutral graphite icon, never a fabricated portrait.
 const profileIcon = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="none" stroke="#101014" stroke-width="2"><circle cx="32" cy="23" r="10"/><path d="M12 55v-5a20 20 0 0 1 40 0v5"/></g></svg>')}`
 
@@ -47,7 +60,7 @@ function TestimonyCounter({
             <m.span
               className="block"
               initial={false}
-              animate={{ y: `${-Number(digit) * 10}%` }}
+              animate={{ transform: `translateY(${-Number(digit) * 10}%)` }}
               transition={{ duration: reducedMotion ? 0 : active === 0 ? 0.8 : 0.5, ease }}
             >
               {Array.from({ length: 10 }, (_, value) => (
@@ -73,22 +86,90 @@ function Slide({
   animateEntry: boolean
   reducedMotion: boolean
 }) {
-  const present = useIsPresent()
+  const [scope, animate] = useAnimate<HTMLElement>()
+  const [isPresent, safeToRemove] = usePresence()
+  // Fixed at mount, so re-renders never put the start state back on screen.
+  const [enters] = useState(() => animateEntry && !reducedMotion)
   const image = testimonyImages[item.id]
-  const timing = (duration: number, delay = 0) => ({
-    duration: reducedMotion ? 0 : duration,
-    delay: reducedMotion ? 0 : delay,
-    ease,
-  })
 
-  let letterIndex = 0
+  const presentBefore = useRef(false)
+
+  // Letters, portrait and name animate as plain elements through the browser's compositor
+  // (transform, opacity and clip-path), so ~250 letters never tie up the main thread.
+  useEffect(() => {
+    if (isPresent) {
+      // Rapid clicks can bring back a slide that is still leaving (same key): AnimatePresence
+      // keeps the instance, so it animates in again from wherever its exit stopped.
+      const returning = presentBefore.current
+      presentBefore.current = true
+      if (!enters && !returning) return
+      const show = (duration: number, delay: number | ReturnType<typeof stagger>) => ({
+        duration: reducedMotion ? 0 : duration,
+        delay: reducedMotion ? 0 : delay,
+        ease,
+      })
+      const controls = [
+        animate(
+          '[data-testimony-letter]',
+          returning
+            ? { transform: 'translateY(0%)', opacity: 1 }
+            : { transform: ['translateY(110%)', 'translateY(0%)'], opacity: [0, 1] },
+          show(0.65, stagger(0.0015, { startDelay: 0.18 })),
+        ),
+        animate(
+          '[data-testimony-avatar]',
+          returning
+            ? { clipPath: 'inset(0% 0 0 0)', opacity: 1 }
+            : { clipPath: ['inset(100% 0 0 0)', 'inset(0% 0 0 0)'], opacity: [0, 1] },
+          show(0.6, 0.12),
+        ),
+        animate(
+          '[data-testimony-name]',
+          returning
+            ? { transform: 'translateY(0%)', opacity: 1 }
+            : { transform: ['translateY(110%)', 'translateY(0%)'], opacity: [0, 1] },
+          show(0.6, 0.22),
+        ),
+      ]
+      return () => controls.forEach((control) => control.stop())
+    }
+
+    if (reducedMotion) {
+      safeToRemove()
+      return
+    }
+    let cancelled = false
+    const controls = [
+      animate(
+        '[data-testimony-letter]',
+        { transform: 'translateY(110%)', opacity: 0 },
+        { duration: 0.4, delay: stagger(0.001), ease },
+      ),
+      animate(
+        '[data-testimony-avatar]',
+        { clipPath: 'inset(0 0 100% 0)', opacity: 0 },
+        { duration: 0.4, ease },
+      ),
+      animate(
+        '[data-testimony-name]',
+        { transform: 'translateY(110%)', opacity: 0 },
+        { duration: 0.4, ease },
+      ),
+    ]
+    void Promise.all(controls.map((control) => control.finished)).then(() => {
+      if (!cancelled) safeToRemove()
+    })
+    return () => {
+      cancelled = true
+      controls.forEach((control) => control.stop())
+    }
+  }, [animate, enters, isPresent, reducedMotion, safeToRemove])
+
   return (
-    <m.figure
+    <figure
+      ref={scope}
       className="col-start-1 row-start-1 m-0 min-w-0"
-      initial={animateEntry && !reducedMotion ? 'enter' : false}
-      animate="visible"
-      aria-hidden={!present || undefined}
-      exit={reducedMotion ? undefined : 'exit'}
+      aria-hidden={!isPresent || undefined}
     >
       <blockquote className="m-0 max-w-[34ch] text-[clamp(1.75rem,3.2vw,3.5rem)] leading-[1.2] font-normal tracking-[-0.035em]">
         <span className="sr-only">{item.quote}</span>
@@ -97,47 +178,26 @@ function Slide({
             <span key={wordIndex}>
               {wordIndex > 0 ? ' ' : null}
               <span className="mb-[-0.12em] inline-block overflow-clip pb-[0.12em] align-top">
-                {Array.from(word).map((letter) => {
-                  const index = letterIndex++
-                  return (
-                    <m.span
-                      key={index}
-                      className="inline-block"
-                      variants={{
-                        enter: { y: '110%', opacity: 0 },
-                        visible: {
-                          y: '0%',
-                          opacity: 1,
-                          transition: timing(0.65, 0.18 + index * 0.0015),
-                        },
-                        exit: {
-                          y: '110%',
-                          opacity: 0,
-                          transition: timing(0.4, index * 0.001),
-                        },
-                      }}
-                    >
-                      {letter}
-                    </m.span>
-                  )
-                })}
+                {Array.from(word).map((letter, letterIndex) => (
+                  <span
+                    key={letterIndex}
+                    data-testimony-letter
+                    className="inline-block"
+                    style={enters ? hiddenRise : undefined}
+                  >
+                    {letter}
+                  </span>
+                ))}
               </span>
             </span>
           ))}
         </span>
       </blockquote>
       <figcaption className="mt-8 flex min-h-[86.4px] items-center gap-4">
-        <m.div
+        <div
+          data-testimony-avatar
           className="bg-warm-white size-[82.08px] shrink-0 overflow-clip rounded-[8px]"
-          variants={{
-            enter: { clipPath: 'inset(100% 0 0 0)', opacity: 0 },
-            visible: {
-              clipPath: 'inset(0% 0 0 0)',
-              opacity: 1,
-              transition: timing(0.6, 0.12),
-            },
-            exit: { clipPath: 'inset(0 0 100% 0)', opacity: 0, transition: timing(0.4) },
-          }}
+          style={enters ? hiddenPortrait : undefined}
         >
           <img
             src={image || profileIcon}
@@ -154,23 +214,17 @@ function Slide({
               element.dataset.placeholder = 'true'
             }}
           />
-        </m.div>
+        </div>
         <div className="overflow-clip">
-          <m.div
-            variants={{
-              enter: { y: '110%', opacity: 0 },
-              visible: { y: '0%', opacity: 1, transition: timing(0.6, 0.22) },
-              exit: { y: '110%', opacity: 0, transition: timing(0.4) },
-            }}
-          >
+          <div data-testimony-name style={enters ? hiddenRise : undefined}>
             <p className="m-0 text-[14.4px] leading-[1.4] tracking-[0.04em] uppercase">
               {item.name}
             </p>
             <p className="text-secondary m-0 mt-1 text-[14.4px] leading-[1.4]">{item.detail}</p>
-          </m.div>
+          </div>
         </div>
       </figcaption>
-    </m.figure>
+    </figure>
   )
 }
 
@@ -187,22 +241,50 @@ export function Testimonies({
   const pageVisible = useSyncExternalStore(subscribeVisibility, readVisibility)
   const [active, setActive] = useState(0)
   const [hasChanged, setHasChanged] = useState(false)
-  const progress = useMotionValue(0)
+  const [bar, animateBar] = useAnimate<HTMLSpanElement>()
+  const timer = useRef<AnimationPlaybackControls | null>(null)
   const count = content.items.length
   const playing = visible && pageVisible && !reducedMotion
 
   function change(direction: number) {
-    progress.set(0)
     setHasChanged(true)
     setActive((current) => (current + direction + count) % count)
   }
 
-  useAnimationFrame((_, delta) => {
-    if (!playing || count < 2) return
-    const next = progress.get() + Math.min(delta, 64) / interval
-    if (next >= 1) change(1)
-    else progress.set(next)
-  })
+  const isPlaying = useEffectEvent(() => playing)
+  const advance = useEffectEvent(() => change(1))
+
+  // The bar is the autoplay timer: a 10s compositor animation that restarts on every change
+  // (active) and advances the carousel when it fills.
+  useEffect(() => {
+    const element = bar.current
+    if (!element) return
+    if (reducedMotion || count < 2) {
+      const reset = animateBar(element, { transform: 'scaleX(0)' }, { duration: 0 })
+      return () => reset.stop()
+    }
+    let cancelled = false
+    const controls = animateBar(
+      element,
+      { transform: ['scaleX(0)', 'scaleX(1)'] },
+      { duration: interval / 1000, ease: 'linear' },
+    )
+    if (!isPlaying()) controls.pause()
+    timer.current = controls
+    void controls.finished.then(() => {
+      if (!cancelled) advance()
+    })
+    return () => {
+      cancelled = true
+      timer.current = null
+      controls.stop()
+    }
+  }, [active, animateBar, bar, count, reducedMotion])
+
+  useEffect(() => {
+    if (playing) timer.current?.play()
+    else timer.current?.pause()
+  }, [playing])
 
   return (
     <section
@@ -253,9 +335,10 @@ export function Testimonies({
                   className="bg-border col-span-full h-[2px] overflow-clip md:col-auto"
                   aria-hidden="true"
                 >
-                  <m.span
+                  <span
+                    ref={bar}
                     className="bg-warm-white block h-full origin-left"
-                    style={{ scaleX: reducedMotion ? 0 : progress }}
+                    style={emptyBar}
                   />
                 </div>
               </>

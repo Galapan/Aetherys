@@ -94,15 +94,15 @@ export function LanguageTransition({
             key={index}
             className="bg-graphite h-full w-[calc(100%+1px)]"
             custom={index}
-            initial={{ y: '101%' }}
+            initial={{ transform: 'translateY(101%)' }}
             animate={controls}
             variants={{
               covered: (column: number) => ({
-                y: '0%',
+                transform: 'translateY(0%)',
                 transition: { duration: 0.55, delay: column * 0.055, ease: curtainEase },
               }),
               revealed: (column: number) => ({
-                y: '-101%',
+                transform: 'translateY(-101%)',
                 transition: { duration: 0.65, delay: column * 0.055, ease: curtainEase },
               }),
             }}

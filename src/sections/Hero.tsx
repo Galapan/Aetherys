@@ -94,8 +94,8 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
 
   function reveal(delay: number) {
     return {
-      initial: entering ? { opacity: 0, y: 24 } : (false as const),
-      animate: { opacity: 1, y: 0 },
+      initial: entering ? { opacity: 0, transform: 'translateY(24px)' } : (false as const),
+      animate: { opacity: 1, transform: 'translateY(0px)' },
       transition: {
         duration: entering ? 0.8 : 0,
         delay: entering ? delay : 0,
@@ -123,8 +123,8 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                 >
                   <m.span
                     className="bg-warm-white absolute top-0 left-0 h-[calc(50%+1px)] w-[calc(100%+1px)] border-r border-[color-mix(in_srgb,var(--color-graphite)_14%,transparent)]"
-                    initial={{ y: '0%' }}
-                    animate={{ y: '-101%' }}
+                    initial={{ transform: 'translateY(0%)' }}
+                    animate={{ transform: 'translateY(-101%)' }}
                     transition={{
                       duration: 1.35,
                       delay: 3.55 + Math.abs(index - 3.5) * 0.1,
@@ -133,8 +133,8 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                   />
                   <m.span
                     className="bg-warm-white absolute bottom-0 left-0 h-[calc(50%+1px)] w-[calc(100%+1px)] border-r border-[color-mix(in_srgb,var(--color-graphite)_14%,transparent)]"
-                    initial={{ y: '0%' }}
-                    animate={{ y: '101%' }}
+                    initial={{ transform: 'translateY(0%)' }}
+                    animate={{ transform: 'translateY(101%)' }}
                     transition={{
                       duration: 1.35,
                       delay: 3.55 + Math.abs(index - 3.5) * 0.1,
@@ -147,16 +147,16 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
             <div className="text-burgundy absolute inset-0 grid place-items-center">
               <m.span
                 className="flex overflow-hidden px-[2px] py-1 text-[26px] leading-[1.3] font-medium tracking-[-0.055em] md:text-[32px]"
-                initial={{ scaleX: 1, opacity: 1 }}
-                animate={{ scaleX: 0.035, opacity: 0 }}
+                initial={{ transform: 'scaleX(1)', opacity: 1 }}
+                animate={{ transform: 'scaleX(0.035)', opacity: 0 }}
                 transition={{ delay: 1.7, duration: 0.6, ease: curtainEase }}
               >
                 {Array.from(content.brand).map((letter, index) => (
                   <m.span
                     key={index}
                     className="inline-block"
-                    initial={{ y: '110%' }}
-                    animate={{ y: '0%' }}
+                    initial={{ transform: 'translateY(110%)' }}
+                    animate={{ transform: 'translateY(0%)' }}
                     transition={{
                       delay: 0.15 + index * 0.035,
                       duration: 0.65,
@@ -169,11 +169,15 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
               </m.span>
               <m.span
                 className="absolute size-3 before:absolute before:top-[5px] before:h-[2px] before:w-3 before:bg-current before:content-[''] after:absolute after:left-[5px] after:h-3 after:w-[2px] after:bg-current after:content-['']"
-                initial={{ opacity: 0, rotate: 0, scale: 0.6 }}
+                initial={{ opacity: 0, transform: 'rotate(0deg) scale(0.6)' }}
                 animate={{
                   opacity: [0, 1, 1, 0],
-                  rotate: [0, 0, 180, 180],
-                  scale: [0.6, 1, 1, 0.3],
+                  transform: [
+                    'rotate(0deg) scale(0.6)',
+                    'rotate(0deg) scale(1)',
+                    'rotate(180deg) scale(1)',
+                    'rotate(180deg) scale(0.3)',
+                  ],
                 }}
                 transition={{
                   delay: 2.2,

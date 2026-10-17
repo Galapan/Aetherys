@@ -1,8 +1,9 @@
 import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import { useEffect, useRef, useState } from 'react'
-import { m, useAnimate, useAnimationFrame, useInView, useMotionValue } from 'framer-motion'
+import { useAnimate, useInView } from 'framer-motion'
 import type { ExpertiseContent } from '@/content/expertise'
 import { RuleGrid } from '@/components/ui/RuleGrid'
+import { useMarquee } from '@/hooks/useMarquee'
 
 interface ExpertiseProps {
   content: ExpertiseContent
@@ -17,74 +18,52 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
   const group = useRef<HTMLUListElement>(null)
   const railVisible = useInView(rail)
   const [repeats, setRepeats] = useState(1)
-  const groupWidth = useRef(0)
-  const pageVisible = useRef(!document.hidden)
-  const cruiseSpeed = useRef(0)
-  const currentSpeed = useRef(0)
-  const targetSpeed = useRef(0)
-  const hovering = useRef(false)
+  const [hovering, setHovering] = useState(false)
   const moving = !reducedMotion
-  const x = useMotionValue(0)
+  // One card every 5.5 seconds, whatever the period's width.
+  const track = useMarquee<HTMLDivElement>({
+    enabled: moving,
+    visible: railVisible,
+    halted: hovering,
+    duration: content.cards.length * repeats * 5.5,
+  })
 
   useEffect(() => {
     const root = scope.current
     if (!introVisible || reducedMotion || !root) return
     const controls = animate([
-      ['.expertise__copy', { y: '110%' }, { duration: 0 }],
-      ['.expertise__copy', { y: '0%' }, { duration: 0.75, at: 0.4, ease: [0.22, 1, 0.36, 1] }],
+      ['.expertise__copy', { transform: 'translateY(110%)' }, { duration: 0 }],
+      [
+        '.expertise__copy',
+        { transform: 'translateY(0%)' },
+        { duration: 0.75, at: 0.4, ease: [0.22, 1, 0.36, 1] },
+      ],
     ])
     return () => {
       controls.stop()
       // Restore readable content on preference changes and StrictMode cleanup. On
       // unmount the scope is already detached and a selector animation would throw.
-      if (root.isConnected) animate('.expertise__copy', { y: '0%' }, { duration: 0 })
+      if (root.isConnected) animate('.expertise__copy', { transform: 'none' }, { duration: 0 })
     }
   }, [animate, introVisible, reducedMotion, content, scope])
 
   useEffect(() => {
     const element = group.current
     const railElement = rail.current
-    if (!element || !railElement || !moving) {
-      groupWidth.current = 0
-      cruiseSpeed.current = 0
-      currentSpeed.current = 0
-      targetSpeed.current = 0
-      hovering.current = false
-      x.set(0)
-      return
-    }
+    if (!element || !railElement || !moving) return
+    // Repeat the cards until one period covers the rail, so the loop never shows a gap.
     const measure = () => {
-      const periodWidth = element.getBoundingClientRect().width
-      const naturalWidth = periodWidth / repeats
+      const naturalWidth = element.getBoundingClientRect().width / repeats
       const viewportWidth = railElement.getBoundingClientRect().width
       const nextRepeats = Math.max(1, Math.ceil(viewportWidth / naturalWidth))
-      groupWidth.current = periodWidth
-      cruiseSpeed.current = periodWidth / (content.cards.length * repeats) / 5.5
-      if (!hovering.current) targetSpeed.current = cruiseSpeed.current
-      x.set(0)
       if (nextRepeats !== repeats) setRepeats(nextRepeats)
     }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(element)
     observer.observe(railElement)
-    const onVisibility = () => {
-      pageVisible.current = !document.hidden
-    }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      observer.disconnect()
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [content.cards.length, moving, repeats, x])
-
-  useAnimationFrame((_, delta) => {
-    if (!moving || !railVisible || !pageVisible.current || !groupWidth.current) return
-    const elapsed = Math.min(delta, 64) / 1000
-    const smoothing = 1 - Math.exp(-elapsed / 0.5)
-    currentSpeed.current += (targetSpeed.current - currentSpeed.current) * smoothing
-    x.set((x.get() - elapsed * currentSpeed.current) % groupWidth.current)
-  })
+    return () => observer.disconnect()
+  }, [moving, repeats])
 
   return (
     <section
@@ -117,19 +96,13 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
         ref={rail}
         className={`relative overflow-hidden ${moving ? '' : 'container'}`}
         onPointerEnter={() => {
-          if (canHover && moving) {
-            hovering.current = true
-            targetSpeed.current = 0
-          }
+          if (canHover && moving) setHovering(true)
         }}
         onPointerLeave={() => {
-          if (canHover && moving) {
-            hovering.current = false
-            targetSpeed.current = cruiseSpeed.current
-          }
+          if (canHover && moving) setHovering(false)
         }}
       >
-        <m.div className={`flex ${moving ? 'w-max' : 'w-full'}`} style={{ x: moving ? x : 0 }}>
+        <div ref={track} className={`flex ${moving ? 'w-max' : 'w-full'}`}>
           {(moving ? [false, true] : [false]).map((duplicate) => (
             <ul
               key={String(duplicate)}
@@ -167,7 +140,7 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
               )}
             </ul>
           ))}
-        </m.div>
+        </div>
       </div>
     </section>
   )

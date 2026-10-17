@@ -1,8 +1,7 @@
 import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   m,
-  useAnimationFrame,
   useInView,
   useMotionValue,
   useScroll,
@@ -33,6 +32,7 @@ import {
 import type { IconType } from 'react-icons'
 import { technologies, type Service, type ServicesContent } from '@/content/services'
 import { RuleGrid } from '@/components/ui/RuleGrid'
+import { useMarquee } from '@/hooks/useMarquee'
 
 interface ServicesProps {
   content: ServicesContent
@@ -63,7 +63,7 @@ const icons: Record<(typeof technologies)[number]['id'], IconType> = {
 const ease = [0.22, 1, 0.36, 1] as const
 const technologyEnter = { duration: 0.5, ease }
 const technologyLeave = { duration: 0.4, ease }
-const technologySpring = { type: 'spring', stiffness: 180, damping: 20, mass: 0.85 } as const
+const technologySpring = { type: 'spring', stiffness: 120, damping: 20, mass: 0.85 } as const
 
 function ServiceFeature({
   item,
@@ -165,53 +165,16 @@ function ServiceRow({
 function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
   const interactive = canHover && !reducedMotion
   const rail = useRef<HTMLDivElement>(null)
-  const group = useRef<HTMLUListElement>(null)
   const visible = useInView(rail)
-  const width = useRef(0)
-  const pageVisible = useRef(!document.hidden)
-  const hovered = useRef(false)
-  const focused = useRef(false)
-  const cruiseSpeed = useRef(0)
-  const currentSpeed = useRef(0)
-  const x = useMotionValue(0)
-
-  useEffect(() => {
-    const element = group.current
-    x.set(0)
-    if (!element || reducedMotion) {
-      width.current = 0
-      cruiseSpeed.current = 0
-      currentSpeed.current = 0
-      return
-    }
-    const measure = () => {
-      width.current = element.getBoundingClientRect().width
-      // One item every 4 seconds. The rail is full-bleed, so it covers more
-      // ground than the card rail and needs a brisker cadence to feel even.
-      cruiseSpeed.current = width.current / technologies.length / 4
-      x.set(0)
-    }
-    const onVisibility = () => {
-      pageVisible.current = !document.hidden
-    }
-    measure()
-    onVisibility()
-    const observer = new ResizeObserver(measure)
-    observer.observe(element)
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      observer.disconnect()
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [reducedMotion, x])
-
-  useAnimationFrame((_, delta) => {
-    if (reducedMotion || !visible || !pageVisible.current || !width.current) return
-    const elapsed = Math.min(delta, 64) / 1000
-    const targetSpeed = (hovered.current && canHover) || focused.current ? 0 : cruiseSpeed.current
-    const smoothing = 1 - Math.exp(-elapsed / 0.5)
-    currentSpeed.current += (targetSpeed - currentSpeed.current) * smoothing
-    x.set((x.get() - elapsed * currentSpeed.current) % width.current)
+  const [hovered, setHovered] = useState(false)
+  const [focused, setFocused] = useState(false)
+  // One item every 4 seconds. The rail is full-bleed, so it covers more ground than the
+  // card rail and needs a brisker cadence to feel even.
+  const track = useMarquee<HTMLDivElement>({
+    enabled: !reducedMotion,
+    visible,
+    halted: (hovered && canHover) || focused,
+    duration: technologies.length * 4,
   })
 
   return (
@@ -222,27 +185,15 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
         role="region"
         aria-label={content.technologyLabel}
         tabIndex={reducedMotion ? undefined : 0}
-        onPointerEnter={() => {
-          hovered.current = true
-        }}
-        onPointerLeave={() => {
-          hovered.current = false
-        }}
-        onFocus={() => {
-          focused.current = true
-        }}
-        onBlur={() => {
-          focused.current = false
-        }}
+        onPointerEnter={() => setHovered(true)}
+        onPointerLeave={() => setHovered(false)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
       >
-        <m.div
-          className={`flex ${reducedMotion ? 'w-full' : 'w-max'}`}
-          style={{ x: reducedMotion ? 0 : x }}
-        >
+        <div ref={track} className={`flex ${reducedMotion ? 'w-full' : 'w-max'}`}>
           {(reducedMotion ? [false] : [false, true]).map((duplicate) => (
             <ul
               key={String(duplicate)}
-              ref={duplicate ? undefined : group}
               className={`m-0 list-none p-0 ${reducedMotion ? 'grid w-full grid-cols-2 gap-x-0 gap-y-4 md:grid-cols-4 lg:grid-cols-5' : 'flex shrink-0'}`}
               aria-label={duplicate ? undefined : content.technologyLabel}
               aria-hidden={duplicate || undefined}
@@ -322,7 +273,7 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
               })}
             </ul>
           ))}
-        </m.div>
+        </div>
       </div>
     </div>
   )
