@@ -1,5 +1,4 @@
 import type { RefObject } from 'react'
-import { m } from 'framer-motion'
 import type { HeroContent } from '@/content/hero'
 import { AudioToggle } from '@/components/ui/AudioToggle'
 
@@ -9,7 +8,6 @@ interface SiteHeaderProps {
   audioRef: RefObject<HTMLAudioElement | null>
   content: HeroContent
   reducedMotion: boolean
-  canHover: boolean
   mounted: boolean
   /** Brand link: an anchor on Home, the Home route elsewhere. */
   homeHref: string
@@ -22,7 +20,6 @@ export function SiteHeader({
   audioRef,
   content,
   reducedMotion,
-  canHover,
   mounted,
   homeHref,
   onOpen,
@@ -42,13 +39,8 @@ export function SiteHeader({
         {content.brand}
       </a>
       <div className="flex items-center gap-[clamp(6px,1.8vw,12px)] md:gap-4">
-        <AudioToggle
-          content={content}
-          reducedMotion={reducedMotion}
-          canHover={canHover}
-          audioRef={audioRef}
-        />
-        <m.button
+        <AudioToggle content={content} reducedMotion={reducedMotion} audioRef={audioRef} />
+        <button
           ref={triggerRef}
           className="pointer-events-auto flex min-h-11 items-center gap-4 rounded border-0 bg-transparent px-2 text-[20px] leading-[1.4] tracking-[0.08em] whitespace-nowrap text-inherit uppercase"
           type="button"
@@ -56,9 +48,6 @@ export function SiteHeader({
           aria-expanded={mounted}
           aria-controls="navigation-menu"
           onClick={onOpen}
-          animate={{ y: 0 }}
-          whileHover={canHover && !mounted ? { y: -2 } : undefined}
-          transition={{ duration: 0.18 }}
         >
           <span
             className="grid w-[84px] shrink-0 grid-cols-[minmax(0,1fr)] items-center justify-items-end"
@@ -70,7 +59,7 @@ export function SiteHeader({
             <i className="block h-px w-5 bg-current" />
             <i className="block h-px w-5 bg-current" />
           </span>
-        </m.button>
+        </button>
       </div>
     </header>
   )

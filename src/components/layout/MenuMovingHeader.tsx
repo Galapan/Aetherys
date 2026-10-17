@@ -11,7 +11,6 @@ interface MenuMovingHeaderProps {
   snapshot: PageSnapshot
   expanded: boolean
   reducedMotion: boolean
-  canHover: boolean
   padding: number
   headerInset: number
   sceneTransition: SceneTransition
@@ -24,7 +23,6 @@ export function MenuMovingHeader({
   snapshot,
   expanded,
   reducedMotion,
-  canHover,
   padding,
   headerInset,
   sceneTransition,
@@ -57,12 +55,7 @@ export function MenuMovingHeader({
         animate={{ x: expanded ? snapshot.headerRight - padding : 0 }}
         transition={sceneTransition}
       >
-        <AudioToggle
-          content={content}
-          reducedMotion={reducedMotion}
-          canHover={canHover}
-          audioRef={audioRef}
-        />
+        <AudioToggle content={content} reducedMotion={reducedMotion} audioRef={audioRef} />
         <MenuCloseButton
           content={content}
           expanded={expanded}

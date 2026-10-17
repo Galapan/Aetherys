@@ -284,6 +284,28 @@ function Mark({ background }: { background: Texture | Color }) {
   )
 }
 
+// Linking the glass shaders blocks the main thread when the first frame needs them, which
+// froze the page whenever the scene mounted mid-scroll. They compile in parallel first
+// (KHR_parallel_shader_compile where available) and only then is the first frame drawn.
+function CompileBeforeFirstFrame() {
+  const { gl, scene, camera, setFrameloop, invalidate } = useThree()
+
+  useEffect(() => {
+    let active = true
+    const start = () => {
+      if (!active) return
+      setFrameloop('demand')
+      invalidate()
+    }
+    gl.compileAsync(scene, camera).then(start, start)
+    return () => {
+      active = false
+    }
+  }, [camera, gl, invalidate, scene, setFrameloop])
+
+  return null
+}
+
 function RenderQuality({ onContextLost }: { onContextLost: () => void }) {
   const { gl, size, setDpr, invalidate } = useThree()
   const onContextLostEvent = useEffectEvent(onContextLost)
@@ -326,7 +348,8 @@ export default function NextStepScene({
     <Canvas
       camera={{ position: [0, 0, 5], fov: 35 }}
       gl={{ antialias: true, alpha: true }}
-      frameloop="demand"
+      // Stays idle until CompileBeforeFirstFrame switches it to on-demand rendering.
+      frameloop="never"
       // Pointer tilt reads window coordinates, so the canvas offset is never needed.
       // Without this, every scroll pause re-measures, reconfigures and re-renders the
       // transmission passes.
@@ -334,6 +357,7 @@ export default function NextStepScene({
       fallback={fallback}
     >
       <RenderQuality onContextLost={handleContextLost} />
+      <CompileBeforeFirstFrame />
       <HeadingRefractionBackground headingKey={headingKey} onTextureReady={handleTextureReady} />
       <ambientLight color={warmWhite} intensity={0.3} />
       <Environment resolution={512} frames={1}>
