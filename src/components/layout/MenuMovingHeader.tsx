@@ -33,17 +33,14 @@ export function MenuMovingHeader({
 }: MenuMovingHeaderProps) {
   return (
     <m.div
-      className="absolute z-2 flex h-11 items-center justify-between"
+      className="pointer-events-auto absolute z-2 flex h-11 items-center justify-between"
       style={{
         top: snapshot.headerTop,
         left: snapshot.headerLeft,
         right: snapshot.headerRight,
       }}
-      initial={reducedMotion ? false : { y: 0, color: snapshot.headerColor }}
-      animate={{
-        y: expanded ? headerInset - snapshot.headerTop : 0,
-        color: expanded ? snapshot.menuColor : snapshot.headerColor,
-      }}
+      initial={reducedMotion ? false : { y: 0 }}
+      animate={{ y: expanded ? headerInset - snapshot.headerTop : 0 }}
       transition={sceneTransition}
     >
       <m.span

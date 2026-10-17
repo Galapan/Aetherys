@@ -24,7 +24,7 @@ export function MenuCloseButton({
       className="flex min-h-11 items-center gap-4 rounded border-0 bg-transparent px-2 text-[20px] leading-[1.4] tracking-[0.08em] whitespace-nowrap text-inherit uppercase"
       type="button"
       aria-label={content.closeMenu}
-      autoFocus
+      data-menu-close
       onClick={onClose}
       initial={reducedMotion ? false : { y: initialOffsetY }}
       animate={{ y: 0 }}

@@ -7,7 +7,6 @@ import {
   projectLogoPaths,
   type ProjectCard as ProjectCardData,
 } from '@/content/projects'
-import { reveal } from './reveal'
 
 const markVariantClasses: Record<ProjectCardData['markVariant'], string> = {
   grotesque: 'font-grotesque font-bold tracking-[-0.04em] indent-[-0.04em]',
@@ -156,7 +155,6 @@ export function ProjectCard({
       tabIndex={-1}
       className={`text-warm-white [container-type:inline-size] relative w-full scroll-mt-[calc(var(--header-height)+24px)] ${className}`}
       style={style}
-      {...reveal(index, reducedMotion)}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
     >

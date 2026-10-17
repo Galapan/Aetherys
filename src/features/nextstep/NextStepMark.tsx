@@ -4,6 +4,10 @@ import type { NextStepContent } from '@/content/nextStep'
 
 const NextStepScene = lazy(() => import('./NextStepScene'))
 
+// Share of the canvas width the scene gives the viewBox (fov 35 at z 5), so the fallback
+// matches the 3D mark's size and the swap does not jump.
+const SCENE_VIEW_FRACTION = 0.609
+
 function Fallback() {
   return (
     <svg
@@ -11,12 +15,12 @@ function Fallback() {
       viewBox="140 110 205 160"
       aria-hidden="true"
       focusable="false"
-      style={{ transform: `scale(${heroMark.scale})` }}
+      style={{ transform: `scale(${heroMark.scale * SCENE_VIEW_FRACTION})` }}
     >
       <path
         d={heroMark.path}
-        fill="color-mix(in srgb, var(--color-warm-white) 55%, var(--color-graphite))"
-        opacity="0.62"
+        fill="color-mix(in srgb, var(--color-warm-white) 86%, var(--color-graphite))"
+        opacity="0.8"
       />
     </svg>
   )

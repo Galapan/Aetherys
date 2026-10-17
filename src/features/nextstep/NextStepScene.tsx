@@ -15,14 +15,20 @@ import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import { heroMark } from '@/content/hero'
 import { useMotionPreferences } from '@/hooks/useMotionPreferences'
 
+// A thick slab, like the reference glass letter: its side faces carry most of the refraction.
 const EXTRUDE_OPTIONS = {
-  depth: 13,
+  depth: 32,
   bevelEnabled: true,
-  bevelSegments: 8,
+  bevelSegments: 6,
   steps: 1,
-  bevelSize: 2,
-  bevelThickness: 2,
+  bevelSize: 1.5,
+  bevelThickness: 1.5,
   curveSegments: 32,
+}
+const PATH_SCALE = 0.012
+
+function readToken(name: string) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
 
 function HeadingRefractionBackground({
@@ -43,6 +49,9 @@ function HeadingRefractionBackground({
     texture.magFilter = LinearFilter
     texture.generateMipmaps = false
     let active = true
+    let visible = true
+    let layout = ''
+    let frame = 0
     const draw = () => {
       if (!active) return
       const heading = document.getElementById('next-step-heading')
@@ -51,36 +60,52 @@ function HeadingRefractionBackground({
       const canvasBounds = gl.domElement.getBoundingClientRect()
       if (!canvasBounds.width || !canvasBounds.height) return
 
+      const words = [...heading.querySelectorAll<HTMLElement>('[data-heading-word]')].map(
+        (word) => ({ word, bounds: word.getBoundingClientRect() }),
+      )
+      // Scrolling moves canvas and words together; only their relative layout matters.
+      const nextLayout = [
+        canvasBounds.width,
+        canvasBounds.height,
+        ...words.flatMap(({ bounds }) => [
+          bounds.left - canvasBounds.left,
+          bounds.top - canvasBounds.top,
+        ]),
+      ]
+        .map((value) => value.toFixed(1))
+        .join()
+      if (nextLayout === layout) return
+      layout = nextLayout
+
       const resolution = 1024
       canvas.width = resolution
       canvas.height = resolution
       const context = canvas.getContext('2d')
       if (!context) return
 
-      context.fillStyle = getComputedStyle(document.documentElement)
-        .getPropertyValue('--color-warm-white')
-        .trim()
+      context.fillStyle = readToken('--color-warm-white')
       context.fillRect(0, 0, resolution, resolution)
 
       const scale = resolution / canvasBounds.height
       context.save()
       context.scale(canvasBounds.height / canvasBounds.width, 1)
-      context.textBaseline = 'top'
+      // The em box sits centred in each word's line box, whatever the line-height.
+      context.textBaseline = 'middle'
 
-      heading.querySelectorAll('span').forEach((word) => {
+      words.forEach(({ word, bounds }) => {
         const text = word.textContent?.trim()
         if (!text) return
 
-        const bounds = word.getBoundingClientRect()
         const style = getComputedStyle(word)
         context.font = `${style.fontStyle} ${style.fontWeight} ${
           Number.parseFloat(style.fontSize) * scale
         }px ${style.fontFamily}`
+        context.letterSpacing = `${(Number.parseFloat(style.letterSpacing) || 0) * scale}px`
         context.fillStyle = style.color
         context.fillText(
           text,
           (bounds.left - canvasBounds.left) * scale,
-          (bounds.top - canvasBounds.top) * scale,
+          (bounds.top + bounds.height / 2 - canvasBounds.top) * scale,
         )
       })
 
@@ -90,18 +115,43 @@ function HeadingRefractionBackground({
       invalidate()
     }
 
+    const redraw = () => {
+      layout = ''
+      draw()
+    }
+    // The words converge with scroll. Two frames let Motion apply this frame's transforms
+    // before they are measured.
+    const scroll = () => {
+      if (!visible || frame) return
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => {
+          frame = 0
+          draw()
+        })
+      })
+    }
+
     draw()
     const heading = document.getElementById('next-step-heading')
-    const observer = new ResizeObserver(draw)
+    const observer = new ResizeObserver(redraw)
     observer.observe(gl.domElement)
     if (heading) observer.observe(heading)
-    window.addEventListener('resize', draw)
-    void document.fonts.ready.then(draw)
+    const visibility = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting
+      if (visible) scroll()
+    })
+    visibility.observe(gl.domElement)
+    window.addEventListener('resize', redraw)
+    window.addEventListener('scroll', scroll, { passive: true })
+    void document.fonts.ready.then(redraw)
 
     return () => {
       active = false
+      cancelAnimationFrame(frame)
       observer.disconnect()
-      window.removeEventListener('resize', draw)
+      visibility.disconnect()
+      window.removeEventListener('resize', redraw)
+      window.removeEventListener('scroll', scroll)
       texture.dispose()
     }
   }, [gl, headingKey, invalidate, onTextureReady])
@@ -113,8 +163,9 @@ function Mark({ background }: { background: Texture | Color }) {
   const group = useRef<Group>(null)
   const { gl, invalidate } = useThree()
   const { reducedMotion, canHover } = useMotionPreferences()
-  const tiltX = useSpring(0, { stiffness: 420, damping: 32, mass: 0.6 })
-  const tiltY = useSpring(0, { stiffness: 420, damping: 32, mass: 0.6 })
+  // Soft and slightly lagging, like the reference letter easing after the cursor.
+  const tiltX = useSpring(0, { stiffness: 140, damping: 22, mass: 0.9 })
+  const tiltY = useSpring(0, { stiffness: 140, damping: 22, mass: 0.9 })
 
   useEffect(() => {
     const surface = gl.domElement.closest('section')
@@ -188,32 +239,37 @@ function Mark({ background }: { background: Texture | Color }) {
     )
     return svg.paths.flatMap((path) => SVGLoader.createShapes(path))
   }, [])
-  const warmWhite = useMemo(
+  // Pale glass: warm white with a breath of graphite, so the faces read just below the page.
+  const glassTint = useMemo(
     () =>
-      new Color(
-        getComputedStyle(document.documentElement).getPropertyValue('--color-warm-white').trim(),
+      new Color(readToken('--color-warm-white')).lerp(
+        new Color(readToken('--color-graphite')),
+        0.05,
       ),
     [],
   )
 
   return (
     <group ref={group} scale={heroMark.scale}>
-      <mesh scale={[0.012, -0.012, 0.012]} position={[-2.91, 2.28, -0.08]}>
+      <mesh
+        scale={[PATH_SCALE, -PATH_SCALE, PATH_SCALE]}
+        position={[-2.91, 2.28, (-EXTRUDE_OPTIONS.depth / 2) * PATH_SCALE]}
+      >
         <extrudeGeometry args={[shapes, EXTRUDE_OPTIONS]} />
         <MeshTransmissionMaterial
           backside
-          resolution={512}
+          resolution={1024}
           backsideResolution={512}
-          samples={4}
+          samples={6}
           background={background}
-          color={warmWhite}
+          color={glassTint}
           metalness={0}
-          roughness={0.08}
-          transmission={0.78}
-          thickness={13}
-          backsideThickness={2}
-          ior={1.45}
-          chromaticAberration={0.055}
+          roughness={0.02}
+          transmission={1}
+          thickness={EXTRUDE_OPTIONS.depth}
+          backsideThickness={4}
+          ior={1.5}
+          chromaticAberration={0.18}
           anisotropicBlur={0}
           distortion={0}
           temporalDistortion={0}
@@ -250,7 +306,7 @@ export default function NextStepScene({
   heading,
 }: {
   fallback: ReactNode
-  heading: [string, string, string]
+  heading: [string, string, string, string]
 }) {
   const [lost, setLost] = useState(false)
   const [refractionBackground, setRefractionBackground] = useState<CanvasTexture | null>(null)
@@ -258,9 +314,7 @@ export default function NextStepScene({
   const handleTextureReady = useCallback((texture: CanvasTexture) => {
     setRefractionBackground(texture)
   }, [])
-  const warmWhite = getComputedStyle(document.documentElement)
-    .getPropertyValue('--color-warm-white')
-    .trim()
+  const warmWhite = readToken('--color-warm-white')
   const warmWhiteColor = useMemo(() => new Color(warmWhite), [warmWhite])
   const headingKey = heading.join('\u0000')
 
@@ -281,6 +335,8 @@ export default function NextStepScene({
       <HeadingRefractionBackground headingKey={headingKey} onTextureReady={handleTextureReady} />
       <ambientLight color={warmWhite} intensity={0.3} />
       <Environment resolution={512} frames={1}>
+        {/* A light room, so grazing reflections brighten the edges instead of inking them. */}
+        <color attach="background" args={[warmWhite]} />
         <Lightformer color={warmWhite} intensity={5} position={[-4, 1, 2]} scale={[1.2, 8, 1]} />
         <Lightformer color={warmWhite} intensity={2} position={[0, 4, 1]} scale={[12, 1.6, 1]} />
         <Lightformer color={warmWhite} intensity={4} position={[4, 0, 2]} scale={[2, 7, 1]} />

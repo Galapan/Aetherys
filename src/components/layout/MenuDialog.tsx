@@ -18,6 +18,8 @@ import type { PageSnapshot } from './useMenuScene'
 
 interface MenuDialogProps {
   ref: RefObject<HTMLDialogElement | null>
+  /** Top-layer popover that blends the moving header with everything beneath it. */
+  headerLayerRef: RefObject<HTMLDivElement | null>
   content: HeroContent
   navigation: NavigationProps
   /** Home link: an anchor on Home, the Home route elsewhere. */
@@ -40,6 +42,7 @@ interface MenuDialogProps {
 
 export function MenuDialog({
   ref: dialogRef,
+  headerLayerRef,
   content,
   navigation,
   homeHref,
@@ -60,6 +63,18 @@ export function MenuDialog({
 }: MenuDialogProps) {
   const copy = menuContent[navigation.locale]
   const { gap } = getMenuDimensions(snapshot)
+  const stageMotion = snapshot && {
+    initial: reducedMotion ? (false as const) : { scaleX: 1, scaleY: 1 },
+    animate: expanded ? 'open' : 'closed',
+    variants: {
+      open: {
+        scaleX: 1 - (gap * 2) / snapshot.width,
+        scaleY: 1 - (gap * 2) / snapshot.height,
+      },
+      closed: { scaleX: 1, scaleY: 1 },
+    },
+    transition: sceneTransition,
+  }
   const links = [
     { href: homeHref, label: content.homeLabel },
     { href: projectsHref(navigation.locale), label: content.projectsLabel },
@@ -82,19 +97,10 @@ export function MenuDialog({
         onClose()
       }}
     >
-      {snapshot && (
+      {snapshot && stageMotion && (
         <m.div
           className="absolute inset-0 origin-center overflow-hidden rounded will-change-transform"
-          initial={reducedMotion ? false : { scaleX: 1, scaleY: 1 }}
-          animate={expanded ? 'open' : 'closed'}
-          variants={{
-            open: {
-              scaleX: 1 - (gap * 2) / snapshot.width,
-              scaleY: 1 - (gap * 2) / snapshot.height,
-            },
-            closed: { scaleX: 1, scaleY: 1 },
-          }}
-          transition={sceneTransition}
+          {...stageMotion}
           onAnimationComplete={(definition) => {
             if (definition === 'closed' && !expanded) onExitComplete()
           }}
@@ -106,18 +112,6 @@ export function MenuDialog({
             animate={expanded ? 'open' : 'closed'}
             variants={{ open: { opacity: 1 }, closed: { opacity: 0 } }}
             transition={createPanelTransition(expanded, sceneTransition)}
-          />
-          <MenuMovingHeader
-            content={content}
-            snapshot={snapshot}
-            expanded={expanded}
-            reducedMotion={reducedMotion}
-            canHover={canHover}
-            padding={padding}
-            headerInset={headerInset}
-            sceneTransition={sceneTransition}
-            audioRef={audioRef}
-            onClose={() => onClose()}
           />
           <div className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain">
             <div className="relative flex min-h-full flex-col px-5 pt-[100px] pb-[max(24px,env(safe-area-inset-bottom))] sm:px-8 md:pt-[132px] md:pb-10 lg:px-16 lg:pt-[168px] lg:pb-16">
@@ -186,6 +180,30 @@ export function MenuDialog({
               />
             </div>
           </div>
+        </m.div>
+      )}
+      {snapshot && stageMotion && (
+        // Same warm-white difference blend as the page header, so the copy keeps adapting to the
+        // page and the panel behind it while opening and closing, and hands off without a jump.
+        <m.div
+          ref={headerLayerRef}
+          popover="manual"
+          className="text-warm-white pointer-events-none fixed inset-y-0 m-0 h-dvh max-h-none max-w-none origin-center overflow-visible border-0 bg-transparent p-0 mix-blend-difference [--focus-outline:var(--color-warm-white)]"
+          style={{ left: snapshot.pageLeft, right: 'auto', width: snapshot.width }}
+          {...stageMotion}
+        >
+          <MenuMovingHeader
+            content={content}
+            snapshot={snapshot}
+            expanded={expanded}
+            reducedMotion={reducedMotion}
+            canHover={canHover}
+            padding={padding}
+            headerInset={headerInset}
+            sceneTransition={sceneTransition}
+            audioRef={audioRef}
+            onClose={() => onClose()}
+          />
         </m.div>
       )}
     </dialog>

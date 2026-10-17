@@ -5,6 +5,7 @@ import { LocaleTransition } from './LocaleTransition'
 import type { NavigationProps } from './LanguageSwitch'
 import { createSceneTransition, getMenuDimensions } from './menuMotion'
 import { PageSurface } from './PageSurface'
+import { SiteFooter } from './SiteFooter'
 import { SiteHeader } from './SiteHeader'
 import { useMenuScene } from './useMenuScene'
 import { usePageTransition, type PageDestination } from './usePageTransition'
@@ -34,6 +35,7 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
     expanded,
     mounted,
     dialogRef,
+    headerLayerRef,
     triggerRef,
     openMenu: openMenuScene,
     closeMenu,
@@ -52,7 +54,8 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
     reducedMotion,
     pendingLocale !== null || pendingPage !== null,
   )
-  const isHome = parseRoute(path).kind === 'home'
+  const routeKind = parseRoute(path).kind
+  const isHome = routeKind === 'home'
   const homeHref = withLocale(routes.home, locale)
 
   useEffect(() => () => audioElement.current?.pause(), [])
@@ -89,6 +92,16 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
           onOpen={openMenu}
         />
         {children}
+        {routeKind !== 'project' && (
+          <SiteFooter
+            content={content}
+            locale={locale}
+            reducedMotion={reducedMotion}
+            canHover={canHover}
+            homeHref={isHome ? '' : homeHref}
+            onSelectLocale={selectLocale}
+          />
+        )}
       </PageSurface>
       <MenuDialog
         content={content}
@@ -100,6 +113,7 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
         expanded={expanded}
         snapshot={snapshot}
         ref={dialogRef}
+        headerLayerRef={headerLayerRef}
         audioRef={audioElement}
         padding={padding}
         headerInset={headerInset}

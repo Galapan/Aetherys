@@ -29,7 +29,8 @@ function Reveal({
   const visible = useInView(scope, { once: true, amount: 0.15 })
 
   useEffect(() => {
-    if (!visible || reducedMotion) return
+    const root = scope.current
+    if (!visible || reducedMotion || !root) return
     const target = kind === 'heading' ? '.join-us__word' : '.join-us__reveal-content'
     const controls = animate([
       [target, { y: '110%', opacity: 0 }, { duration: 0 }],
@@ -42,9 +43,10 @@ function Reveal({
 
     return () => {
       controls.stop()
-      animate(target, { y: 0, opacity: 1 }, { duration: 0 })
+      // On unmount the scope is already detached and a selector animation would throw.
+      if (root.isConnected) animate(target, { y: 0, opacity: 1 }, { duration: 0 })
     }
-  }, [animate, kind, reducedMotion, visible])
+  }, [animate, kind, reducedMotion, scope, visible])
 
   return (
     <div ref={scope} className={className}>

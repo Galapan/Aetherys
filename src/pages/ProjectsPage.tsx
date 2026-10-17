@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, type RefObject } from 'react'
-import { m, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion'
+import { m, useMotionValue, useTransform, type MotionValue } from 'framer-motion'
 import { useLenis } from 'lenis/react'
 import type { ProjectCard as ProjectCardData, ProjectsContent } from '@/content/projects'
 import type { Locale } from '@/content/hero'
 import { ProjectCard } from '@/sections/projects/ProjectCard'
-import { reveal } from '@/sections/projects/reveal'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 
 interface ProjectsPageProps {
@@ -21,59 +20,42 @@ const sectionClasses =
   'text-graphite bg-warm-white relative z-1 mt-[calc(var(--header-height)*-1)] min-h-svh scroll-mt-[calc(var(--header-height)+24px)] [--stagger-w:clamp(255px,45.9vw,1060px)] [--deck-card-h:calc((100vw_-_2_*_var(--page-padding))_*_27_/_50)] lg:[--deck-card-h:calc(var(--stagger-w)_*_5_/_8)] pt-[max(calc(var(--header-height)_+_24px),calc(50svh_-_var(--deck-card-h)_/_2))] pb-[calc(50svh_-_var(--deck-card-h)_/_2)]'
 
 // Below lg the single column keeps a wide gap so one card holds the centre at a time.
-// On lg the cards alternate sides and each next one tucks 1/36 of a card under the
-// previous one, so the swap between titles lands where the two cards meet.
+// On lg the cards alternate sides with a clear vertical gap of ~17% of a card between
+// them, as in the reference, so each card gets its own moment under the title.
 const deckClasses = 'flex flex-col gap-[max(28svh,160px)] lg:gap-0'
 
 function cardPlacement(index: number) {
   return [
     'aspect-[50/27] lg:aspect-[8/5] lg:w-[var(--stagger-w)]',
     index % 2 === 0 ? 'lg:self-start' : 'lg:self-end',
-    index > 0 ? 'lg:mt-[calc(var(--deck-card-h)_/_-36)]' : '',
+    index > 0 ? 'lg:mt-[calc(var(--deck-card-h)_*_0.17)]' : '',
   ].join(' ')
 }
 
 // One roll row per card: the title on one line with its meta (label, year) beside it
-// on lg and above it below lg. --roll-pitch is the row height and the roll step.
+// on lg and above it below lg. --roll-pitch is the row height and the roll step. The
+// box is a one-row window with room around the text: rows slide up through it, so the
+// outgoing title leaves by its top edge while the incoming one rises in from the bottom
+// edge, with a clear gap between the two.
 const rollClasses =
-  'text-warm-white relative -translate-y-1/2 h-[var(--roll-pitch)] text-[clamp(2rem,10vw,3.5rem)] leading-[1.1] font-medium uppercase tracking-[-0.03em] [--roll-pitch:calc(1.1em+24px)] lg:text-[clamp(3rem,3.8vw,4.5rem)] lg:[--roll-pitch:1.15em]'
+  'text-warm-white relative -translate-y-1/2 h-[var(--roll-pitch)] overflow-hidden text-[clamp(2rem,10vw,3.5rem)] leading-[1.1] font-medium uppercase tracking-[-0.03em] [--roll-pitch:calc(1.7em+24px)] lg:text-[clamp(3rem,3.8vw,4.5rem)] lg:[--roll-pitch:1.7em]'
 
 const rowGridClasses =
   "grid grid-cols-[auto_auto] items-baseline gap-x-4 gap-y-1 [grid-template-areas:'label_year'_'title_title'] lg:grid-cols-[auto_auto_auto] lg:gap-x-[clamp(12px,1.2vw,24px)] lg:[grid-template-areas:'label_title_year']"
 
 const metaClasses = 'text-[12px] leading-[1.4] tracking-[0.08em] uppercase'
 
-// Each title holds while the viewport centre is within ±HOLD of its card (in card
-// spacings) and wipes out/in over the next WIPE, so the swap lands between cards.
-const HOLD = 0.2
-const WIPE = 0.6
-
-// The roll trails the scroll slightly so native touch scroll does not make it jump.
-const rollSpring = { stiffness: 140, damping: 28, mass: 0.6, restDelta: 0.0005 }
-
-function easeInOut(t: number) {
-  return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2
-}
-
 interface TitleRollRowProps {
   card: ProjectCardData
   label: string
   index: number
-  progress: MotionValue<number>
 }
 
-function TitleRollRow({ card, label, index, progress }: TitleRollRowProps) {
-  // Both the outgoing and the incoming title are cut from the bottom edge: the
-  // outgoing one loses its lower part first, the incoming one shows its top first.
-  const clipPath = useTransform(progress, (value) => {
-    const hidden = easeInOut(Math.min(Math.max((Math.abs(value - index) - HOLD) / WIPE, 0), 1))
-    return `inset(0 0 ${hidden * 100}% 0)`
-  })
-
+function TitleRollRow({ card, label, index }: TitleRollRowProps) {
   return (
-    <m.div
+    <div
       className="absolute inset-x-0 flex h-[var(--roll-pitch)] items-center justify-center whitespace-nowrap"
-      style={{ top: `calc(var(--roll-pitch) * ${index})`, clipPath }}
+      style={{ top: `calc(var(--roll-pitch) * ${index})` }}
     >
       <div className={rowGridClasses}>
         <span className="justify-self-center [grid-area:title]">/{card.title}</span>
@@ -82,7 +64,7 @@ function TitleRollRow({ card, label, index, progress }: TitleRollRowProps) {
           <span className={`justify-self-end [grid-area:year] ${metaClasses}`}>{card.year}</span>
         )}
       </div>
-    </m.div>
+    </div>
   )
 }
 
@@ -90,36 +72,34 @@ interface TitleRollProps {
   cards: ProjectCardData[]
   label: string
   progress: MotionValue<number>
-  reducedMotion: boolean
 }
 
-/** Sticky stack of every card title that rolls up with the deck's scroll progress. */
-function TitleRoll({ cards, label, progress, reducedMotion }: TitleRollProps) {
+/**
+ * Sticky one-row window over every card title. The rows move linearly with the deck's
+ * scroll progress, one pitch per card spacing, so the strip glides in step with Lenis. */
+function TitleRoll({ cards, label, progress }: TitleRollProps) {
   const transform = useTransform(
     progress,
     (value) => `translateY(calc(var(--roll-pitch) * ${-value}))`,
   )
 
+  // The track runs from the first card's centre to the last one's, so the window sticks
+  // to the viewport centre only in between: the first and last titles stay on the middle
+  // of their cards and scroll in and out with them.
   return (
     <div
-      className="pointer-events-none sticky top-[50svh] z-20 h-0 mix-blend-difference"
+      className="pointer-events-none absolute inset-x-0 top-[calc(var(--deck-card-h)/2)] bottom-[calc(var(--deck-card-h)/2)]"
       aria-hidden="true"
     >
-      <m.div {...reveal(0.2, reducedMotion)}>
+      <div className="sticky top-[50svh] z-20 h-0 mix-blend-difference">
         <div className={rollClasses}>
-          <m.div className="absolute inset-0" style={{ transform }}>
+          <m.div className="absolute inset-0 will-change-transform" style={{ transform }}>
             {cards.map((card, index) => (
-              <TitleRollRow
-                key={card.id}
-                card={card}
-                label={label}
-                index={index}
-                progress={progress}
-              />
+              <TitleRollRow key={card.id} card={card} label={label} index={index} />
             ))}
           </m.div>
         </div>
-      </m.div>
+      </div>
     </div>
   )
 }
@@ -152,9 +132,9 @@ function useDeckProgress(deckRef: RefObject<HTMLDivElement | null>, reducedMotio
     progress.set(reducedMotion ? Math.round(value) : value)
   }, [progress, reducedMotion])
 
-  // Lenis emits from its own frame for wheel, keyboard, touch and programmatic scroll.
+  // Lenis advances inside Motion's frame loop and emits for wheel, keyboard, touch and
+  // programmatic scroll, so the roll is written in the same frame as the scroll.
   useLenis(syncProgress)
-  const smoothProgress = useSpring(progress, rollSpring)
 
   useEffect(() => {
     const deck = deckRef.current
@@ -171,16 +151,14 @@ function useDeckProgress(deckRef: RefObject<HTMLDivElement | null>, reducedMotio
     }
 
     syncProgress()
-    // Start on the restored scroll position instead of rolling through every title.
-    smoothProgress.jump(progress.get())
     window.addEventListener('resize', scheduleSync)
     return () => {
       if (frame) cancelAnimationFrame(frame)
       window.removeEventListener('resize', scheduleSync)
     }
-  }, [deckRef, syncProgress, smoothProgress, progress])
+  }, [deckRef, syncProgress])
 
-  return reducedMotion ? progress : smoothProgress
+  return progress
 }
 
 export function ProjectsPage({ content, locale, reducedMotion, canHover }: ProjectsPageProps) {
@@ -200,12 +178,7 @@ export function ProjectsPage({ content, locale, reducedMotion, canHover }: Proje
         <h2 id="proyectos-heading" className="sr-only">
           {content.eyebrow}
         </h2>
-        <TitleRoll
-          cards={content.cards}
-          label={content.sideLabel}
-          progress={progress}
-          reducedMotion={reducedMotion}
-        />
+        <TitleRoll cards={content.cards} label={content.sideLabel} progress={progress} />
         <div ref={deckRef} className={deckClasses}>
           {content.cards.map((card, index) => (
             <ProjectCard

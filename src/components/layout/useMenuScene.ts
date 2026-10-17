@@ -11,8 +11,6 @@ export interface PageSnapshot {
   headerTop: number
   headerLeft: number
   headerRight: number
-  headerColor: string
-  menuColor: string
   triggerOffsetY: number
 }
 
@@ -21,6 +19,7 @@ interface MenuScene {
   expanded: boolean
   mounted: boolean
   dialogRef: RefObject<HTMLDialogElement | null>
+  headerLayerRef: RefObject<HTMLDivElement | null>
   triggerRef: RefObject<HTMLButtonElement | null>
   openMenu: (header: HTMLElement | null, page: HTMLDivElement | null) => void
   closeMenu: (id?: string) => void
@@ -33,6 +32,7 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
   const [expanded, setExpanded] = useState(false)
   const [snapshot, setSnapshot] = useState<PageSnapshot | null>(null)
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const headerLayerRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const closing = useRef(false)
   const destination = useRef<string | null>(null)
@@ -48,11 +48,16 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
   useLayoutEffect(() => {
     if (!mounted) return
     const modal = dialogRef.current
+    const headerLayer = headerLayerRef.current
     const opener = triggerRef.current
     const previousOverflow = document.body.style.overflow
     lenis?.stop()
     document.body.style.overflow = 'hidden'
     modal?.showModal()
+    // Shown after the modal so it stacks above it in the top layer and keeps blending with the
+    // page and the menu panel beneath, exactly like the page header it replaces.
+    headerLayer?.showPopover()
+    headerLayer?.querySelector<HTMLElement>('[data-menu-close]')?.focus({ preventScroll: true })
     const resize = () => {
       setSnapshot(
         (previous) =>
@@ -66,6 +71,7 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
     window.addEventListener('resize', resize)
     return () => {
       window.removeEventListener('resize', resize)
+      if (headerLayer?.matches(':popover-open')) headerLayer.hidePopover()
       modal?.close()
       document.body.style.overflow = previousOverflow
       if (lenis) {
@@ -144,10 +150,6 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
       headerTop: brand?.top ?? 18,
       headerLeft: (brand?.left ?? pageLeft + 20) - pageLeft,
       headerRight: pageLeft + width - (button?.right ?? pageLeft + width - 20),
-      headerColor: header ? getComputedStyle(header).color : 'var(--color-warm-white)',
-      menuColor: dialogRef.current
-        ? getComputedStyle(dialogRef.current).color
-        : getComputedStyle(document.documentElement).getPropertyValue('--color-graphite').trim(),
       triggerOffsetY: button && brand ? button.top - brand.top : 0,
     })
     setExpanded(true)
@@ -176,6 +178,7 @@ export function useMenuScene(reducedMotion: boolean): MenuScene {
     expanded,
     mounted,
     dialogRef,
+    headerLayerRef,
     triggerRef,
     openMenu,
     closeMenu,

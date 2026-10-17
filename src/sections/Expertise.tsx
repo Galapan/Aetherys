@@ -27,17 +27,19 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
   const x = useMotionValue(0)
 
   useEffect(() => {
-    if (!introVisible || reducedMotion) return
+    const root = scope.current
+    if (!introVisible || reducedMotion || !root) return
     const controls = animate([
       ['.expertise__copy', { y: '110%' }, { duration: 0 }],
       ['.expertise__copy', { y: '0%' }, { duration: 0.75, at: 0.4, ease: [0.22, 1, 0.36, 1] }],
     ])
     return () => {
       controls.stop()
-      // Restore readable content on preference changes and StrictMode cleanup.
-      animate('.expertise__copy', { y: '0%' }, { duration: 0 })
+      // Restore readable content on preference changes and StrictMode cleanup. On
+      // unmount the scope is already detached and a selector animation would throw.
+      if (root.isConnected) animate('.expertise__copy', { y: '0%' }, { duration: 0 })
     }
-  }, [animate, introVisible, reducedMotion, content])
+  }, [animate, introVisible, reducedMotion, content, scope])
 
   useEffect(() => {
     const element = group.current

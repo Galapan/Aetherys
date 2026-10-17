@@ -10,10 +10,14 @@ import {
 import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
-import { Color, type Group } from 'three'
+import { CanvasTexture, Color, LinearFilter, SRGBColorSpace, type Group, type Texture } from 'three'
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import { heroMark } from '@/content/hero'
 import { useMotionPreferences } from '@/hooks/useMotionPreferences'
+
+// The glass lifts the dark page with its reflections, which flattens the faint grid; each
+// line is composited this many times so it reads inside the mark as it does beside it.
+const LINE_GAIN = 3
 
 const EXTRUDE_OPTIONS = {
   depth: 13,
@@ -25,7 +29,119 @@ const EXTRUDE_OPTIONS = {
   curveSegments: 32,
 }
 
-function Mark() {
+function readToken(name: string) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+// The transmission pass only sees the WebGL scene, so the DOM grid behind the canvas is
+// redrawn into its background for the glass to refract.
+function GridRefractionBackground({
+  onTextureReady,
+}: {
+  onTextureReady: (texture: CanvasTexture) => void
+}) {
+  const { gl, invalidate } = useThree()
+
+  useEffect(() => {
+    // Owned by this effect, so drawing into them never mutates a hook value.
+    const canvas = document.createElement('canvas')
+    const texture = new CanvasTexture(canvas)
+    texture.colorSpace = SRGBColorSpace
+    texture.minFilter = LinearFilter
+    texture.magFilter = LinearFilter
+    texture.generateMipmaps = false
+    let active = true
+    let visible = true
+    let layout = ''
+    let frame = 0
+    const draw = () => {
+      if (!active) return
+      const canvasBounds = gl.domElement.getBoundingClientRect()
+      if (!canvasBounds.width || !canvasBounds.height) return
+
+      // Lines hidden at this breakpoint measure zero.
+      const lines = [...document.querySelectorAll<HTMLElement>('.hero-rule-grid > span')]
+        .map((line) => ({ line, bounds: line.getBoundingClientRect() }))
+        .filter(({ bounds }) => bounds.width > 0)
+      // Grid and mark are pinned in the same stage; only their relative layout matters.
+      const nextLayout = [
+        canvasBounds.width,
+        canvasBounds.height,
+        ...lines.map(({ bounds }) => bounds.left - canvasBounds.left),
+      ]
+        .map((value) => value.toFixed(1))
+        .join()
+      if (nextLayout === layout) return
+      layout = nextLayout
+
+      const resolution = 1024
+      canvas.width = resolution
+      canvas.height = resolution
+      const context = canvas.getContext('2d')
+      if (!context) return
+
+      context.fillStyle = readToken('--color-graphite')
+      context.fillRect(0, 0, resolution, resolution)
+
+      const scale = resolution / canvasBounds.height
+      context.save()
+      context.scale(canvasBounds.height / canvasBounds.width, 1)
+      lines.forEach(({ line, bounds }) => {
+        // The translucent line colour composites over graphite as it does on the page.
+        context.fillStyle = getComputedStyle(line).backgroundColor
+        for (let pass = 0; pass < LINE_GAIN; pass += 1) {
+          context.fillRect(
+            (bounds.left - canvasBounds.left) * scale,
+            0,
+            Math.max(1, bounds.width * scale),
+            resolution,
+          )
+        }
+      })
+      context.restore()
+      texture.needsUpdate = true
+      onTextureReady(texture)
+      invalidate()
+    }
+
+    const redraw = () => {
+      layout = ''
+      draw()
+    }
+    const scroll = () => {
+      if (!visible || frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        draw()
+      })
+    }
+
+    draw()
+    const observer = new ResizeObserver(redraw)
+    observer.observe(gl.domElement)
+    const visibility = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting
+      if (visible) scroll()
+    })
+    visibility.observe(gl.domElement)
+    window.addEventListener('resize', redraw)
+    window.addEventListener('scroll', scroll, { passive: true })
+
+    return () => {
+      active = false
+      cancelAnimationFrame(frame)
+      observer.disconnect()
+      visibility.disconnect()
+      window.removeEventListener('resize', redraw)
+      window.removeEventListener('scroll', scroll)
+      texture.dispose()
+    }
+  }, [gl, invalidate, onTextureReady])
+
+  return null
+}
+
+function Mark({ background }: { background: Texture | Color }) {
   const group = useRef<Group>(null)
   const { gl, invalidate } = useThree()
   const { reducedMotion, canHover } = useMotionPreferences()
@@ -101,42 +217,39 @@ function Mark() {
     )
     return svg.paths.flatMap((path) => SVGLoader.createShapes(path))
   }, [])
-  const { graphite, body } = useMemo(() => {
-    const colors = getComputedStyle(document.documentElement)
-    const graphite = new Color(colors.getPropertyValue('--color-graphite').trim())
-    const body = new Color(colors.getPropertyValue('--color-warm-white').trim()).lerp(
-      graphite,
-      0.15,
-    )
-    return { graphite, body }
-  }, [])
+  // Pale glass as in NextStep: warm white with a breath of graphite, so the grid reads through.
+  const glassTint = useMemo(
+    () =>
+      new Color(readToken('--color-warm-white')).lerp(
+        new Color(readToken('--color-graphite')),
+        0.05,
+      ),
+    [],
+  )
   return (
     <group ref={group} scale={heroMark.scale}>
       <mesh scale={[0.012, -0.012, 0.012]} position={[-2.91, 2.28, -0.08]}>
         <extrudeGeometry args={[shapes, EXTRUDE_OPTIONS]} />
         <MeshTransmissionMaterial
-          backside
-          resolution={512}
-          backsideResolution={512}
-          samples={4}
-          color={body}
+          // A backside pass renders the far faces against the dark page first, which inks the
+          // body to black and hides the grid; the front faces alone keep it see-through.
+          resolution={1024}
+          samples={6}
+          background={background}
+          color={glassTint}
           metalness={0}
-          roughness={0.04}
+          roughness={0.02}
           transmission={1}
           // Thickness uses the SVG's local units, before the mesh scale.
-          thickness={13}
-          backsideThickness={2}
-          backsideEnvMapIntensity={1.2}
-          attenuationColor={graphite}
-          attenuationDistance={0.85}
+          thickness={EXTRUDE_OPTIONS.depth}
           ior={1.5}
-          chromaticAberration={0}
+          chromaticAberration={0.18}
           anisotropicBlur={0}
           distortion={0}
           temporalDistortion={0}
           clearcoat={1}
-          clearcoatRoughness={0.04}
-          envMapIntensity={1.6}
+          clearcoatRoughness={0.06}
+          envMapIntensity={1.2}
         />
       </mesh>
     </group>
@@ -165,15 +278,26 @@ function RenderQuality({ onContextLost }: { onContextLost: () => void }) {
 
 export default function HeroScene({ fallback }: { fallback: ReactNode }) {
   const [lost, setLost] = useState(false)
+  const [refractionBackground, setRefractionBackground] = useState<CanvasTexture | null>(null)
   const handleContextLost = useCallback(() => setLost(true), [])
-  const colors = getComputedStyle(document.documentElement)
-  const white = colors.getPropertyValue('--color-warm-white').trim()
-  const burgundy = colors.getPropertyValue('--color-burgundy').trim()
+  const handleTextureReady = useCallback((texture: CanvasTexture) => {
+    setRefractionBackground(texture)
+  }, [])
+  const white = readToken('--color-warm-white')
+  const burgundy = readToken('--color-burgundy')
+  const graphite = readToken('--color-graphite')
+  const graphiteColor = useMemo(() => new Color(graphite), [graphite])
+  // NextStep's light room, dimmed for the dark page: a full warm-white room would mirror
+  // into the faces and fog the glass grey, hiding the grid behind it.
+  const room = useMemo(() => new Color(white).lerp(graphiteColor, 0.75), [white, graphiteColor])
   if (lost) return fallback
   return (
     <Canvas
       camera={{ position: [0, 0, 5], fov: 35 }}
       gl={{ antialias: true, alpha: true }}
+      // Without tone mapping the refracted grid keeps the page's exact graphite and line
+      // contrast; ACES would crush both to black inside the glass.
+      flat
       frameloop="demand"
       // Pointer tilt reads window coordinates, so the canvas offset is never needed.
       // Without this, every scroll pause re-measures, reconfigures and re-renders the
@@ -182,8 +306,12 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
       fallback={fallback}
     >
       <RenderQuality onContextLost={handleContextLost} />
-      <ambientLight color={white} intensity={0.25} />
+      <GridRefractionBackground onTextureReady={handleTextureReady} />
+      <ambientLight color={white} intensity={0.3} />
       <Environment resolution={512} frames={1}>
+        {/* Grazing reflections brighten the edges instead of inking them, while the burgundy
+            panel keeps the secondary light on the right. */}
+        <color attach="background" args={[room]} />
         <Lightformer color={white} intensity={5} position={[-4, 1, 2]} scale={[1.2, 8, 1]} />
         <Lightformer color={white} intensity={2} position={[0, 4, 1]} scale={[12, 1.6, 1]} />
         <Lightformer color={burgundy} intensity={5} position={[4, 0, 2]} scale={[2, 7, 1]} />
@@ -191,7 +319,7 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
       </Environment>
       <directionalLight color={white} position={[-3, 4, 5]} intensity={1.5} />
       <directionalLight color={burgundy} position={[4, 2, 1]} intensity={2.5} />
-      <Mark />
+      <Mark background={refractionBackground ?? graphiteColor} />
     </Canvas>
   )
 }
