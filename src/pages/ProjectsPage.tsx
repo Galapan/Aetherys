@@ -72,12 +72,13 @@ interface TitleRollProps {
   cards: ProjectCardData[]
   label: string
   progress: MotionValue<number>
+  reducedMotion: boolean
 }
 
 /**
  * Sticky one-row window over every card title. The rows move linearly with the deck's
  * scroll progress, one pitch per card spacing, so the strip glides in step with Lenis. */
-function TitleRoll({ cards, label, progress }: TitleRollProps) {
+function TitleRoll({ cards, label, progress, reducedMotion }: TitleRollProps) {
   const transform = useTransform(
     progress,
     (value) => `translateY(calc(var(--roll-pitch) * ${-value}))`,
@@ -93,7 +94,12 @@ function TitleRoll({ cards, label, progress }: TitleRollProps) {
     >
       <div className="sticky top-[50svh] z-20 h-0 mix-blend-difference">
         <div className={rollClasses}>
-          <m.div className="absolute inset-0 will-change-transform" style={{ transform }}>
+          {/* The strip is rewritten every scroll frame, so it keeps its own layer while it
+              glides. Reduced motion steps it card by card, which needs no standing layer. */}
+          <m.div
+            className={`absolute inset-0 ${reducedMotion ? '' : 'will-change-transform'}`}
+            style={{ transform }}
+          >
             {cards.map((card, index) => (
               <TitleRollRow key={card.id} card={card} label={label} index={index} />
             ))}
@@ -178,7 +184,12 @@ export function ProjectsPage({ content, locale, reducedMotion, canHover }: Proje
         <h2 id="proyectos-heading" className="sr-only">
           {content.eyebrow}
         </h2>
-        <TitleRoll cards={content.cards} label={content.sideLabel} progress={progress} />
+        <TitleRoll
+          cards={content.cards}
+          label={content.sideLabel}
+          progress={progress}
+          reducedMotion={reducedMotion}
+        />
         <div ref={deckRef} className={deckClasses}>
           {content.cards.map((card, index) => (
             <ProjectCard

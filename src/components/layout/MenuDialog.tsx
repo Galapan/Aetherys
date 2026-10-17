@@ -1,4 +1,4 @@
-import type { KeyboardEvent, RefObject } from 'react'
+import { useState, type KeyboardEvent, type RefObject } from 'react'
 import { m } from 'framer-motion'
 import type { HeroContent, Locale } from '@/content/hero'
 import { menuContact, menuContent, menuSocials } from '@/content/navigation'
@@ -63,6 +63,10 @@ export function MenuDialog({
 }: MenuDialogProps) {
   const copy = menuContent[navigation.locale]
   const { gap } = getMenuDimensions(snapshot)
+  // Variant the stage last finished on. The full-screen layer hint stays only while the
+  // stage is heading somewhere else, so the open menu does not hold it while idle.
+  const [settledStage, setSettledStage] = useState<string | null>(null)
+  const stageMoving = !reducedMotion && settledStage !== (expanded ? 'open' : 'closed')
   const stageMotion = snapshot && {
     initial: reducedMotion ? (false as const) : { scaleX: 1, scaleY: 1 },
     animate: expanded ? 'open' : 'closed',
@@ -99,9 +103,10 @@ export function MenuDialog({
     >
       {snapshot && stageMotion && (
         <m.div
-          className="absolute inset-0 origin-center overflow-hidden rounded will-change-transform"
+          className={`absolute inset-0 origin-center overflow-hidden rounded ${stageMoving ? 'will-change-transform' : ''}`}
           {...stageMotion}
           onAnimationComplete={(definition) => {
+            if (typeof definition === 'string') setSettledStage(definition)
             if (definition === 'closed' && !expanded) onExitComplete()
           }}
         >

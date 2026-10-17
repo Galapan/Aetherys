@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { motion, useInView } from 'framer-motion'
+import { m, useInView } from 'framer-motion'
 import { useLenis } from 'lenis/react'
 import type { HeroContent } from '@/content/hero'
 
@@ -63,7 +63,7 @@ export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
 
   return (
     <>
-      <motion.button
+      <m.button
         ref={trigger}
         type="button"
         className="pointer-events-auto absolute right-0 bottom-[calc(100%+16px)] w-[170px] overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-dark-gray)] p-0 text-[var(--color-warm-white)]"
@@ -98,7 +98,7 @@ export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
             {content.showreel.label.replace(/^\//, '')}
           </span>
         </span>
-      </motion.button>
+      </m.button>
       {origin &&
         createPortal(
           <ShowreelDialog
@@ -127,8 +127,9 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
   const dialog = useRef<HTMLDialogElement>(null)
   const video = useRef<HTMLVideoElement>(null)
   const [target, setTarget] = useState(playerFrame)
-  const [closing, setClosing] = useState(false)
-  const [destination, setDestination] = useState(origin)
+  // Where the player shrinks back to once closing; null while the dialog is open.
+  const [destination, setDestination] = useState<Frame | null>(null)
+  const closing = destination !== null
   const [isPlaying, setIsPlaying] = useState(false)
 
   useLayoutEffect(() => {
@@ -159,7 +160,6 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
   function close() {
     if (closing) return
     setDestination(returnFrame())
-    setClosing(true)
     if (reducedMotion) onClosed()
   }
 
@@ -184,24 +184,21 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
         event.preventDefault()
         close()
       }}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) close()
-      }}
     >
       <h2 id="showreel-title" className="sr-only">
         {content.brand} {content.showreel.label}
       </h2>
-      <motion.div
+      <m.div
         className="pointer-events-auto absolute inset-0 bg-[color-mix(in_srgb,var(--color-graphite)_62%,transparent)]"
         initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
         animate={{ opacity: closing ? 0 : 1, backdropFilter: closing ? 'blur(0px)' : 'blur(16px)' }}
         transition={{ duration: reducedMotion ? 0 : 0.5 }}
         onClick={close}
       />
-      <motion.div
+      <m.div
         className="absolute rounded-lg bg-[var(--color-graphite)] shadow-[0_24px_100px_color-mix(in_srgb,var(--color-graphite)_65%,transparent)]"
         initial={{ ...(reducedMotion ? target : origin) }}
-        animate={{ ...(closing ? destination : target) }}
+        animate={{ ...(destination ?? target) }}
         transition={{ duration: reducedMotion ? 0 : 0.75, ease: [0.76, 0, 0.24, 1] }}
         onAnimationComplete={() => {
           if (closing) onClosed()
@@ -231,7 +228,7 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
             event.currentTarget.currentTime = 0
           }}
         />
-        <motion.div
+        <m.div
           className="absolute inset-x-0 bottom-[calc(100%+12px)] flex items-center justify-between gap-4 text-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: closing ? 0 : 1 }}
@@ -249,8 +246,8 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
           <button type="button" onClick={close} aria-label={content.close}>
             {content.close}
           </button>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </dialog>
   )
 }

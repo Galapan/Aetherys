@@ -43,7 +43,9 @@ interface StepBlockProps {
   progress: MotionValue<number>
 }
 
-function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: StepBlockProps) {
+/** Scroll-scrubbed values for one step: its entrance rise, header wipe, copy rises and the
+ * mobile copy crossfade. */
+function useStepMotion(progress: MotionValue<number>, index: number, mobile: boolean) {
   const entranceY = useTransform(
     progress,
     [index * 0.035, 0.18 + index * 0.035],
@@ -57,11 +59,19 @@ function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: Ste
   const copyY = useTransform(reveal, mobile ? [0, 0.25] : [0.3, 0.8], ['110%', '0%'])
   // Mobile keeps all three headers visible and crossfades copy in one shared area.
   // Screen readers retain the complete ordered list, including every description.
+  const last = index === spans.length - 1
   const bodyOpacity = useTransform(
     progress,
-    index === spans.length - 1 ? [from, from + 0.025] : [from, from + 0.025, to, to + 0.025],
-    index === spans.length - 1 ? [0, 1] : [0, 1, 1, 0],
+    last ? [from, from + 0.025] : [from, from + 0.025, to, to + 0.025],
+    last ? [0, 1] : [0, 1, 1, 0],
   )
+  return { entranceY, clipPath, dateY, copyY, bodyOpacity }
+}
+
+type StepMotion = ReturnType<typeof useStepMotion>
+
+function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: StepBlockProps) {
+  const motion = useStepMotion(progress, index, mobile)
   const scroll = pinned && !reducedMotion
   const mobilePinned = pinned && mobile
 
@@ -77,56 +87,96 @@ function StepBlock({ step, index, pinned, mobile, reducedMotion, progress }: Ste
       ]
         .filter(Boolean)
         .join(' ')}
-      style={{ y: scroll && !mobile ? entranceY : 0 }}
+      style={{ y: scroll && !mobile ? motion.entranceY : 0 }}
       initial={false}
     >
-      <div
-        className={[
-          'min-h-[var(--process-panel-height)] bg-[color-mix(in_srgb,var(--color-burgundy)_20%,transparent)]',
-          mobilePinned &&
-            'self-start bg-[color-mix(in_srgb,var(--color-burgundy)_20%,var(--color-warm-white))]',
-          mobilePinned && index === 1 && 'mt-[var(--process-panel-height)]',
-          mobilePinned && index === 2 && 'mt-[calc(var(--process-panel-height)*2)]',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <m.div
-          className="bg-burgundy text-warm-white flex min-h-[var(--process-panel-height)] items-center px-[clamp(24px,2.6vw,40px)]"
-          style={{ clipPath: scroll ? clipPath : 'inset(0% 0% 0% 0%)' }}
-        >
-          <h3 className="m-0 flex items-baseline gap-[clamp(8px,1vw,16px)] whitespace-nowrap">
-            <span className="text-warm-white block leading-[1.1] font-medium tracking-[-0.02em] text-[var(--process-type-size)]">
-              {step.index}
-            </span>
-            <span className="block leading-[1.1] font-medium tracking-[-0.02em] text-[var(--process-type-size)] uppercase">
-              {step.title}
-            </span>
-          </h3>
-        </m.div>
-      </div>
-      <m.div
-        className={`bg-graphite text-warm-white grid content-start gap-3 px-[clamp(24px,2.6vw,40px)] pt-[30px] pb-6 [--process-copy-measure:56ch] ${mobilePinned ? 'bg-transparent' : ''}`}
-        style={{ opacity: scroll && mobile ? bodyOpacity : 1 }}
-      >
-        <p className="m-0 block max-w-[var(--process-copy-measure)] overflow-hidden">
-          <m.span
-            className="text-warm-white block text-left text-[15px] leading-[1.4] font-semibold tracking-[0.08em] uppercase"
-            style={{ y: scroll ? dateY : 0 }}
-          >
-            {step.date}
-          </m.span>
-        </p>
-        <p className="m-0 block max-w-[var(--process-copy-measure)] overflow-hidden">
-          <m.span
-            className="block text-justify text-[18px] leading-[1.6] hyphens-auto text-[color-mix(in_srgb,var(--color-warm-white)_68%,transparent)] max-md:text-left"
-            style={{ y: scroll ? copyY : 0 }}
-          >
-            {step.description}
-          </m.span>
-        </p>
-      </m.div>
+      <StepHeader
+        step={step}
+        index={index}
+        mobilePinned={mobilePinned}
+        scroll={scroll}
+        clipPath={motion.clipPath}
+      />
+      <StepCopy
+        step={step}
+        mobile={mobile}
+        mobilePinned={mobilePinned}
+        scroll={scroll}
+        motion={motion}
+      />
     </m.li>
+  )
+}
+
+interface StepHeaderProps {
+  step: ProcessStep
+  index: number
+  mobilePinned: boolean
+  scroll: boolean
+  clipPath: MotionValue<string>
+}
+
+function StepHeader({ step, index, mobilePinned, scroll, clipPath }: StepHeaderProps) {
+  return (
+    <div
+      className={[
+        'min-h-[var(--process-panel-height)] bg-[color-mix(in_srgb,var(--color-burgundy)_20%,transparent)]',
+        mobilePinned &&
+          'self-start bg-[color-mix(in_srgb,var(--color-burgundy)_20%,var(--color-warm-white))]',
+        mobilePinned && index === 1 && 'mt-[var(--process-panel-height)]',
+        mobilePinned && index === 2 && 'mt-[calc(var(--process-panel-height)*2)]',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <m.div
+        className="bg-burgundy text-warm-white flex min-h-[var(--process-panel-height)] items-center px-[clamp(24px,2.6vw,40px)]"
+        style={{ clipPath: scroll ? clipPath : 'inset(0% 0% 0% 0%)' }}
+      >
+        <h3 className="m-0 flex items-baseline gap-[clamp(8px,1vw,16px)] whitespace-nowrap">
+          <span className="text-warm-white block leading-[1.1] font-medium tracking-[-0.02em] text-[var(--process-type-size)]">
+            {step.index}
+          </span>
+          <span className="block leading-[1.1] font-medium tracking-[-0.02em] text-[var(--process-type-size)] uppercase">
+            {step.title}
+          </span>
+        </h3>
+      </m.div>
+    </div>
+  )
+}
+
+interface StepCopyProps {
+  step: ProcessStep
+  mobile: boolean
+  mobilePinned: boolean
+  scroll: boolean
+  motion: StepMotion
+}
+
+function StepCopy({ step, mobile, mobilePinned, scroll, motion }: StepCopyProps) {
+  return (
+    <m.div
+      className={`bg-graphite text-warm-white grid content-start gap-3 px-[clamp(24px,2.6vw,40px)] pt-[30px] pb-6 [--process-copy-measure:56ch] ${mobilePinned ? 'bg-transparent' : ''}`}
+      style={{ opacity: scroll && mobile ? motion.bodyOpacity : 1 }}
+    >
+      <p className="m-0 block max-w-[var(--process-copy-measure)] overflow-hidden">
+        <m.span
+          className="text-warm-white block text-left text-[15px] leading-[1.4] font-semibold tracking-[0.08em] uppercase"
+          style={{ y: scroll ? motion.dateY : 0 }}
+        >
+          {step.date}
+        </m.span>
+      </p>
+      <p className="m-0 block max-w-[var(--process-copy-measure)] overflow-hidden">
+        <m.span
+          className="block text-justify text-[18px] leading-[1.6] hyphens-auto text-[color-mix(in_srgb,var(--color-warm-white)_68%,transparent)] max-md:text-left"
+          style={{ y: scroll ? motion.copyY : 0 }}
+        >
+          {step.description}
+        </m.span>
+      </p>
+    </m.div>
   )
 }
 

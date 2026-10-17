@@ -33,10 +33,10 @@ function Reveal({
     if (!visible || reducedMotion || !root) return
     const target = kind === 'heading' ? '.join-us__word' : '.join-us__reveal-content'
     const controls = animate([
-      [target, { y: '110%', opacity: 0 }, { duration: 0 }],
+      [target, { transform: 'translateY(110%)', opacity: 0 }, { duration: 0 }],
       [
         target,
-        { y: '0%', opacity: 1 },
+        { transform: 'translateY(0%)', opacity: 1 },
         { duration: 0.8, delay: kind === 'heading' ? stagger(0.025) : 0, ease },
       ],
     ])
@@ -44,7 +44,7 @@ function Reveal({
     return () => {
       controls.stop()
       // On unmount the scope is already detached and a selector animation would throw.
-      if (root.isConnected) animate(target, { y: 0, opacity: 1 }, { duration: 0 })
+      if (root.isConnected) animate(target, { transform: 'none', opacity: 1 }, { duration: 0 })
     }
   }, [animate, kind, reducedMotion, scope, visible])
 
