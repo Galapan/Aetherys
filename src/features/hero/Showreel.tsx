@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { motion } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import { useLenis } from 'lenis/react'
 import type { HeroContent } from '@/content/hero'
 
@@ -35,8 +35,24 @@ function playerFrame(): Frame {
 
 export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
   const trigger = useRef<HTMLButtonElement>(null)
+  const preview = useRef<HTMLVideoElement>(null)
+  const previewVisible = useInView(preview)
   const returnFocus = useRef(false)
   const [origin, setOrigin] = useState<Frame | null>(null)
+  const previewPlaying = previewVisible && origin === null
+
+  // Only decode the preview while it can be seen; the dialog plays the full video.
+  useEffect(() => {
+    const element = preview.current
+    if (!element) return
+    const syncPlayback = () => {
+      if (!previewPlaying || document.hidden) element.pause()
+      else void element.play().catch(() => {})
+    }
+    syncPlayback()
+    document.addEventListener('visibilitychange', syncPlayback)
+    return () => document.removeEventListener('visibilitychange', syncPlayback)
+  }, [previewPlaying])
 
   useEffect(() => {
     if (origin === null && returnFocus.current) {
@@ -68,8 +84,9 @@ export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
           aria-hidden="true"
         >
           <video
+            ref={preview}
             className="absolute inset-0 h-full w-full scale-[1.04] object-cover blur-[1px]"
-            src={content.showreel.video}
+            src={content.showreel.preview}
             autoPlay
             muted
             loop

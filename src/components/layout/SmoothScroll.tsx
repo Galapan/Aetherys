@@ -1,12 +1,15 @@
-import { useEffect, type ReactNode } from 'react'
-import { ReactLenis, useLenis } from 'lenis/react'
+import { useEffect, useRef, type ReactNode } from 'react'
+import { cancelFrame, frame, type FrameData } from 'framer-motion'
+import { ReactLenis, useLenis, type LenisRef } from 'lenis/react'
 
 interface SmoothScrollProps {
   children: ReactNode
 }
 
 const options = {
-  autoRaf: true,
+  // Lenis advances inside Framer Motion's frame loop (see SmoothScroll), so scroll
+  // position and scroll-linked animations share one rAF and one timestamp.
+  autoRaf: false,
   lerp: 0.1,
   respectReducedMotion: true,
   syncTouch: false,
@@ -80,8 +83,18 @@ function SmoothAnchorNavigation() {
 }
 
 export function SmoothScroll({ children }: SmoothScrollProps) {
+  const lenisRef = useRef<LenisRef>(null)
+
+  useEffect(() => {
+    function update({ timestamp }: FrameData) {
+      lenisRef.current?.lenis?.raf(timestamp)
+    }
+    frame.update(update, true)
+    return () => cancelFrame(update)
+  }, [])
+
   return (
-    <ReactLenis root options={options}>
+    <ReactLenis root options={options} ref={lenisRef}>
       <SmoothAnchorNavigation />
       {children}
     </ReactLenis>

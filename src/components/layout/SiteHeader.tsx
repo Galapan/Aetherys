@@ -11,6 +11,8 @@ interface SiteHeaderProps {
   reducedMotion: boolean
   canHover: boolean
   mounted: boolean
+  /** Brand link: an anchor on Home, the Home route elsewhere. */
+  homeHref: string
   onOpen: () => void
 }
 
@@ -22,6 +24,7 @@ export function SiteHeader({
   reducedMotion,
   canHover,
   mounted,
+  homeHref,
   onOpen,
 }: SiteHeaderProps) {
   return (
@@ -33,7 +36,7 @@ export function SiteHeader({
     >
       <a
         className="brand pointer-events-auto inline-flex min-h-11 items-center text-[28px] font-medium tracking-[-0.055em]"
-        href="#inicio"
+        href={homeHref}
         aria-label={content.home}
       >
         {content.brand}

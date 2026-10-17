@@ -332,6 +332,10 @@ export function Services(props: ServicesProps) {
   const { content, reducedMotion, canHover } = props
   const pointerY = useMotionValue<number | null>(null)
   const { scrollY } = useScroll()
+  const rows = useRef<HTMLDivElement>(null)
+  // The cursor effect only reaches items inside the viewport, so off-screen rows
+  // skip their per-frame layout reads entirely.
+  const rowsVisible = useInView(rows)
 
   useEffect(() => {
     pointerY.set(null)
@@ -374,14 +378,14 @@ export function Services(props: ServicesProps) {
             {content.introduction}
           </p>
         </div>
-        <div className="grid gap-16">
+        <div ref={rows} className="grid gap-16">
           {content.services.map((service, index) => (
             <ServiceRow
               key={service.id}
               service={service}
               index={index}
               reducedMotion={reducedMotion}
-              canHover={props.canHover}
+              canHover={canHover && rowsVisible}
               pointerY={pointerY}
               scrollY={scrollY}
             />

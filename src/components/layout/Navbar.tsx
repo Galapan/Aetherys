@@ -1,21 +1,28 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { MenuDialog } from './MenuDialog'
+import { LanguageTransition } from './LanguageTransition'
 import { LocaleTransition } from './LocaleTransition'
 import type { NavigationProps } from './LanguageSwitch'
 import { createSceneTransition, getMenuDimensions } from './menuMotion'
 import { PageSurface } from './PageSurface'
 import { SiteHeader } from './SiteHeader'
 import { useMenuScene } from './useMenuScene'
+import { usePageTransition, type PageDestination } from './usePageTransition'
 import { audioSrc } from '@/components/ui/AudioToggle'
 import type { Locale } from '@/content/hero'
+import { parseRoute, routes, withLocale } from '@/routes'
 
 interface NavbarProps extends NavigationProps {
   children: ReactNode
   reducedMotion: boolean
+  /** Path of the page currently rendered. */
+  path: string
+  /** Swaps the rendered page; called while the curtain covers the screen. */
+  onNavigate: (destination: PageDestination | null) => void
 }
 
-export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
-  const { content } = props
+export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: NavbarProps) {
+  const { content, locale } = props
   const canHover = Boolean(props.canHover && !reducedMotion)
   const [pendingLocale, setPendingLocale] = useState<Locale | null>(null)
   const [hoveredLink, setHoveredLink] = useState<number | null>(null)
@@ -33,9 +40,20 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
     resetScene,
     onAnimationComplete,
   } = useMenuScene(reducedMotion)
+  const { pendingPage, finishPage } = usePageTransition({
+    path,
+    busy: pendingLocale !== null,
+    onSamePage: () => onNavigate(null),
+  })
   const { gap, headerInset, padding } = getMenuDimensions(snapshot)
   const compact = Boolean(expanded && !reducedMotion && snapshot)
-  const sceneTransition = createSceneTransition(expanded, reducedMotion, pendingLocale !== null)
+  const sceneTransition = createSceneTransition(
+    expanded,
+    reducedMotion,
+    pendingLocale !== null || pendingPage !== null,
+  )
+  const isHome = parseRoute(path).kind === 'home'
+  const homeHref = withLocale(routes.home, locale)
 
   useEffect(() => () => audioElement.current?.pause(), [])
 
@@ -46,7 +64,7 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
   }
 
   function selectLocale(next: Locale) {
-    if (next !== props.locale && pendingLocale === null) setPendingLocale(next)
+    if (next !== locale && pendingLocale === null && pendingPage === null) setPendingLocale(next)
   }
 
   return (
@@ -67,6 +85,7 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
           reducedMotion={reducedMotion}
           canHover={canHover}
           mounted={mounted}
+          homeHref={isHome ? '#inicio' : homeHref}
           onOpen={openMenu}
         />
         {children}
@@ -74,6 +93,8 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
       <MenuDialog
         content={content}
         navigation={{ ...props, canHover }}
+        homeHref={isHome ? '#main' : homeHref}
+        aboutHref={isHome ? '#manifiesto' : `${homeHref}#manifiesto`}
         reducedMotion={reducedMotion}
         canHover={canHover}
         expanded={expanded}
@@ -100,6 +121,20 @@ export function Navbar({ children, reducedMotion, ...props }: NavbarProps) {
           triggerRef.current?.focus({ preventScroll: true })
         }}
       />
+      {pendingPage && (
+        <LanguageTransition
+          label={content.pageTransition}
+          reducedMotion={reducedMotion}
+          onCovered={() => {
+            resetScene()
+            onNavigate(pendingPage)
+          }}
+          onFinished={() => {
+            finishPage()
+            document.getElementById('main')?.focus({ preventScroll: true })
+          }}
+        />
+      )}
     </>
   )
 }

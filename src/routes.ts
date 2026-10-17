@@ -9,9 +9,18 @@ export const routes = {
 
 export type Route = { kind: 'home' } | { kind: 'projects' } | { kind: 'project'; slug: string }
 
-export function readPath(): string {
-  const path = window.location.pathname.replace(/\/+$/, '')
+export function normalizePath(pathname: string): string {
+  const path = pathname.replace(/\/+$/, '')
   return path === '' ? routes.home : path
+}
+
+export function readPath(): string {
+  return normalizePath(window.location.pathname)
+}
+
+/** True for paths rendered by this app, as opposed to static files under /media/. */
+export function isPageRoute(path: string): boolean {
+  return path === routes.home || parseRoute(path).kind !== 'home'
 }
 
 export function parseRoute(path: string): Route {

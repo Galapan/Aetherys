@@ -175,6 +175,10 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
       camera={{ position: [0, 0, 5], fov: 35 }}
       gl={{ antialias: true, alpha: true }}
       frameloop="demand"
+      // Pointer tilt reads window coordinates, so the canvas offset is never needed.
+      // Without this, every scroll pause re-measures, reconfigures and re-renders the
+      // transmission passes.
+      resize={{ scroll: false }}
       fallback={fallback}
     >
       <RenderQuality onContextLost={handleContextLost} />

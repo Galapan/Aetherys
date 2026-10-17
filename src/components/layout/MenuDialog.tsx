@@ -20,6 +20,9 @@ interface MenuDialogProps {
   ref: RefObject<HTMLDialogElement | null>
   content: HeroContent
   navigation: NavigationProps
+  /** Home link: an anchor on Home, the Home route elsewhere. */
+  homeHref: string
+  aboutHref: string
   reducedMotion: boolean
   canHover: boolean
   expanded: boolean
@@ -39,6 +42,8 @@ export function MenuDialog({
   ref: dialogRef,
   content,
   navigation,
+  homeHref,
+  aboutHref,
   reducedMotion,
   canHover,
   expanded,
@@ -56,9 +61,9 @@ export function MenuDialog({
   const copy = menuContent[navigation.locale]
   const { gap } = getMenuDimensions(snapshot)
   const links = [
-    { href: '#main', label: content.homeLabel },
+    { href: homeHref, label: content.homeLabel },
     { href: projectsHref(navigation.locale), label: content.projectsLabel },
-    { href: '#manifiesto', label: copy.about },
+    { href: aboutHref, label: copy.about },
     { href: menuContact.emailHref, label: content.contact },
   ]
 

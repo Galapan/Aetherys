@@ -24,6 +24,7 @@ export interface HeroContent {
   home: string
   skip: string
   language: string
+  pageTransition: string
   spanish: string
   english: string
   es: string
@@ -36,6 +37,8 @@ export interface HeroContent {
   title: string
   showreel: {
     video: string
+    /** Lightweight encode of `video` for the small autoplaying trigger. */
+    preview: string
     label: string
     open: string
     play: string
@@ -69,6 +72,7 @@ export const content: Record<Locale, HeroContent> = {
     home: 'Aetherys — inicio',
     skip: 'Ir al contenido',
     language: 'Idioma',
+    pageTransition: 'Cambiando de página',
     spanish: 'Cambiar a español',
     english: 'Cambiar a inglés',
     es: 'ES',
@@ -82,6 +86,7 @@ export const content: Record<Locale, HeroContent> = {
     title: 'Aetherys — Software a medida',
     showreel: {
       video: '/media/showreel/aetherys-20s-1920x1080-60fps.mp4',
+      preview: '/media/showreel/aetherys-preview-480x270-60fps.mp4',
       label: '/SHOWREEL',
       open: 'Ver showreel de Aetherys',
       play: 'Reproducir',
@@ -115,6 +120,7 @@ export const content: Record<Locale, HeroContent> = {
     home: 'Aetherys — home',
     skip: 'Skip to content',
     language: 'Language',
+    pageTransition: 'Changing page',
     spanish: 'Switch to Spanish',
     english: 'Switch to English',
     es: 'ES',
@@ -128,6 +134,7 @@ export const content: Record<Locale, HeroContent> = {
     title: 'Aetherys — Custom software',
     showreel: {
       video: '/media/showreel/aetherys-20s-1920x1080-60fps.mp4',
+      preview: '/media/showreel/aetherys-preview-480x270-60fps.mp4',
       label: '/SHOWREEL',
       open: 'Watch the Aetherys showreel',
       play: 'Play',

@@ -9,7 +9,7 @@ Framer Motion continúa como único motor de animación de UI. GSAP no aporta un
 ## Contrato de implementación
 
 - Instancia global mediante `ReactLenis root` en `src/main.tsx`; no crea wrappers DOM.
-- `lerp: 0.1`, `autoRaf: true`, `syncTouch: false` y `respectReducedMotion: true`.
+- `lerp: 0.1`, `autoRaf: false`, `syncTouch: false` y `respectReducedMotion: true`. `SmoothScroll` avanza Lenis desde el bucle de frames de Framer Motion (`frame.update(..., true)` / `cancelFrame`), de modo que scroll y animaciones ligadas al scroll comparten un único rAF y timestamp.
 - `SmoothScroll` intercepta solo anclas del mismo documento que no hayan sido gestionadas por otro controlador. El skip link permanece nativo e inmediato; los enlaces del diálogo de navegación conservan su cierre animado y delegan el scroll a `useMenuScene`.
 - `lenis.scrollTo(element)` respeta el `scroll-margin` CSS del destino; no fijar un offset duplicado en JavaScript.
 - Menú y showreel paran Lenis al abrir y lo reanudan al cerrar. La posición previa al menú se restaura inmediatamente; el destino elegido se alcanza con el scroll de Lenis.

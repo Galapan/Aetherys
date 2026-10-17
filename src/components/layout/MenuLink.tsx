@@ -38,7 +38,8 @@ export function MenuLink({
           if (href.startsWith('#')) {
             event.preventDefault()
             onClose(href.slice(1))
-          } else onClose()
+          } else if (!href.startsWith('/')) onClose()
+          // In-app pages keep the menu open: the page curtain covers it, then resets it.
         }}
         {...createReveal(expanded, reducedMotion, 0.35 + index * 0.075, true)}
         onHoverStart={() => {

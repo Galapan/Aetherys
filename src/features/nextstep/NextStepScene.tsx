@@ -33,17 +33,15 @@ function HeadingRefractionBackground({
   onTextureReady: (texture: CanvasTexture) => void
 }) {
   const { gl, invalidate } = useThree()
-  const canvas = useMemo(() => document.createElement('canvas'), [])
-  const texture = useMemo(() => {
-    const background = new CanvasTexture(canvas)
-    background.colorSpace = SRGBColorSpace
-    background.minFilter = LinearFilter
-    background.magFilter = LinearFilter
-    background.generateMipmaps = false
-    return background
-  }, [canvas])
 
   useEffect(() => {
+    // Owned by this effect, so drawing into them never mutates a hook value.
+    const canvas = document.createElement('canvas')
+    const texture = new CanvasTexture(canvas)
+    texture.colorSpace = SRGBColorSpace
+    texture.minFilter = LinearFilter
+    texture.magFilter = LinearFilter
+    texture.generateMipmaps = false
     let active = true
     const draw = () => {
       if (!active) return
@@ -104,10 +102,9 @@ function HeadingRefractionBackground({
       active = false
       observer.disconnect()
       window.removeEventListener('resize', draw)
+      texture.dispose()
     }
-  }, [canvas, gl, headingKey, invalidate, onTextureReady, texture])
-
-  useEffect(() => () => texture.dispose(), [texture])
+  }, [gl, headingKey, invalidate, onTextureReady])
 
   return null
 }
@@ -274,6 +271,10 @@ export default function NextStepScene({
       camera={{ position: [0, 0, 5], fov: 35 }}
       gl={{ antialias: true, alpha: true }}
       frameloop="demand"
+      // Pointer tilt reads window coordinates, so the canvas offset is never needed.
+      // Without this, every scroll pause re-measures, reconfigures and re-renders the
+      // transmission passes.
+      resize={{ scroll: false }}
       fallback={fallback}
     >
       <RenderQuality onContextLost={handleContextLost} />
