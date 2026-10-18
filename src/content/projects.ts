@@ -34,6 +34,7 @@ export function projectImageSrcSet(card: Pick<ProjectCard, 'slug' | 'image'>): s
 
 export interface ProjectPresentation {
   src: string
+  srcSet?: string
   alt: string
   width: number
   height: number
@@ -85,7 +86,9 @@ export const content: Record<Locale, ProjectsContent> = {
         summary:
           'Sigsor es un proyecto de desarrollo web. Trabajamos de principio a fin: entendimos la necesidad, definimos el alcance y construimos el sitio priorizando la claridad y la facilidad de uso.',
         presentation: {
-          src: '/media/projects/presentaciones/sigsorlaptopnormal.png',
+          src: '/media/projects/presentaciones/sigsorlaptopnormal.webp',
+          srcSet:
+            '/media/projects/presentaciones/sigsorlaptopnormal-960.webp 960w, /media/projects/presentaciones/sigsorlaptopnormal-1600.webp 1600w, /media/projects/presentaciones/sigsorlaptopnormal.webp 2560w',
           alt: 'Presentación del proyecto Sigsor',
           width: 2560,
           height: 1182,
@@ -169,7 +172,9 @@ export const content: Record<Locale, ProjectsContent> = {
         summary:
           'Sigsor is a web development project. We work end to end: we understood the need, defined the scope, and built the site with a focus on clarity and ease of use.',
         presentation: {
-          src: '/media/projects/presentaciones/sigsorlaptopnormal.png',
+          src: '/media/projects/presentaciones/sigsorlaptopnormal.webp',
+          srcSet:
+            '/media/projects/presentaciones/sigsorlaptopnormal-960.webp 960w, /media/projects/presentaciones/sigsorlaptopnormal-1600.webp 1600w, /media/projects/presentaciones/sigsorlaptopnormal.webp 2560w',
           alt: 'Sigsor project presentation',
           width: 2560,
           height: 1182,

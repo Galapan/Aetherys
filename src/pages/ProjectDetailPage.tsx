@@ -145,6 +145,8 @@ export function ProjectDetailPage({
         <m.img
           className="mt-[clamp(48px,7vw,96px)] block h-auto w-full"
           src={card.presentation.src}
+          srcSet={card.presentation.srcSet}
+          sizes="100vw"
           alt={card.presentation.alt}
           width={card.presentation.width}
           height={card.presentation.height}
