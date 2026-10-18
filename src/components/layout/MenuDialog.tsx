@@ -1,8 +1,9 @@
 import { useState, type KeyboardEvent, type RefObject } from 'react'
 import { m } from 'framer-motion'
 import type { HeroContent, Locale } from '@/content/hero'
-import { menuContact, menuContent, menuSocials } from '@/content/navigation'
+import { menuContent, menuSocials } from '@/content/navigation'
 import { projectsHref } from '@/content/projects'
+import { contactHref } from '@/content/contact'
 import type { NavigationProps } from './LanguageSwitch'
 import { MenuFooter } from './MenuFooter'
 import { MenuLink } from './MenuLink'
@@ -83,7 +84,7 @@ export function MenuDialog({
     { href: homeHref, label: content.homeLabel },
     { href: projectsHref(navigation.locale), label: content.projectsLabel },
     { href: aboutHref, label: copy.about },
-    { href: menuContact.emailHref, label: content.contact },
+    { href: contactHref(navigation.locale), label: content.contact },
   ]
 
   return (

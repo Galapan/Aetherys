@@ -9,7 +9,8 @@ import { content as expertiseContent } from '@/content/expertise'
 import { content as servicesContent } from '@/content/services'
 import { content as processContent } from '@/content/process'
 import { content as testimoniesContent } from '@/content/testimonies'
-import { content as joinUsContent, joinUsAssets } from '@/content/joinUs'
+import { content as joinUsContent } from '@/content/joinUs'
+import { contactHref } from '@/content/contact'
 import { content as nextStepContent } from '@/content/nextStep'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 import { Hero } from '@/sections/Hero'
@@ -66,7 +67,7 @@ export function HomePage({ locale, reducedMotion, canHover }: HomePageProps) {
           <StageFoot copy={copy} localTime={localTime} ghost />
         </div>
         <Hero content={copy} entering={entering} reducedMotion={reducedMotion} />
-        <Manifesto content={manifestoContent[locale]} reducedMotion={reducedMotion} />
+        <Manifesto content={manifestoContent[locale]} />
         {/* Pinned to the bottom after the stage text, so it paints above the hero and manifesto. */}
         <div className="pointer-events-none sticky bottom-0 z-1 -mt-[calc(100svh-var(--header-height))] flex h-[calc(100svh-var(--header-height))] flex-col justify-end">
           <StageFoot copy={copy} localTime={localTime}>
@@ -105,10 +106,15 @@ export function HomePage({ locale, reducedMotion, canHover }: HomePageProps) {
         content={testimoniesContent[locale]}
         reducedMotion={reducedMotion}
       />
-      <JoinUs content={joinUsContent[locale]} reducedMotion={reducedMotion} canHover={canHover} />
+      <JoinUs
+        content={joinUsContent[locale]}
+        contactHref={contactHref(locale)}
+        reducedMotion={reducedMotion}
+        canHover={canHover}
+      />
       <NextStep
         content={nextStepContent[locale]}
-        contactHref={joinUsAssets.contactHref}
+        contactHref={contactHref(locale)}
         reducedMotion={reducedMotion}
         canHover={canHover}
       />

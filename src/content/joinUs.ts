@@ -11,17 +11,15 @@ export interface JoinUsContent {
   videoLabel: string
 }
 
-// Supply the owner's media and verified contact destination before publishing.
+// Supply the owner's media before publishing.
 export const joinUsAssets: {
   photo?: string
   video?: string
   poster?: string
-  contactHref?: string
 } = {
   photo: '',
   video: '',
   poster: '',
-  contactHref: '',
 }
 
 export const content: Record<Locale, JoinUsContent> = {

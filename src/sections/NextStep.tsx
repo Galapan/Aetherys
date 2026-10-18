@@ -7,7 +7,7 @@ import { NextStepMark } from '@/features/nextstep/NextStepMark'
 
 interface NextStepProps {
   content: NextStepContent
-  contactHref?: string
+  contactHref: string
   reducedMotion: boolean
   canHover: boolean
 }
@@ -176,22 +176,9 @@ export function NextStep({ content, contactHref, reducedMotion, canHover }: Next
               transition={PHOTO_SPRING}
             />
           </div>
-          {contactHref ? (
-            <m.a className={`${buttonClassName} relative z-1`} href={contactHref} {...ctaMotion}>
-              {ctaLabel}
-            </m.a>
-          ) : (
-            // The verified contact address is still pending (AGENTS §7): no destination, but
-            // the button keeps its look and hover so the design can be reviewed.
-            <m.button
-              className={`${buttonClassName} relative z-1 cursor-default`}
-              type="button"
-              aria-disabled="true"
-              {...ctaMotion}
-            >
-              {ctaLabel}
-            </m.button>
-          )}
+          <m.a className={`${buttonClassName} relative z-1`} href={contactHref} {...ctaMotion}>
+            {ctaLabel}
+          </m.a>
         </m.div>
       </div>
     </section>

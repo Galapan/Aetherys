@@ -6,6 +6,7 @@ import { RuleGrid } from '@/components/ui/RuleGrid'
 
 interface JoinUsProps {
   content: JoinUsContent
+  contactHref: string
   reducedMotion: boolean
   canHover: boolean
 }
@@ -106,11 +107,11 @@ function JoinUsVideo({ label, reducedMotion }: { label: string; reducedMotion: b
   )
 }
 
-export function JoinUs({ content, reducedMotion, canHover }: JoinUsProps) {
+export function JoinUs({ content, contactHref, reducedMotion, canHover }: JoinUsProps) {
   return (
     <section
       id="join-us"
-      className="bg-warm-white text-graphite focus-visible:outline-graphite relative isolate z-2 -mt-[100svh] min-h-svh scroll-mt-[calc(var(--header-height)+24px)] py-20 [color-scheme:light] focus-visible:outline-2 focus-visible:outline-offset-4 md:py-26 lg:py-36"
+      className="bg-warm-white text-graphite focus-visible:outline-graphite relative isolate z-1 -mt-[100svh] min-h-svh scroll-mt-[calc(var(--header-height)+24px)] py-20 [color-scheme:light] focus-visible:outline-2 focus-visible:outline-offset-4 md:py-26 lg:py-36"
       tabIndex={-1}
       aria-labelledby="join-us-heading"
     >
@@ -163,24 +164,14 @@ export function JoinUs({ content, reducedMotion, canHover }: JoinUsProps) {
             <Reveal kind="details" className="mt-6 overflow-clip" reducedMotion={reducedMotion}>
               {/* animation hook: targeted by useAnimate */}
               <div className="join-us__reveal-content">
-                {joinUsAssets.contactHref ? (
-                  <m.a
-                    className="bg-burgundy text-warm-white focus-visible:outline-graphite inline-flex min-h-11 items-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4"
-                    href={joinUsAssets.contactHref}
-                    whileHover={canHover && !reducedMotion ? { y: -2 } : undefined}
-                    transition={{ duration: 0.18 }}
-                  >
-                    {content.contact}
-                  </m.a>
-                ) : (
-                  <button
-                    className="bg-burgundy text-warm-white focus-visible:outline-graphite inline-flex min-h-11 items-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-default disabled:opacity-60"
-                    type="button"
-                    disabled
-                  >
-                    {content.contact}
-                  </button>
-                )}
+                <m.a
+                  className="bg-burgundy text-warm-white focus-visible:outline-graphite inline-flex min-h-11 items-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4"
+                  href={contactHref}
+                  whileHover={canHover && !reducedMotion ? { y: -2 } : undefined}
+                  transition={{ duration: 0.18 }}
+                >
+                  {content.contact}
+                </m.a>
               </div>
             </Reveal>
           </div>

@@ -9,6 +9,8 @@ import type { PageDestination } from '@/components/layout/usePageTransition'
 import { HomePage } from '@/pages/HomePage'
 import { ProjectsPage } from '@/pages/ProjectsPage'
 import { ProjectDetailPage } from '@/pages/ProjectDetailPage'
+import { ContactPage } from '@/pages/ContactPage'
+import { content as contactContent } from '@/content/contact'
 import { parseRoute, readPath } from '@/routes'
 
 function readLocale(): Locale {
@@ -83,9 +85,13 @@ function App() {
 
   useEffect(() => {
     document.documentElement.lang = locale
-    document.title = project ? `${project.title} — ${copy.brand}` : copy.title
+    document.title = project
+      ? `${project.title} — ${copy.brand}`
+      : route.kind === 'contact'
+        ? `${contactContent[locale].title} — ${copy.brand}`
+        : copy.title
     document.querySelector('meta[name="description"]')?.setAttribute('content', copy.description)
-  }, [locale, copy, project])
+  }, [locale, copy, project, route.kind])
 
   function changeLocale(next: Locale) {
     if (next === locale) return
@@ -126,6 +132,12 @@ function App() {
               nextCard={nextProject}
               content={projectContent}
               locale={locale}
+              reducedMotion={reducedMotion}
+              canHover={canHover}
+            />
+          ) : route.kind === 'contact' ? (
+            <ContactPage
+              content={contactContent[locale]}
               reducedMotion={reducedMotion}
               canHover={canHover}
             />
