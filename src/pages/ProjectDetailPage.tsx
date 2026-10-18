@@ -35,6 +35,9 @@ const secondaryGraphite = 'text-[color-mix(in_srgb,var(--color-graphite)_78%,tra
 
 const navLinkClasses = `inline-flex min-h-11 items-center text-[12px] leading-[1.4] tracking-[0.08em] uppercase text-graphite focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-graphite`
 
+// Mirrors the header: blends the label with whatever image sits behind it.
+const backLinkClasses = `pointer-events-auto inline-flex min-h-11 items-center text-[14px] leading-[1.4] tracking-[0.08em] uppercase`
+
 export function ProjectDetailPage({
   card,
   nextCard,
@@ -53,6 +56,27 @@ export function ProjectDetailPage({
       aria-labelledby="proyecto-heading"
     >
       <RuleGrid className="absolute inset-x-0 top-0 h-full" spanClassName="bg-grid-burgundy" />
+      <div className="text-warm-white pointer-events-none absolute inset-x-0 top-0 z-3 container max-w-none pt-[calc(var(--header-height)+clamp(12px,2vw,24px))] mix-blend-difference [--page-padding:clamp(20px,1.85vw,32px)]">
+        <m.a
+          href={projectsHref(locale)}
+          className={backLinkClasses}
+          initial={reducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          whileHover={canHover ? { y: -2 } : undefined}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+        >
+          <svg className="mr-2 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M13 8H3m0 0 4-4m-4 4 4 4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span>{content.detail.back}</span>
+        </m.a>
+      </div>
       <m.div
         className="relative h-[50svh] min-h-[260px] w-full overflow-hidden"
         initial={reducedMotion ? false : { opacity: 0 }}
@@ -82,39 +106,56 @@ export function ProjectDetailPage({
             decoding="async"
           />
         )}
+        <div className="pointer-events-none absolute inset-0 z-2 flex flex-col justify-center">
+          <m.h1
+            id="proyecto-heading"
+            className="text-warm-white container max-w-none text-[clamp(2.5rem,5vw,5rem)] leading-[1.02] font-medium tracking-[-0.04em] uppercase"
+            {...reveal(reducedMotion, 0.05)}
+          >
+            <span aria-hidden="true">/</span>
+            {card.title}
+          </m.h1>
+        </div>
       </m.div>
-      <div className="container flex min-h-[50svh] flex-col justify-center">
-        <m.h1
-          id="proyecto-heading"
-          className="text-[clamp(2.75rem,6vw,6rem)] leading-[1.02] font-medium tracking-[-0.04em] uppercase"
-          {...reveal(reducedMotion, 0.05)}
-        >
-          <span className="text-burgundy" aria-hidden="true">
-            /
-          </span>
-          {card.title}
-        </m.h1>
+      <div
+        className={
+          card.summary
+            ? 'container pt-[clamp(48px,7vw,96px)]'
+            : 'container flex min-h-[50svh] flex-col justify-center'
+        }
+      >
         {meta && (
           <m.p
-            className={`${secondaryGraphite} mt-[clamp(16px,2vw,24px)] text-[12px] leading-[1.4] tracking-[0.08em] uppercase`}
+            className={`${secondaryGraphite} text-[12px] leading-[1.4] tracking-[0.08em] uppercase`}
             {...reveal(reducedMotion, 0.15)}
           >
             {meta}
           </m.p>
         )}
+        {card.summary && (
+          <m.p
+            className="mt-[clamp(16px,2vw,24px)] max-w-[62ch] text-[18px] leading-[1.6]"
+            {...reveal(reducedMotion, 0.2)}
+          >
+            {card.summary}
+          </m.p>
+        )}
       </div>
-      <div className="container mt-[clamp(24px,4vw,48px)] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <m.a
-          href={projectsHref(locale)}
-          className={navLinkClasses}
-          whileHover={canHover ? { y: -2 } : undefined}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
-        >
-          <span className="text-burgundy" aria-hidden="true">
-            /
-          </span>
-          <span className="ml-1">{content.detail.back}</span>
-        </m.a>
+      {card.presentation && (
+        <m.img
+          className="mt-[clamp(48px,7vw,96px)] block h-auto w-full"
+          src={card.presentation.src}
+          alt={card.presentation.alt}
+          width={card.presentation.width}
+          height={card.presentation.height}
+          loading="lazy"
+          decoding="async"
+          initial={reducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: reducedMotion ? 0 : 0.8, ease: 'easeOut' }}
+        />
+      )}
+      <div className="container mt-[clamp(24px,4vw,48px)] flex flex-col gap-3 sm:flex-row sm:justify-end">
         <m.a
           href={projectHref(nextCard.slug, locale)}
           className={`${navLinkClasses} sm:justify-end`}

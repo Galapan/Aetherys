@@ -87,7 +87,7 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
           content={content}
           reducedMotion={reducedMotion}
           mounted={mounted}
-          homeHref={isHome ? '#inicio' : homeHref}
+          homeHref={homeHref}
           onOpen={openMenu}
         />
         {children}
@@ -106,6 +106,7 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
         content={content}
         navigation={{ ...props, canHover }}
         homeHref={isHome ? '#main' : homeHref}
+        brandHref={homeHref}
         aboutHref={isHome ? '#manifiesto' : `${homeHref}#manifiesto`}
         reducedMotion={reducedMotion}
         canHover={canHover}
