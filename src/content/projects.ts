@@ -46,6 +46,19 @@ export interface ProjectSection {
   body: string
 }
 
+/** Empty graphite frame used to sketch a project gallery layout. */
+export type ProjectGalleryBlock = 'large' | 'small' | 'wide'
+
+/** Wide backdrop that frames an optional looping video in its centre. */
+export interface ProjectVideoBackground {
+  src: string
+  srcSet?: string
+  alt: string
+  width: number
+  height: number
+  video?: string
+}
+
 export interface ProjectCard {
   id: string
   slug: string
@@ -59,6 +72,8 @@ export interface ProjectCard {
   summary?: string
   sections?: ProjectSection[]
   presentation?: ProjectPresentation
+  videoBackground?: ProjectVideoBackground
+  gallery?: ProjectGalleryBlock[]
 }
 
 export interface ProjectsContent {
@@ -113,6 +128,16 @@ export const content: Record<Locale, ProjectsContent> = {
           width: 2560,
           height: 1182,
         },
+        videoBackground: {
+          src: '/media/projects/proyecto-sigsor-video-fondo.webp',
+          srcSet:
+            '/media/projects/proyecto-sigsor-video-fondo-960.webp 960w, /media/projects/proyecto-sigsor-video-fondo-1600.webp 1600w, /media/projects/proyecto-sigsor-video-fondo.webp 2560w',
+          alt: 'Fondo del video de Sigsor',
+          width: 2560,
+          height: 1440,
+          video: '/media/projects/videos/SigsorReveal.mp4',
+        },
+        gallery: ['large', 'large', 'small', 'small', 'small', 'small', 'wide'],
       },
       {
         title: 'Impulso',
@@ -210,6 +235,16 @@ export const content: Record<Locale, ProjectsContent> = {
           width: 2560,
           height: 1182,
         },
+        videoBackground: {
+          src: '/media/projects/proyecto-sigsor-video-fondo.webp',
+          srcSet:
+            '/media/projects/proyecto-sigsor-video-fondo-960.webp 960w, /media/projects/proyecto-sigsor-video-fondo-1600.webp 1600w, /media/projects/proyecto-sigsor-video-fondo.webp 2560w',
+          alt: 'Sigsor video backdrop',
+          width: 2560,
+          height: 1440,
+          video: '/media/projects/videos/SigsorReveal.mp4',
+        },
+        gallery: ['large', 'large', 'small', 'small', 'small', 'small', 'wide'],
       },
       {
         title: 'Impulso',

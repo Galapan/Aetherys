@@ -6,6 +6,7 @@ import {
   projectImageSrcSet,
   projectLogoPaths,
   type ProjectCard,
+  type ProjectGalleryBlock,
   type ProjectsContent,
 } from '@/content/projects'
 import { content as nextStepContent } from '@/content/nextStep'
@@ -37,6 +38,12 @@ function reveal(reducedMotion: boolean, delay = 0) {
 const secondaryGraphite = 'text-[color-mix(in_srgb,var(--color-graphite)_78%,transparent)]'
 
 const navLinkClasses = `inline-flex min-h-11 items-center text-[12px] leading-[1.4] tracking-[0.08em] uppercase text-graphite focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-graphite`
+
+const galleryBlockClasses: Record<ProjectGalleryBlock, string> = {
+  large: 'col-span-2 aspect-[4/3] md:col-span-6',
+  small: 'col-span-1 aspect-square md:col-span-3',
+  wide: 'col-span-2 aspect-[16/9] md:col-span-12',
+}
 
 // Mirrors the header: blends the label with whatever image sits behind it.
 const backLinkClasses = `pointer-events-auto inline-flex min-h-11 items-center text-[14px] leading-[1.4] tracking-[0.08em] uppercase`
@@ -201,6 +208,55 @@ export function ProjectDetailPage({
                 </div>
               ))}
             </div>
+          )}
+          {card.videoBackground && (
+            <m.div
+              className="mt-[clamp(48px,7vw,96px)] px-[clamp(20px,1.85vw,32px)]"
+              initial={reducedMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: reducedMotion ? 0 : 0.8, ease: 'easeOut' }}
+            >
+              <div className="relative overflow-hidden">
+                <img
+                  className="block h-auto w-full"
+                  src={card.videoBackground.src}
+                  srcSet={card.videoBackground.srcSet}
+                  sizes="100vw"
+                  alt={card.videoBackground.alt}
+                  width={card.videoBackground.width}
+                  height={card.videoBackground.height}
+                  loading="lazy"
+                  decoding="async"
+                />
+                {card.videoBackground.video && !reducedMotion && (
+                  <video
+                    className="absolute top-1/2 left-1/2 aspect-video w-[92%] max-w-[1200px] -translate-x-1/2 -translate-y-1/2 object-cover md:w-[68%]"
+                    src={card.videoBackground.video}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                  />
+                )}
+              </div>
+            </m.div>
+          )}
+          {card.gallery && card.gallery.length > 0 && (
+            <m.div
+              className="mt-[clamp(48px,7vw,96px)] grid grid-cols-2 gap-[clamp(16px,2vw,24px)] px-[clamp(20px,1.85vw,32px)] md:grid-cols-12"
+              initial={reducedMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: reducedMotion ? 0 : 0.8, ease: 'easeOut' }}
+            >
+              {card.gallery.map((block, index) => (
+                <div
+                  key={`${block}-${index}`}
+                  className={`bg-graphite ${galleryBlockClasses[block]}`}
+                  aria-hidden="true"
+                />
+              ))}
+            </m.div>
           )}
           <div className="container mt-[clamp(24px,4vw,48px)] flex flex-col gap-3 sm:flex-row sm:justify-end">
             <m.a
