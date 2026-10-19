@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 360" width="1280" height="360" role="img" aria-label="Aetherys">
+  <rect width="1280" height="360" fill="#101014"/>
+  <g stroke="#F4F1F6" stroke-opacity="0.06" stroke-width="1">
+    <path d="M160 0V360M320 0V360M480 0V360M640 0V360M800 0V360M960 0V360M1120 0V360"/>
+    <path d="M0 90H1280M0 180H1280M0 270H1280"/>
+  </g>
+  <svg x="140" y="100" width="210" height="164" viewBox="140 110 205 160">
+    <path fill="#F4F1F6" d="M 155 263 C 146 263 143 258 148 249 L 211 140 C 219 126 229 117 241 117 C 258 116 269 131 286 159 L 268 155 C 258 140 251 133 243 133 C 235 133 229 140 223 150 L 165 249 L 200 249 L 236 188 C 245 171 254 163 266 162 C 280 161 291 169 298 182 L 336 248 C 342 258 338 263 328 263 L 278 263 L 246 209 L 255 194 L 287 249 L 320 249 L 285 189 C 279 179 274 177 268 177 C 261 177 255 182 249 192 L 208 263 Z"/>
+  </svg>
+  <text x="420" y="196" fill="#F4F1F6" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="88" font-weight="500" letter-spacing="-3">Aetherys</text>
+  <rect x="424" y="222" width="48" height="3" fill="#800020"/>
+  <text x="424" y="262" fill="#F4F1F6" fill-opacity="0.78" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" letter-spacing="2.4">TECNOLOGÍA A LA MEDIDA DE LO QUE IMAGINAS</text>
+</svg>

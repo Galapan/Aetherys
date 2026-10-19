@@ -1,75 +1,51 @@
-# React + TypeScript + Vite
+<p align="center">
+  <img src="docs/brand/readme-banner.svg" alt="Aetherys" width="100%">
+</p>
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sitio corporativo de **Aetherys**, equipo de desarrollo de software a medida: desde landing pages hasta plataformas SaaS, integración de IA y modernización de sistemas.
 
-Currently, two official plugins are available:
+> Repositorio privado. Solo para uso interno del equipo.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack
 
-## React Compiler
+Vite · React 19 · TypeScript · Tailwind CSS 4 · Framer Motion · Lenis · Three.js / React Three Fiber
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Desarrollo
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```sh
+pnpm install
+pnpm dev       # servidor local
+pnpm build     # typecheck + build de producción
+pnpm lint
+pnpm preview   # sirve el build generado
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Estructura
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```text
+src/
+  pages/        páginas: inicio, proyectos, detalle de proyecto, contacto
+  sections/     secciones de la portada
+  features/     escenas 3D (hero, siguiente paso)
+  components/   layout (navbar, menú, idioma) y UI compartida
+  content/      textos ES/EN y datos de proyectos
+  hooks/        preferencias de movimiento
+docs/plans/     especificaciones de diseño y animación
 ```
+
+## Identidad
+
+<img src="docs/brand/readme-palette.svg" alt="Paleta de Aetherys" width="100%">
+
+| Token                | Valor     | Uso                    |
+| -------------------- | --------- | ---------------------- |
+| `--color-graphite`   | `#101014` | Fondo principal        |
+| `--color-dark-gray`  | `#1B1B23` | Superficies y tarjetas |
+| `--color-burgundy`   | `#800020` | Acentos y botones      |
+| `--color-warm-white` | `#F4F1F6` | Texto, logo e iconos   |
+
+Las reglas completas de marca, diseño y trabajo viven en [`AGENTS.md`](AGENTS.md).
+
+---
+
+<p align="center"><sub>© Aetherys</sub></p>

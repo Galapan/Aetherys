@@ -59,10 +59,12 @@ function TextField({
   reducedMotion,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false)
-  const errorId = `contacto-${name}-error`
+  const fieldId = `contacto-${name}`
+  const errorId = `${fieldId}-error`
   const transition = { duration: reducedMotion ? 0 : 0.4, ease: REVEAL_EASE }
   const fieldProps = {
     className: multiline ? `${textFieldClassName} min-h-28 resize-y` : textFieldClassName,
+    id: fieldId,
     name,
     placeholder,
     required: Boolean(error),
@@ -81,9 +83,13 @@ function TextField({
     },
   } as const
 
+  // The label points at the field instead of wrapping it, so the error message below is
+  // announced once through aria-describedby rather than also becoming part of the name.
   return (
-    <label className="relative block">
-      <span className="sr-only">{label}</span>
+    <div className="relative">
+      <label htmlFor={fieldId} className="sr-only">
+        {label}
+      </label>
       {multiline ? (
         <m.textarea {...fieldProps} rows={3} />
       ) : (
@@ -111,7 +117,7 @@ function TextField({
           </m.span>
         ) : null}
       </AnimatePresence>
-    </label>
+    </div>
   )
 }
 
