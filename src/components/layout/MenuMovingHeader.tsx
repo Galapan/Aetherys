@@ -1,6 +1,7 @@
 import type { RefObject } from 'react'
 import { m } from 'framer-motion'
 import type { HeroContent } from '@/content/hero'
+import { normalizePath } from '@/routes'
 import { AudioToggle } from '@/components/ui/AudioToggle'
 import { MenuCloseButton } from './MenuCloseButton'
 import type { PageSnapshot } from './useMenuScene'
@@ -15,6 +16,8 @@ interface MenuMovingHeaderProps {
   headerInset: number
   sceneTransition: SceneTransition
   audioRef: RefObject<HTMLAudioElement | null>
+  /** Brand link: always the root route. */
+  homeHref: string
   onClose: () => void
 }
 
@@ -27,6 +30,7 @@ export function MenuMovingHeader({
   headerInset,
   sceneTransition,
   audioRef,
+  homeHref,
   onClose,
 }: MenuMovingHeaderProps) {
   return (
@@ -41,14 +45,23 @@ export function MenuMovingHeader({
       animate={{ y: expanded ? headerInset - snapshot.headerTop : 0 }}
       transition={sceneTransition}
     >
-      <m.span
-        className="brand inline-flex min-h-11 items-center text-[28px] font-medium tracking-[-0.055em]"
+      <m.a
+        className="brand pointer-events-auto inline-flex min-h-11 items-center text-[28px] font-medium tracking-[-0.055em]"
+        href={homeHref}
+        aria-label={content.home}
+        onClick={() => {
+          // Same page: close the menu and let the router scroll to the top.
+          const destination = new URL(homeHref, window.location.href)
+          if (normalizePath(destination.pathname) === normalizePath(window.location.pathname)) {
+            onClose()
+          }
+        }}
         initial={{ x: 0 }}
         animate={{ x: expanded ? padding - snapshot.headerLeft : 0 }}
         transition={sceneTransition}
       >
         {content.brand}
-      </m.span>
+      </m.a>
       <m.div
         className="flex items-center gap-[clamp(6px,1.8vw,12px)] md:gap-4"
         initial={{ x: 0 }}

@@ -25,6 +25,8 @@ interface MenuDialogProps {
   navigation: NavigationProps
   /** Home link: an anchor on Home, the Home route elsewhere. */
   homeHref: string
+  /** Brand link: always the root route. */
+  brandHref: string
   aboutHref: string
   reducedMotion: boolean
   canHover: boolean
@@ -47,6 +49,7 @@ export function MenuDialog({
   content,
   navigation,
   homeHref,
+  brandHref,
   aboutHref,
   reducedMotion,
   canHover,
@@ -207,6 +210,7 @@ export function MenuDialog({
             headerInset={headerInset}
             sceneTransition={sceneTransition}
             audioRef={audioRef}
+            homeHref={brandHref}
             onClose={() => onClose()}
           />
         </m.div>
