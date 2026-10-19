@@ -91,16 +91,14 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
           onOpen={openMenu}
         />
         {children}
-        {routeKind !== 'project' && (
-          <SiteFooter
-            content={content}
-            locale={locale}
-            reducedMotion={reducedMotion}
-            canHover={canHover}
-            homeHref={isHome ? '' : homeHref}
-            onSelectLocale={selectLocale}
-          />
-        )}
+        <SiteFooter
+          content={content}
+          locale={locale}
+          reducedMotion={reducedMotion}
+          canHover={canHover}
+          homeHref={isHome ? '' : homeHref}
+          onSelectLocale={selectLocale}
+        />
       </PageSurface>
       <MenuDialog
         content={content}

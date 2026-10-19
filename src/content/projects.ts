@@ -40,6 +40,12 @@ export interface ProjectPresentation {
   height: number
 }
 
+/** Labelled block shown under the presentation image, e.g. "/APPROACH". */
+export interface ProjectSection {
+  label: string
+  body: string
+}
+
 export interface ProjectCard {
   id: string
   slug: string
@@ -51,6 +57,7 @@ export interface ProjectCard {
   mark: string
   markVariant: MarkVariant
   summary?: string
+  sections?: ProjectSection[]
   presentation?: ProjectPresentation
 }
 
@@ -61,6 +68,8 @@ export interface ProjectsContent {
   detail: {
     back: string
     next: string
+    /** Small eyebrow above the summary on the project page. */
+    context: string
   }
 }
 
@@ -71,6 +80,7 @@ export const content: Record<Locale, ProjectsContent> = {
     detail: {
       back: 'Volver a proyectos',
       next: 'Siguiente proyecto',
+      context: '/CONTEXTO',
     },
     cards: [
       {
@@ -85,6 +95,16 @@ export const content: Record<Locale, ProjectsContent> = {
         markVariant: 'grotesque',
         summary:
           'Sigsor es un proyecto de desarrollo web. Trabajamos de principio a fin: entendimos la necesidad, definimos el alcance y construimos el sitio priorizando la claridad y la facilidad de uso.',
+        sections: [
+          {
+            label: '/ENFOQUE',
+            body: 'Palomino trabaja con algunos de los mejores atletas de Francia y produce contenido al nivel de los grandes nombres del deporte. Lo que les faltaba era un sitio web que reflejara esa calidad y llevara a su presencia digital el mismo nivel de ambición que ponen en sus producciones.',
+          },
+          {
+            label: '/RESULTADO',
+            body: 'El sitio web posiciona a Palomino como un actor líder en la producción de foto y video deportivo. Pone su trabajo en primer plano y les da una presencia digital acorde con la talla de los atletas, marcas y federaciones con las que trabajan.',
+          },
+        ],
         presentation: {
           src: '/media/projects/presentaciones/sigsorlaptopnormal.webp',
           srcSet:
@@ -157,6 +177,7 @@ export const content: Record<Locale, ProjectsContent> = {
     detail: {
       back: 'Back to projects',
       next: 'Next project',
+      context: '/CONTEXT',
     },
     cards: [
       {
@@ -171,6 +192,16 @@ export const content: Record<Locale, ProjectsContent> = {
         markVariant: 'grotesque',
         summary:
           'Sigsor is a web development project. We work end to end: we understood the need, defined the scope, and built the site with a focus on clarity and ease of use.',
+        sections: [
+          {
+            label: '/APPROACH',
+            body: "Palomino works with some of France's top athletes and produces content at the level of the biggest names in sports. What they were missing was a website that reflected that quality and brought the same level of ambition to their digital presence as they do to their productions.",
+          },
+          {
+            label: '/RESULT',
+            body: 'The website positions Palomino as a leading player in sports photo and video production. It puts their work front and center and gives them a digital presence that matches the caliber of the athletes, brands, and federations they work with.',
+          },
+        ],
         presentation: {
           src: '/media/projects/presentaciones/sigsorlaptopnormal.webp',
           srcSet:
