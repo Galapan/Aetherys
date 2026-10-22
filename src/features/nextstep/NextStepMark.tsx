@@ -1,4 +1,13 @@
-import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
+import {
+  Component,
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { heroMark } from '@/content/hero'
 import type { NextStepContent } from '@/content/nextStep'
 
@@ -27,15 +36,23 @@ function Fallback() {
   )
 }
 
-class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+// The static mark lives outside the boundary, so a failed scene only needs to report it.
+class SceneBoundary extends Component<
+  { children: ReactNode; onError: () => void },
+  { failed: boolean }
+> {
   state = { failed: false }
 
   static getDerivedStateFromError() {
     return { failed: true }
   }
 
+  componentDidCatch() {
+    this.props.onError()
+  }
+
   render() {
-    return this.state.failed ? <Fallback /> : this.props.children
+    return this.state.failed ? null : this.props.children
   }
 }
 
@@ -100,17 +117,24 @@ function useSceneReady() {
 
 export function NextStepMark({ heading }: { heading: NextStepContent['heading'] }) {
   const { frame, ready } = useSceneReady()
+  // The canvas stays blank while the chunk loads and the shaders compile, and again after a
+  // lost context; the static mark covers it until the glass has actually been drawn.
+  const [drawn, setDrawn] = useState(false)
+  const hide = useCallback(() => setDrawn(false), [])
 
   return (
     <div ref={frame} className="relative aspect-[205/160] w-full" aria-hidden="true">
-      {ready ? (
-        <SceneBoundary>
-          <Suspense fallback={<Fallback />}>
-            <NextStepScene fallback={<Fallback />} heading={heading} />
+      {ready && (
+        <SceneBoundary onError={hide}>
+          <Suspense fallback={null}>
+            <NextStepScene heading={heading} onDrawn={setDrawn} />
           </Suspense>
         </SceneBoundary>
-      ) : (
-        <Fallback />
+      )}
+      {!drawn && (
+        <div className="absolute inset-0">
+          <Fallback />
+        </div>
       )}
     </div>
   )

@@ -1,86 +1,79 @@
-import { useEffect, useEffectEvent, useRef, useSyncExternalStore, type RefObject } from 'react'
-import { animate, type AnimationPlaybackControls } from 'framer-motion'
+import { useEffect, useRef, type RefObject } from 'react'
+import {
+  useAnimationFrame,
+  useMotionValue,
+  useScroll,
+  useVelocity,
+  type MotionValue,
+} from 'framer-motion'
 
 interface MarqueeOptions {
   /** False under reduced motion or when the rail renders as a static grid. */
   enabled: boolean
   /** The rail is inside the viewport. */
   visible: boolean
-  /** Hover or focus: ease the rail to a stop. */
+  /** Hover or focus: ease the resting drift to a stop. */
   halted: boolean
-  /** Seconds for the track to travel one period. */
+  /** Seconds for the track to travel one period at rest. */
   duration: number
+  /** First of the two identical groups in the track; its width is one period. */
+  group: RefObject<HTMLElement | null>
 }
 
-// Exponential approach with a 0.5s time constant, normalised to land exactly at the end of
-// its 1.5s, like the per-frame smoothing the rails used before.
-const settle = (progress: number) => (1 - Math.exp(-3 * progress)) / (1 - Math.exp(-3))
-
-function subscribeVisibility(onChange: () => void) {
-  document.addEventListener('visibilitychange', onChange)
-  return () => document.removeEventListener('visibilitychange', onChange)
-}
-
-function readVisibility() {
-  return !document.hidden
-}
+// Rail px/s added per px/s of page scroll; scrolling up past the resting speed reverses it.
+const SCROLL_GAIN = 0.4
+const MAX_SPEED = 1600
+// Time constant of the velocity easing, so boosts and reversals blend in and fade out.
+const VELOCITY_SMOOTHING = 0.35
+// Time constant of the drift easing to a stop on hover and back when it ends.
+const HALT_SMOOTHING = 0.5
 
 /**
- * Endless horizontal rail. The track holds two identical groups, so one period is exactly
- * -50% of its width; the loop runs as a compositor animation, off the main thread. */
-export function useMarquee<T extends HTMLElement>({
+ * Endless horizontal rail driven frame by frame. It drifts left at rest; page scroll adds
+ * its velocity, so scrolling down speeds it up and scrolling up turns it back for a moment.
+ * Returns the track's x offset in pixels, always within one period. */
+export function useMarquee({
   enabled,
   visible,
   halted,
   duration,
-}: MarqueeOptions): RefObject<T | null> {
-  const track = useRef<T>(null)
-  const loop = useRef<AnimationPlaybackControls | null>(null)
-  const phase = useRef(0)
-  const speed = useRef(1)
-  const pageVisible = useSyncExternalStore(subscribeVisibility, readVisibility)
-  const running = visible && pageVisible
-  const isRunning = useEffectEvent(() => running)
+  group,
+}: MarqueeOptions): MotionValue<number> {
+  const x = useMotionValue(0)
+  const period = useRef(0)
+  const velocity = useRef(0)
+  const drift = useRef(1)
+  const { scrollY } = useScroll()
+  const scrollVelocity = useVelocity(scrollY)
 
   useEffect(() => {
-    const element = track.current
-    if (!element || !enabled || duration <= 0) return
-    const controls = animate(
-      element,
-      { transform: ['translateX(0%)', 'translateX(-50%)'] },
-      { duration, ease: 'linear', repeat: Infinity },
-    )
-    // A new period length keeps the rail where it was instead of jumping back to the start.
-    controls.time = phase.current * duration
-    controls.speed = speed.current
-    if (!isRunning()) controls.pause()
-    loop.current = controls
-    return () => {
-      phase.current = (controls.time % duration) / duration
-      loop.current = null
-      controls.stop()
-      element.style.transform = ''
+    const element = group.current
+    if (!element || !enabled) return
+    const measure = () => {
+      period.current = element.offsetWidth
     }
-  }, [duration, enabled])
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [enabled, group])
 
-  useEffect(() => {
-    if (running) loop.current?.play()
-    else loop.current?.pause()
-  }, [running])
+  useAnimationFrame((_, delta) => {
+    const width = period.current
+    if (!enabled || !visible || width <= 0 || duration <= 0) return
+    // A long gap (background tab, dropped frames) must not fling the rail.
+    const seconds = Math.min(delta, 100) / 1000
+    // Halting eases only the resting drift; scrolling still pushes the rail.
+    drift.current += ((halted ? 0 : 1) - drift.current) * (1 - Math.exp(-seconds / HALT_SMOOTHING))
+    const target = Math.max(
+      -MAX_SPEED,
+      Math.min(MAX_SPEED, (drift.current * width) / duration + scrollVelocity.get() * SCROLL_GAIN),
+    )
+    velocity.current += (target - velocity.current) * (1 - Math.exp(-seconds / VELOCITY_SMOOTHING))
+    // Two identical groups: wrapping by one period is invisible.
+    const next = (x.get() - velocity.current * seconds) % width
+    x.set(next > 0 ? next - width : next)
+  })
 
-  useEffect(() => {
-    const target = halted ? 0 : 1
-    if (speed.current === target) return
-    const tween = animate(speed.current, target, {
-      duration: 1.5,
-      ease: settle,
-      onUpdate: (value) => {
-        speed.current = value
-        if (loop.current) loop.current.speed = value
-      },
-    })
-    return () => tween.stop()
-  }, [halted])
-
-  return track
+  return x
 }

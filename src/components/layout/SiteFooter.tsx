@@ -17,10 +17,10 @@ interface SiteFooterProps {
   onSelectLocale: (locale: Locale) => void
 }
 
-// The card enters almost full-bleed and narrows to the container edge as the page reaches
-// its end, as in the reference.
+// The card enters almost full-bleed and narrows to the page padding as the page reaches its
+// end, as in the reference; the content spans the card's final width.
 const ENTRY_INSET = 12
-const FINAL_INSET = 'max(var(--page-padding), (100% - 1440px) / 2 + var(--page-padding))'
+const FINAL_INSET = 'var(--page-padding)'
 
 // "Contact" rests sunk into the card's bottom edge and rises letter by letter, left to right,
 // while the pointer is over the footer (in view on touch); it sinks back the same way.
@@ -111,7 +111,7 @@ export function SiteFooter({
           if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false)
         }}
       >
-        <div className="container">
+        <div className="px-(--page-padding)">
           <div className="px-6 pt-12 md:px-10 md:pt-16 lg:px-12 lg:pt-20">
             <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-6">
               <a

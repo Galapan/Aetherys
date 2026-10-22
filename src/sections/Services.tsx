@@ -168,13 +168,15 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
   const visible = useInView(rail)
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
+  const group = useRef<HTMLUListElement>(null)
   // One item every 4 seconds. The rail is full-bleed, so it covers more ground than the
   // card rail and needs a brisker cadence to feel even.
-  const track = useMarquee<HTMLDivElement>({
+  const trackX = useMarquee({
     enabled: !reducedMotion,
     visible,
     halted: (hovered && canHover) || focused,
     duration: technologies.length * 4,
+    group,
   })
 
   return (
@@ -190,10 +192,14 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
       >
-        <div ref={track} className={`flex ${reducedMotion ? 'w-full' : 'w-max'}`}>
+        <m.div
+          className={`flex ${reducedMotion ? 'w-full' : 'w-max'}`}
+          style={reducedMotion ? undefined : { x: trackX }}
+        >
           {(reducedMotion ? [false] : [false, true]).map((duplicate) => (
             <ul
               key={String(duplicate)}
+              ref={duplicate ? undefined : group}
               className={`m-0 list-none p-0 ${reducedMotion ? 'grid w-full grid-cols-2 gap-x-0 gap-y-4 md:grid-cols-4 lg:grid-cols-5' : 'flex shrink-0'}`}
               aria-label={duplicate ? undefined : content.technologyLabel}
               aria-hidden={duplicate || undefined}
@@ -273,7 +279,7 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
               })}
             </ul>
           ))}
-        </div>
+        </m.div>
       </div>
     </div>
   )
