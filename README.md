@@ -4,8 +4,6 @@
 
 Sitio corporativo de **Aetherys**, equipo de desarrollo de software a medida: desde landing pages hasta plataformas SaaS, integración de IA y modernización de sistemas.
 
-> Repositorio privado. Solo para uso interno del equipo.
-
 ## Stack
 
 Vite · React 19 · TypeScript · Tailwind CSS 4 · Framer Motion · Lenis · Three.js / React Three Fiber
