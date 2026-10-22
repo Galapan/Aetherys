@@ -20,6 +20,7 @@ export const testimonyImages: Record<string, string> = {
   bastian: '/media/team/galapan-246.webp',
   jesus: '/media/team/jesus-246.webp',
   cesar: '/media/team/cesar-246.webp',
+  edgar: '/media/team/edgar-246.webp',
   'placeholder-3': '',
 }
 
@@ -53,6 +54,14 @@ export const content: Record<Locale, TestimoniesContent> = {
         detail: 'Desarrollador full stack',
         imageAlt: 'Retrato de Cesar',
       },
+      {
+        id: 'edgar',
+        quote:
+          'Más que escribir software, construyo realidades digitales, el límite es tu imaginación.',
+        name: 'Edgar Flores',
+        detail: 'Desarrollador backend',
+        imageAlt: 'Retrato de Edgar',
+      },
     ],
   },
   en: {
@@ -83,6 +92,14 @@ export const content: Record<Locale, TestimoniesContent> = {
         name: 'Cesar Vazquez',
         detail: 'Full-stack developer',
         imageAlt: 'Portrait of Cesar Vazquez',
+      },
+      {
+        id: 'edgar',
+        quote:
+          'More than writing software, I build digital realities. The only limit is your imagination.',
+        name: 'Edgar Flores',
+        detail: 'Backend developer',
+        imageAlt: 'Portrait of Edgar Flores',
       },
     ],
   },

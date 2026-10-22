@@ -21,10 +21,10 @@ interface MarqueeOptions {
 }
 
 // Rail px/s added per px/s of page scroll; scrolling up past the resting speed reverses it.
-const SCROLL_GAIN = 0.4
-const MAX_SPEED = 1600
+const SCROLL_GAIN = 0.12
+const MAX_SPEED = 480
 // Time constant of the velocity easing, so boosts and reversals blend in and fade out.
-const VELOCITY_SMOOTHING = 0.35
+const VELOCITY_SMOOTHING = 0.5
 // Time constant of the drift easing to a stop on hover and back when it ends.
 const HALT_SMOOTHING = 0.5
 
