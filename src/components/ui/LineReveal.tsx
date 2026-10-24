@@ -1,4 +1,4 @@
-import { Fragment, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, memo, useLayoutEffect, useRef, useState } from 'react'
 import { m, useInView } from 'framer-motion'
 import { REVEAL_EASE } from '@/components/ui/easing'
 
@@ -24,8 +24,13 @@ function keyWords(text: string) {
 /**
  * Masked line reveal from the about reference: each rendered line rises out of its own clip,
  * one after another. Words are grouped into lines by measuring where the browser wrapped them.
+ * Memoized, so a section's hover or visibility state never re-renders its words.
  */
-export function LineReveal({ text, reducedMotion, delay = 0 }: LineRevealProps) {
+export const LineReveal = memo(function LineReveal({
+  text,
+  reducedMotion,
+  delay = 0,
+}: LineRevealProps) {
   const scope = useRef<HTMLSpanElement>(null)
   const visible = useInView(scope, { once: true, amount: 0.3 })
   const [lines, setLines] = useState<number[]>([])
@@ -72,4 +77,4 @@ export function LineReveal({ text, reducedMotion, delay = 0 }: LineRevealProps) 
       ))}
     </span>
   )
-}
+})

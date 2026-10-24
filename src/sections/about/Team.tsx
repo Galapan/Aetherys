@@ -1,4 +1,4 @@
-import { useState, type RefObject } from 'react'
+import { memo, useState, type RefObject } from 'react'
 import { m, useInView, useTransform, type MotionValue } from 'framer-motion'
 import { REVEAL_EASE } from '@/components/ui/easing'
 import { teamPhotos } from '@/content/about'
@@ -40,8 +40,17 @@ interface TeamCardProps {
 /**
  * Cards keep their slot until the track scrolls past it; then they pin to the left edge and
  * the following card slides over them, so the team stacks instead of leaving the frame.
+ * Memoized: hovering the carousel (also as the page scrolls it under a resting cursor) only
+ * toggles the scrollbar, so the cards skip that render.
  */
-function TeamCard({ member, index, offset, step, visible, reducedMotion }: TeamCardProps) {
+const TeamCard = memo(function TeamCard({
+  member,
+  index,
+  offset,
+  step,
+  visible,
+  reducedMotion,
+}: TeamCardProps) {
   const photo = teamPhotos[member.id]
   const x = useTransform(() => Math.max(index * step.get() - offset.get(), 0))
   const covered = useTransform(() => {
@@ -86,7 +95,7 @@ function TeamCard({ member, index, offset, step, visible, reducedMotion }: TeamC
       <p className="text-secondary m-0 mt-1 pr-4 text-[14px] leading-[1.4]">{member.detail}</p>
     </m.li>
   )
-}
+})
 
 interface TeamScrollbarProps {
   barRef: RefObject<HTMLDivElement | null>

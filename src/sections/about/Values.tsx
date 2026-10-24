@@ -67,9 +67,80 @@ function StairRow({
   )
 }
 
+interface ValueRowProps {
+  value: AboutValue
+  index: number
+  progress: MotionValue<number>
+  scroll: boolean
+  canHover: boolean
+  dimDescriptions: boolean
+  duration: number
+  /** Touch only: the row picked by the last tap, one at a time. */
+  tapped: boolean
+  onTap: () => void
+}
+
+// Each row owns its hover highlight: the staircase slides rows under a resting cursor while
+// the page scrolls, and a section-wide state re-rendered every row on each crossing.
+function ValueRow({
+  value,
+  index,
+  progress,
+  scroll,
+  canHover,
+  dimDescriptions,
+  duration,
+  tapped,
+  onTap,
+}: ValueRowProps) {
+  const [hovered, setHovered] = useState(false)
+  const active = canHover ? hovered : tapped
+  return (
+    <StairRow
+      as="li"
+      index={index + 1}
+      progress={progress}
+      scroll={scroll}
+      onHoverStart={canHover ? () => setHovered(true) : undefined}
+      onHoverEnd={canHover ? () => setHovered(false) : undefined}
+      onTap={canHover ? undefined : onTap}
+    >
+      <div
+        className={`grid min-h-[clamp(80px,9vw,156px)] items-center px-[var(--page-padding)] py-4 ${columnsClassName}`}
+      >
+        <span className="text-[20px] leading-none font-light" aria-hidden="true">
+          +
+        </span>
+        <h3 className="m-0 grid text-[clamp(2rem,5.4vw,5.75rem)] leading-[1] font-normal tracking-[-0.02em] uppercase">
+          <span className="[grid-area:1/1]">{value.title}</span>
+          {/* Only the letters change colour on hover: a burgundy copy fades in over
+              the title. */}
+          <m.span
+            className="text-burgundy [grid-area:1/1]"
+            aria-hidden="true"
+            initial={false}
+            animate={{ opacity: active ? 1 : 0 }}
+            transition={{ ...HOVER_TRANSITION, duration }}
+          >
+            {value.title}
+          </m.span>
+        </h3>
+        <m.p
+          className="col-start-2 m-0 mt-2 max-w-[36ch] text-[clamp(14px,1.05vw,18px)] leading-[1.4] md:col-start-3 md:mt-0"
+          initial={false}
+          animate={{ opacity: !dimDescriptions || active ? 1 : 0.45 }}
+          transition={{ ...HOVER_TRANSITION, duration }}
+        >
+          {value.description}
+        </m.p>
+      </div>
+    </StairRow>
+  )
+}
+
 export function Values({ eyebrow, values, reducedMotion, canHover }: ValuesProps) {
   const section = useRef<HTMLElement>(null)
-  const [active, setActive] = useState<number | null>(null)
+  const [tapped, setTapped] = useState<number | null>(null)
   const { scrollYProgress } = useScroll({ target: section, offset: ['start start', 'end end'] })
   const scroll = !reducedMotion
   // Without hover every description stays readable; tapping a row highlights its title.
@@ -97,51 +168,20 @@ export function Values({ eyebrow, values, reducedMotion, canHover }: ValuesProps
           </h2>
         </StairRow>
         <ul className="m-0 list-none p-0">
-          {values.map((value, index) => {
-            const isActive = active === index
-            return (
-              <StairRow
-                as="li"
-                key={value.id}
-                index={index + 1}
-                progress={scrollYProgress}
-                scroll={scroll}
-                onHoverStart={canHover ? () => setActive(index) : undefined}
-                onHoverEnd={canHover ? () => setActive(null) : undefined}
-                onTap={canHover ? undefined : () => setActive(isActive ? null : index)}
-              >
-                <div
-                  className={`grid min-h-[clamp(80px,9vw,156px)] items-center px-[var(--page-padding)] py-4 ${columnsClassName}`}
-                >
-                  <span className="text-[20px] leading-none font-light" aria-hidden="true">
-                    +
-                  </span>
-                  <h3 className="m-0 grid text-[clamp(2rem,5.4vw,5.75rem)] leading-[1] font-normal tracking-[-0.02em] uppercase">
-                    <span className="[grid-area:1/1]">{value.title}</span>
-                    {/* Only the letters change colour on hover: a burgundy copy fades in over
-                        the title. */}
-                    <m.span
-                      className="text-burgundy [grid-area:1/1]"
-                      aria-hidden="true"
-                      initial={false}
-                      animate={{ opacity: isActive ? 1 : 0 }}
-                      transition={{ ...HOVER_TRANSITION, duration }}
-                    >
-                      {value.title}
-                    </m.span>
-                  </h3>
-                  <m.p
-                    className="col-start-2 m-0 mt-2 max-w-[36ch] text-[clamp(14px,1.05vw,18px)] leading-[1.4] md:col-start-3 md:mt-0"
-                    initial={false}
-                    animate={{ opacity: !dimDescriptions || isActive ? 1 : 0.45 }}
-                    transition={{ ...HOVER_TRANSITION, duration }}
-                  >
-                    {value.description}
-                  </m.p>
-                </div>
-              </StairRow>
-            )
-          })}
+          {values.map((value, index) => (
+            <ValueRow
+              key={value.id}
+              value={value}
+              index={index}
+              progress={scrollYProgress}
+              scroll={scroll}
+              canHover={canHover}
+              dimDescriptions={dimDescriptions}
+              duration={duration}
+              tapped={tapped === index}
+              onTap={() => setTapped(tapped === index ? null : index)}
+            />
+          ))}
         </ul>
         <StairRow
           index={values.length + 1}

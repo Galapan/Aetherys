@@ -1,5 +1,6 @@
 import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import {
+  memo,
   useEffect,
   useEffectEvent,
   useRef,
@@ -79,6 +80,35 @@ function TestimonyCounter({
     </span>
   )
 }
+
+// Memoized: the carousel re-renders whenever the section enters or leaves the viewport,
+// and the presence context changes with it, so the letter spans are kept out of that pass.
+const Quote = memo(function Quote({ quote, enters }: { quote: string; enters: boolean }) {
+  return (
+    <blockquote className="m-0 max-w-[34ch] text-[clamp(1.75rem,3.2vw,3.5rem)] leading-[1.2] font-normal tracking-[-0.035em]">
+      <span className="sr-only">{quote}</span>
+      <span aria-hidden="true">
+        {quote.split(' ').map((word, wordIndex) => (
+          <span key={wordIndex}>
+            {wordIndex > 0 ? ' ' : null}
+            <span className="mb-[-0.12em] inline-block overflow-clip pb-[0.12em] align-top">
+              {Array.from(word).map((letter, letterIndex) => (
+                <span
+                  key={letterIndex}
+                  data-testimony-letter
+                  className="inline-block"
+                  style={enters ? hiddenRise : undefined}
+                >
+                  {letter}
+                </span>
+              ))}
+            </span>
+          </span>
+        ))}
+      </span>
+    </blockquote>
+  )
+})
 
 function Slide({
   item,
@@ -174,28 +204,7 @@ function Slide({
       className="col-start-1 row-start-1 m-0 min-w-0"
       aria-hidden={!isPresent || undefined}
     >
-      <blockquote className="m-0 max-w-[34ch] text-[clamp(1.75rem,3.2vw,3.5rem)] leading-[1.2] font-normal tracking-[-0.035em]">
-        <span className="sr-only">{item.quote}</span>
-        <span aria-hidden="true">
-          {item.quote.split(' ').map((word, wordIndex) => (
-            <span key={wordIndex}>
-              {wordIndex > 0 ? ' ' : null}
-              <span className="mb-[-0.12em] inline-block overflow-clip pb-[0.12em] align-top">
-                {Array.from(word).map((letter, letterIndex) => (
-                  <span
-                    key={letterIndex}
-                    data-testimony-letter
-                    className="inline-block"
-                    style={enters ? hiddenRise : undefined}
-                  >
-                    {letter}
-                  </span>
-                ))}
-              </span>
-            </span>
-          ))}
-        </span>
-      </blockquote>
+      <Quote quote={item.quote} enters={enters} />
       <figcaption className="mt-8 flex min-h-[86.4px] items-center gap-4">
         <div
           data-testimony-avatar

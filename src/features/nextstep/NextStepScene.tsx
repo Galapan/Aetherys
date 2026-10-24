@@ -4,21 +4,19 @@ import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three
 import { useSpring } from 'framer-motion'
 import {
   BackSide,
-  CanvasTexture,
   Color,
   DoubleSide,
-  LinearFilter,
   Mesh,
-  SRGBColorSpace,
   WebGLRenderTarget,
   type Group,
   type Material,
   type Side,
   type Texture,
 } from 'three'
-import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import { heroMark } from '@/content/hero'
 import { useMotionPreferences } from '@/hooks/useMotionPreferences'
+import { getMarkShapes } from '../markShapes'
+import { createRefractionCanvas } from '../refractionCanvas'
 import { useSceneQuality, type SceneQuality } from '../sceneQuality'
 
 // A thick slab, like the reference glass letter: its side faces carry most of the refraction.
@@ -48,23 +46,15 @@ function HeadingRefractionBackground({
 }: {
   headingKey: string
   resolution: number
-  onTextureReady: (texture: CanvasTexture) => void
+  onTextureReady: (texture: Texture) => void
 }) {
   const { gl, invalidate } = useThree()
 
   useEffect(() => {
-    // Owned by this effect, so drawing into them never mutates a hook value.
-    const canvas = document.createElement('canvas')
-    // Sized and read once: resizing a canvas reallocates it, which scroll redraws can't afford.
-    canvas.width = resolution
-    canvas.height = resolution
-    const context = canvas.getContext('2d')
+    // Owned by this effect, so drawing into it never mutates a hook value.
+    const refraction = createRefractionCanvas(gl, resolution)
+    const { context } = refraction
     const background = readToken('--color-warm-white')
-    const texture = new CanvasTexture(canvas)
-    texture.colorSpace = SRGBColorSpace
-    texture.minFilter = LinearFilter
-    texture.magFilter = LinearFilter
-    texture.generateMipmaps = false
     let active = true
     let visible = true
     let layout = ''
@@ -136,10 +126,10 @@ function HeadingRefractionBackground({
       })
 
       context.restore()
-      texture.needsUpdate = true
+      refraction.update()
       if (!published) {
         published = true
-        onTextureReady(texture)
+        onTextureReady(refraction.texture)
       }
       invalidate()
     }
@@ -182,7 +172,7 @@ function HeadingRefractionBackground({
       visibility.disconnect()
       window.removeEventListener('resize', redraw)
       window.removeEventListener('scroll', scroll)
-      texture.dispose()
+      refraction.dispose()
     }
   }, [gl, headingKey, invalidate, onTextureReady, resolution])
 
@@ -263,12 +253,7 @@ function Mark({ background, quality }: { background: Texture | Color; quality: S
     }
   }, [canHover, reducedMotion, gl, invalidate, tiltX, tiltY])
 
-  const shapes = useMemo(() => {
-    const svg = new SVGLoader().parse(
-      `<svg xmlns="http://www.w3.org/2000/svg"><path d="${heroMark.path}" /></svg>`,
-    )
-    return svg.paths.flatMap((path) => SVGLoader.createShapes(path))
-  }, [])
+  const shapes = getMarkShapes()
   // Pale glass: warm white with a breath of graphite, so the faces read just below the page.
   const glassTint = useMemo(
     () =>
@@ -414,7 +399,7 @@ export default function NextStepScene({
   // later invalidate, so the glass froze and stopped following the cursor.
   const [frameloop, setFrameloop] = useState<'never' | 'demand'>('never')
   const handleCompiled = useCallback(() => setFrameloop('demand'), [])
-  const [refractionBackground, setRefractionBackground] = useState<CanvasTexture | null>(null)
+  const [refractionBackground, setRefractionBackground] = useState<Texture | null>(null)
   const handleDrawn = useCallback(() => onDrawn(true), [onDrawn])
   const handleContextLost = useCallback(() => {
     onDrawn(false)
@@ -422,7 +407,7 @@ export default function NextStepScene({
     setFrameloop('never')
     setLost(true)
   }, [onDrawn])
-  const handleTextureReady = useCallback((texture: CanvasTexture) => {
+  const handleTextureReady = useCallback((texture: Texture) => {
     setRefractionBackground(texture)
   }, [])
   const warmWhite = readToken('--color-warm-white')

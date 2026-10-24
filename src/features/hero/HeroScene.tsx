@@ -10,10 +10,11 @@ import {
 import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
-import { CanvasTexture, Color, LinearFilter, SRGBColorSpace, type Group, type Texture } from 'three'
-import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
+import { Color, type Group, type Texture } from 'three'
 import { heroMark } from '@/content/hero'
 import { useMotionPreferences } from '@/hooks/useMotionPreferences'
+import { getMarkShapes } from '../markShapes'
+import { createRefractionCanvas } from '../refractionCanvas'
 import { useSceneQuality } from '../sceneQuality'
 
 // The glass lifts the dark page with its reflections, which flattens the faint grid; each
@@ -41,27 +42,17 @@ function GridRefractionBackground({
   onTextureReady,
 }: {
   resolution: number
-  onTextureReady: (texture: CanvasTexture) => void
+  onTextureReady: (texture: Texture) => void
 }) {
   const { gl, invalidate } = useThree()
 
   useEffect(() => {
-    // Owned by this effect, so drawing into them never mutates a hook value.
-    const canvas = document.createElement('canvas')
-    // Sized and read once: resizing a canvas reallocates it, which scroll redraws can't afford.
-    canvas.width = resolution
-    canvas.height = resolution
-    const context = canvas.getContext('2d')
+    // Owned by this effect, so drawing into it never mutates a hook value.
+    const refraction = createRefractionCanvas(gl, resolution)
+    const { context } = refraction
     const background = readToken('--color-graphite')
-    const texture = new CanvasTexture(canvas)
-    texture.colorSpace = SRGBColorSpace
-    texture.minFilter = LinearFilter
-    texture.magFilter = LinearFilter
-    texture.generateMipmaps = false
     let active = true
-    let visible = true
     let layout = ''
-    let frame = 0
     const draw = () => {
       if (!active) return
       const canvasBounds = gl.domElement.getBoundingClientRect()
@@ -71,7 +62,8 @@ function GridRefractionBackground({
       const lines = [...document.querySelectorAll<HTMLElement>('.hero-rule-grid > span')]
         .map((line) => ({ line, bounds: line.getBoundingClientRect() }))
         .filter(({ bounds }) => bounds.width > 0)
-      // Grid and mark are pinned in the same stage; only their relative layout matters.
+      // Grid and mark are pinned in the same stage and only their horizontal layout matters,
+      // which vertical scrolling never changes: only a resize redraws.
       const nextLayout = [
         canvasBounds.width,
         canvasBounds.height,
@@ -103,8 +95,8 @@ function GridRefractionBackground({
         }
       })
       context.restore()
-      texture.needsUpdate = true
-      onTextureReady(texture)
+      refraction.update()
+      onTextureReady(refraction.texture)
       invalidate()
     }
 
@@ -112,33 +104,17 @@ function GridRefractionBackground({
       layout = ''
       draw()
     }
-    const scroll = () => {
-      if (!visible || frame) return
-      frame = requestAnimationFrame(() => {
-        frame = 0
-        draw()
-      })
-    }
 
     draw()
     const observer = new ResizeObserver(redraw)
     observer.observe(gl.domElement)
-    const visibility = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting
-      if (visible) scroll()
-    })
-    visibility.observe(gl.domElement)
     window.addEventListener('resize', redraw)
-    window.addEventListener('scroll', scroll, { passive: true })
 
     return () => {
       active = false
-      cancelAnimationFrame(frame)
       observer.disconnect()
-      visibility.disconnect()
       window.removeEventListener('resize', redraw)
-      window.removeEventListener('scroll', scroll)
-      texture.dispose()
+      refraction.dispose()
     }
   }, [gl, invalidate, onTextureReady, resolution])
 
@@ -215,12 +191,7 @@ function Mark({ background, resolution }: { background: Texture | Color; resolut
     }
   }, [canHover, reducedMotion, gl, invalidate, tiltX, tiltY])
 
-  const shapes = useMemo(() => {
-    const svg = new SVGLoader().parse(
-      `<svg xmlns="http://www.w3.org/2000/svg"><path d="${heroMark.path}" /></svg>`,
-    )
-    return svg.paths.flatMap((path) => SVGLoader.createShapes(path))
-  }, [])
+  const shapes = getMarkShapes()
   // Pale glass as in NextStep: warm white with a breath of graphite, so the grid reads through.
   const glassTint = useMemo(
     () =>
@@ -283,9 +254,9 @@ function RenderQuality({ maxDpr, onContextLost }: { maxDpr: number; onContextLos
 export default function HeroScene({ fallback }: { fallback: ReactNode }) {
   const [lost, setLost] = useState(false)
   const quality = useSceneQuality()
-  const [refractionBackground, setRefractionBackground] = useState<CanvasTexture | null>(null)
+  const [refractionBackground, setRefractionBackground] = useState<Texture | null>(null)
   const handleContextLost = useCallback(() => setLost(true), [])
-  const handleTextureReady = useCallback((texture: CanvasTexture) => {
+  const handleTextureReady = useCallback((texture: Texture) => {
     setRefractionBackground(texture)
   }, [])
   const white = readToken('--color-warm-white')

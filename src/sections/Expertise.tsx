@@ -31,18 +31,16 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
   const introVisible = useInView(scope, { once: true, amount: 0.35 })
   const rail = useRef<HTMLDivElement>(null)
   const group = useRef<HTMLUListElement>(null)
-  const railVisible = useInView(rail)
   const [repeats, setRepeats] = useState(1)
   const moving = !reducedMotion
-  const [hovering, setHovering] = useState(false)
   const railWidth = useMotionValue(0)
-  const trackX = useMarquee({
+  const marquee = useMarquee({
     enabled: moving,
-    visible: railVisible,
-    halted: hovering,
     duration: content.cards.length * repeats * SECONDS_PER_CARD,
     group,
+    viewport: rail,
   })
+  const trackX = marquee.x
 
   useEffect(() => {
     const root = scope.current
@@ -113,9 +111,9 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
         ref={rail}
         className={`relative overflow-hidden ${moving ? '' : 'container'}`}
         onPointerEnter={() => {
-          if (canHover) setHovering(true)
+          if (canHover) marquee.setHalted(true)
         }}
-        onPointerLeave={() => setHovering(false)}
+        onPointerLeave={() => marquee.setHalted(false)}
       >
         <m.div
           className={`flex ${moving ? 'w-max' : 'w-full'}`}

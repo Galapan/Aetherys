@@ -1,8 +1,7 @@
 import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   m,
-  useInView,
   useMotionValue,
   useScroll,
   useSpring,
@@ -69,11 +68,13 @@ function ServiceFeature({
   item,
   pointerY,
   scrollY,
+  rowsInView,
   interactive,
 }: {
   item: string
   pointerY: MotionValue<number | null>
   scrollY: MotionValue<number>
+  rowsInView: MotionValue<boolean>
   interactive: boolean
 }) {
   const element = useRef<HTMLLIElement>(null)
@@ -123,8 +124,9 @@ function ServiceFeature({
     const y = pointerY.get()
     // Subscribe before the initial null pointer/geometry can short-circuit this calculation.
     const scrollOffset = scrollY.get()
+    const inView = rowsInView.get()
     const bounds = geometry.current
-    if (!interactive || y === null || !bounds || !bounds.height) return null
+    if (!interactive || !inView || y === null || !bounds || !bounds.height) return null
     const pageY = y + scrollOffset
     // Follow the cursor's height across the page, including the space beside the list.
     if (pageY < bounds.listTop - 32 || pageY > bounds.listBottom + 32) return null
@@ -158,6 +160,7 @@ function ServiceRow({
   canHover,
   pointerY,
   scrollY,
+  rowsInView,
 }: {
   service: Service
   index: number
@@ -165,6 +168,7 @@ function ServiceRow({
   canHover: boolean
   pointerY: MotionValue<number | null>
   scrollY: MotionValue<number>
+  rowsInView: MotionValue<boolean>
 }) {
   return (
     <article
@@ -193,6 +197,7 @@ function ServiceRow({
             item={item}
             pointerY={pointerY}
             scrollY={scrollY}
+            rowsInView={rowsInView}
             interactive={canHover && !reducedMotion}
           />
         ))}
@@ -204,19 +209,19 @@ function ServiceRow({
 function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
   const interactive = canHover && !reducedMotion
   const rail = useRef<HTMLDivElement>(null)
-  const visible = useInView(rail)
-  const [hovered, setHovered] = useState(false)
-  const [focused, setFocused] = useState(false)
+  const hovered = useRef(false)
+  const focused = useRef(false)
   const group = useRef<HTMLUListElement>(null)
   // One item every 4 seconds. The rail is full-bleed, so it covers more ground than the
   // card rail and needs a brisker cadence to feel even.
-  const trackX = useMarquee({
+  const marquee = useMarquee({
     enabled: !reducedMotion,
-    visible,
-    halted: (hovered && canHover) || focused,
     duration: technologies.length * 4,
     group,
+    viewport: rail,
   })
+  const trackX = marquee.x
+  const syncHalted = () => marquee.setHalted((hovered.current && canHover) || focused.current)
 
   return (
     <div className="mx-[calc(50%-50vw)] mt-12 w-screen lg:mt-16">
@@ -226,10 +231,22 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
         role="region"
         aria-label={content.technologyLabel}
         tabIndex={reducedMotion ? undefined : 0}
-        onPointerEnter={() => setHovered(true)}
-        onPointerLeave={() => setHovered(false)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onPointerEnter={() => {
+          hovered.current = true
+          syncHalted()
+        }}
+        onPointerLeave={() => {
+          hovered.current = false
+          syncHalted()
+        }}
+        onFocus={() => {
+          focused.current = true
+          syncHalted()
+        }}
+        onBlur={() => {
+          focused.current = false
+          syncHalted()
+        }}
       >
         <m.div
           className={`flex ${reducedMotion ? 'w-full' : 'w-max'}`}
@@ -329,9 +346,20 @@ export function Services(props: ServicesProps) {
   const pointerY = useMotionValue<number | null>(null)
   const { scrollY } = useScroll()
   const rows = useRef<HTMLDivElement>(null)
-  // The cursor effect only reaches items inside the viewport, so off-screen rows
-  // skip their per-frame layout reads entirely.
-  const rowsVisible = useInView(rows)
+  // The cursor effect only reaches items inside the viewport. Held in a motion value, so
+  // off-screen rows skip their per-frame maths without re-rendering every item on entry.
+  const rowsInView = useMotionValue(false)
+
+  useEffect(() => {
+    const element = rows.current
+    if (!element) return
+    const observer = new IntersectionObserver(([entry]) => rowsInView.set(entry.isIntersecting))
+    observer.observe(element)
+    return () => {
+      observer.disconnect()
+      rowsInView.set(false)
+    }
+  }, [rowsInView])
 
   useEffect(() => {
     pointerY.set(null)
@@ -381,9 +409,10 @@ export function Services(props: ServicesProps) {
               service={service}
               index={index}
               reducedMotion={reducedMotion}
-              canHover={canHover && rowsVisible}
+              canHover={canHover}
               pointerY={pointerY}
               scrollY={scrollY}
+              rowsInView={rowsInView}
             />
           ))}
         </div>

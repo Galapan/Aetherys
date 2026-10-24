@@ -32,7 +32,6 @@ interface HomePageProps {
 }
 
 export function HomePage({ locale, reducedMotion, canHover }: HomePageProps) {
-  const localTime = useLocalTime()
   const entering = useHeroEntrance(reducedMotion)
   const copy = content[locale]
   const projectContent = projectsContent[locale]
@@ -64,13 +63,13 @@ export function HomePage({ locale, reducedMotion, canHover }: HomePageProps) {
             </m.div>
           </div>
           {/* Invisible twin that reserves the foot row, so the mark keeps its centre. */}
-          <StageFoot copy={copy} localTime={localTime} ghost />
+          <StageFoot copy={copy} ghost />
         </div>
         <Hero content={copy} entering={entering} reducedMotion={reducedMotion} />
         <Manifesto content={manifestoContent[locale]} />
         {/* Pinned to the bottom after the stage text, so it paints above the hero and manifesto. */}
         <div className="pointer-events-none sticky bottom-0 z-1 -mt-[calc(100svh-var(--header-height))] flex h-[calc(100svh-var(--header-height))] flex-col justify-end">
-          <StageFoot copy={copy} localTime={localTime}>
+          <StageFoot copy={copy}>
             <Showreel content={copy} reducedMotion={reducedMotion} canHover={canHover} />
           </StageFoot>
         </div>
@@ -124,12 +123,13 @@ export function HomePage({ locale, reducedMotion, canHover }: HomePageProps) {
 
 interface StageFootProps {
   copy: HeroContent
-  localTime: ReturnType<typeof useLocalTime>
   ghost?: boolean
   children?: ReactNode
 }
 
-function StageFoot({ copy, localTime, ghost = false, children }: StageFootProps) {
+// Owns the clock, so its minute tick re-renders the two foot rows instead of the whole page.
+function StageFoot({ copy, ghost = false, children }: StageFootProps) {
+  const localTime = useLocalTime()
   return (
     <div
       className={`pointer-events-none relative container flex w-full max-w-none items-center justify-between gap-6 pb-8 [--page-padding:clamp(20px,1.85vw,32px)] ${ghost ? 'invisible' : ''}`}
