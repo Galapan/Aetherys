@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useRef } from 'react'
 import { animate, m, useMotionValue, useMotionValueEvent, useScroll } from 'framer-motion'
-import { REVEAL_EASE } from '@/components/ui/easing'
+import { IntroLockup } from '@/features/hero/IntroLockup'
 import type { HeroContent } from '@/content/hero'
 
 interface HeroProps {
@@ -145,48 +145,8 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                 </div>
               ))}
             </div>
-            <div className="text-burgundy absolute inset-0 grid place-items-center">
-              <m.span
-                className="flex overflow-hidden px-[2px] py-1 text-[26px] leading-[1.3] font-medium tracking-[-0.055em] md:text-[32px]"
-                initial={{ transform: 'scaleX(1)', opacity: 1 }}
-                animate={{ transform: 'scaleX(0.035)', opacity: 0 }}
-                transition={{ delay: 1.7, duration: 0.6, ease: curtainEase }}
-              >
-                {Array.from(content.brand).map((letter, index) => (
-                  <m.span
-                    key={index}
-                    className="inline-block"
-                    initial={{ transform: 'translateY(110%)' }}
-                    animate={{ transform: 'translateY(0%)' }}
-                    transition={{
-                      delay: 0.15 + index * 0.035,
-                      duration: 0.65,
-                      ease: REVEAL_EASE,
-                    }}
-                  >
-                    {letter}
-                  </m.span>
-                ))}
-              </m.span>
-              <m.span
-                className="absolute size-3 before:absolute before:top-[5px] before:h-[2px] before:w-3 before:bg-current before:content-[''] after:absolute after:left-[5px] after:h-3 after:w-[2px] after:bg-current after:content-['']"
-                initial={{ opacity: 0, transform: 'rotate(0deg) scale(0.6)' }}
-                animate={{
-                  opacity: [0, 1, 1, 0],
-                  transform: [
-                    'rotate(0deg) scale(0.6)',
-                    'rotate(0deg) scale(1)',
-                    'rotate(180deg) scale(1)',
-                    'rotate(180deg) scale(0.3)',
-                  ],
-                }}
-                transition={{
-                  delay: 2.2,
-                  duration: 1.25,
-                  times: [0, 0.16, 0.8, 1],
-                  ease: 'easeInOut',
-                }}
-              />
+            <div className="absolute inset-0 grid place-items-center">
+              <IntroLockup brand={content.brand} />
             </div>
           </div>,
           document.body,
