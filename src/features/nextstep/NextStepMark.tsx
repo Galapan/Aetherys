@@ -60,10 +60,14 @@ class SceneBoundary extends Component<
 // compete with the intro.
 const WARM_UP_DELAY_MS = 6000
 // Creating the context and compiling the glass shaders blocks the main thread and cannot be
-// interrupted, so it waits for a pause in scrolling instead of landing mid-gesture.
+// interrupted (browsers without KHR_parallel_shader_compile, such as Firefox, link them
+// synchronously), so it waits for a pause in scrolling instead of landing mid-gesture.
 const SCROLL_QUIET_MS = 1200
+// Shorter pause once the scene nears the viewport, so the glass is usually ready on arrival;
+// until then the static mark covers it.
+const NEAR_QUIET_MS = 400
 
-/** Mounts the scene once the page is quiet after the intro, or when it nears the viewport. */
+/** Mounts the scene at a pause in scrolling, after the intro or once it nears the viewport. */
 function useSceneReady() {
   const frame = useRef<HTMLDivElement>(null)
   const [ready, setReady] = useState(false)
@@ -73,13 +77,8 @@ function useSceneReady() {
     if (!element || ready) return
     const markReady = () => setReady(true)
     let idle = 0
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) markReady()
-      },
-      { rootMargin: '150% 0px' },
-    )
-    observer.observe(element)
+    let quietMs = SCROLL_QUIET_MS
+    let watching = false
     let quiet = 0
     const scheduleIdle = () => {
       if (typeof window.requestIdleCallback === 'function') {
@@ -95,14 +94,28 @@ function useSceneReady() {
         window.cancelIdleCallback(idle)
         idle = 0
       }
-      quiet = window.setTimeout(scheduleIdle, SCROLL_QUIET_MS)
+      quiet = window.setTimeout(scheduleIdle, quietMs)
     }
-    const timer = window.setTimeout(() => {
+    const watchScroll = () => {
       // Fetch the chunk now, so the mount itself is not delayed into the next scroll.
       void loadScene()
-      window.addEventListener('scroll', onScroll, { passive: true })
+      if (!watching) {
+        watching = true
+        window.addEventListener('scroll', onScroll, { passive: true })
+      }
       onScroll()
-    }, WARM_UP_DELAY_MS)
+    }
+    // Nearing the viewport no longer mounts mid-scroll: it only shortens the pause awaited.
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        quietMs = NEAR_QUIET_MS
+        watchScroll()
+      },
+      { rootMargin: '150% 0px' },
+    )
+    observer.observe(element)
+    const timer = window.setTimeout(watchScroll, WARM_UP_DELAY_MS)
     return () => {
       observer.disconnect()
       window.clearTimeout(timer)

@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useRef } from 'react'
 import { animate, m, useMotionValue, useMotionValueEvent, useScroll } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 import type { HeroContent } from '@/content/hero'
 
 interface HeroProps {
@@ -160,7 +161,7 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                     transition={{
                       delay: 0.15 + index * 0.035,
                       duration: 0.65,
-                      ease: [0.22, 1, 0.36, 1],
+                      ease: REVEAL_EASE,
                     }}
                   >
                     {letter}

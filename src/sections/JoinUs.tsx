@@ -1,7 +1,9 @@
 import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import { useEffect, useRef, type ReactNode } from 'react'
-import { m, stagger, useAnimate, useInView } from 'framer-motion'
+import { stagger, useAnimate, useInView } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 import { joinUsAssets, type JoinUsContent } from '@/content/joinUs'
+import { Button } from '@/components/ui/Button'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 
 interface JoinUsProps {
@@ -10,8 +12,6 @@ interface JoinUsProps {
   reducedMotion: boolean
   canHover: boolean
 }
-
-const ease = [0.22, 1, 0.36, 1] as const
 
 // Each block enters when it reaches the viewport, including the copy below the video.
 // Markup is visible until Motion initializes, and cleanup restores the static state.
@@ -38,7 +38,7 @@ function Reveal({
       [
         target,
         { transform: 'translateY(0%)', opacity: 1 },
-        { duration: 0.8, delay: kind === 'heading' ? stagger(0.025) : 0, ease },
+        { duration: 0.8, delay: kind === 'heading' ? stagger(0.025) : 0, ease: REVEAL_EASE },
       ],
     ])
 
@@ -164,14 +164,9 @@ export function JoinUs({ content, contactHref, reducedMotion, canHover }: JoinUs
             <Reveal kind="details" className="mt-6 overflow-clip" reducedMotion={reducedMotion}>
               {/* animation hook: targeted by useAnimate */}
               <div className="join-us__reveal-content">
-                <m.a
-                  className="bg-burgundy text-warm-white focus-visible:outline-graphite inline-flex min-h-11 items-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4"
-                  href={contactHref}
-                  whileHover={canHover && !reducedMotion ? { y: -2 } : undefined}
-                  transition={{ duration: 0.18 }}
-                >
+                <Button href={contactHref} lift={canHover && !reducedMotion}>
                   {content.contact}
-                </m.a>
+                </Button>
               </div>
             </Reveal>
           </div>

@@ -1,0 +1,155 @@
+import { useRef, useState, type ReactNode } from 'react'
+import { m, useScroll, useTransform, type MotionValue } from 'framer-motion'
+import type { AboutValue } from '@/content/about'
+import { RuleGrid } from '@/components/ui/RuleGrid'
+import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
+
+interface ValuesProps {
+  eyebrow: string
+  values: AboutValue[]
+  reducedMotion: boolean
+  canHover: boolean
+}
+
+const HOVER_TRANSITION = { duration: 0.35, ease: 'easeOut' } as const
+const rowClassName = 'border-border relative border-t'
+// Sizes follow the reference at desktop width: ~156px rows and ~5.4vw titles.
+// "+" on the first grid line, the title on the second and the description on the fifth, as in
+// the reference. The percentages follow RuleGrid's five equal columns.
+const columnsClassName =
+  'grid-cols-[40px_minmax(0,1fr)] gap-x-4 md:grid-cols-[20%_minmax(0,1fr)_20%] md:gap-x-0'
+
+// Scroll window of each row, as fractions of the pinned stretch. As in the reference, the whole
+// staircase plays while the panel is pinned under the header: rows arrive from the right on the
+// way down and leave completely on the way back up, before the panel unpins and scrolls away.
+// Lower rows start and end later, so the steps narrow progressively.
+const STAIR_WINDOWS: [number, number][] = [
+  [0.02, 0.5],
+  [0.07, 0.6],
+  [0.12, 0.7],
+  [0.17, 0.78],
+  [0.22, 0.86],
+  [0.27, 0.92],
+]
+
+interface StairRowProps {
+  as?: 'div' | 'li'
+  index: number
+  progress: MotionValue<number>
+  scroll: boolean
+  className?: string
+  children?: ReactNode
+  onHoverStart?: () => void
+  onHoverEnd?: () => void
+  onTap?: () => void
+}
+
+function StairRow({
+  as = 'div',
+  index,
+  progress,
+  scroll,
+  className,
+  children,
+  ...events
+}: StairRowProps) {
+  const range = STAIR_WINDOWS[Math.min(index, STAIR_WINDOWS.length - 1)]
+  const x = useTransform(progress, range, ['100%', '0%'], { clamp: true })
+  const Row = as === 'li' ? m.li : m.div
+  return (
+    <Row
+      className={`bg-graphite ${rowClassName} ${className ?? ''}`}
+      style={{ x: scroll ? x : 0 }}
+      {...events}
+    >
+      {children}
+    </Row>
+  )
+}
+
+export function Values({ eyebrow, values, reducedMotion, canHover }: ValuesProps) {
+  const section = useRef<HTMLElement>(null)
+  const [active, setActive] = useState<number | null>(null)
+  const { scrollYProgress } = useScroll({ target: section, offset: ['start start', 'end end'] })
+  const scroll = !reducedMotion
+  // Without hover every description stays readable; tapping a row highlights its title.
+  const dimDescriptions = canHover && !reducedMotion
+  const duration = reducedMotion ? 0 : HOVER_TRANSITION.duration
+
+  return (
+    <section
+      ref={section}
+      // The extra height is the pinned stretch in which the staircase plays.
+      className={`bg-warm-white relative z-1 overflow-x-clip ${scroll ? 'h-[calc(100svh+160svh)]' : ''}`}
+      aria-labelledby="valores-heading"
+    >
+      {/* Above the panel, so the guide lines stay visible while the rows slide over them. */}
+      <RuleGrid className="absolute inset-0 z-1" spanClassName="bg-grid-burgundy" />
+      <div
+        className={`text-warm-white ${scroll ? 'sticky top-0 h-svh pt-[var(--header-height)]' : ''}`}
+      >
+        <StairRow index={0} progress={scrollYProgress} scroll={scroll} className="border-t-0">
+          <h2
+            id="valores-heading"
+            className="text-secondary m-0 flex min-h-[clamp(80px,9vw,156px)] items-center px-[var(--page-padding)] py-6 text-[clamp(12px,1vw,16px)] leading-[1.4] font-normal tracking-[0.08em] uppercase"
+          >
+            <SectionTitleReveal text={eyebrow} reducedMotion={reducedMotion} />
+          </h2>
+        </StairRow>
+        <ul className="m-0 list-none p-0">
+          {values.map((value, index) => {
+            const isActive = active === index
+            return (
+              <StairRow
+                as="li"
+                key={value.id}
+                index={index + 1}
+                progress={scrollYProgress}
+                scroll={scroll}
+                onHoverStart={canHover ? () => setActive(index) : undefined}
+                onHoverEnd={canHover ? () => setActive(null) : undefined}
+                onTap={canHover ? undefined : () => setActive(isActive ? null : index)}
+              >
+                <div
+                  className={`grid min-h-[clamp(80px,9vw,156px)] items-center px-[var(--page-padding)] py-4 ${columnsClassName}`}
+                >
+                  <span className="text-[20px] leading-none font-light" aria-hidden="true">
+                    +
+                  </span>
+                  <h3 className="m-0 grid text-[clamp(2rem,5.4vw,5.75rem)] leading-[1] font-normal tracking-[-0.02em] uppercase">
+                    <span className="[grid-area:1/1]">{value.title}</span>
+                    {/* Only the letters change colour on hover: a burgundy copy fades in over
+                        the title. */}
+                    <m.span
+                      className="text-burgundy [grid-area:1/1]"
+                      aria-hidden="true"
+                      initial={false}
+                      animate={{ opacity: isActive ? 1 : 0 }}
+                      transition={{ ...HOVER_TRANSITION, duration }}
+                    >
+                      {value.title}
+                    </m.span>
+                  </h3>
+                  <m.p
+                    className="col-start-2 m-0 mt-2 max-w-[36ch] text-[clamp(14px,1.05vw,18px)] leading-[1.4] md:col-start-3 md:mt-0"
+                    initial={false}
+                    animate={{ opacity: !dimDescriptions || isActive ? 1 : 0.45 }}
+                    transition={{ ...HOVER_TRANSITION, duration }}
+                  >
+                    {value.description}
+                  </m.p>
+                </div>
+              </StairRow>
+            )
+          })}
+        </ul>
+        <StairRow
+          index={values.length + 1}
+          progress={scrollYProgress}
+          scroll={scroll}
+          className="h-[clamp(64px,9vw,156px)]"
+        />
+      </div>
+    </section>
+  )
+}

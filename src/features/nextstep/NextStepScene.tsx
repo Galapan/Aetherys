@@ -19,6 +19,7 @@ import {
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import { heroMark } from '@/content/hero'
 import { useMotionPreferences } from '@/hooks/useMotionPreferences'
+import { useSceneQuality, type SceneQuality } from '../sceneQuality'
 
 // A thick slab, like the reference glass letter: its side faces carry most of the refraction.
 const EXTRUDE_OPTIONS = {
@@ -42,9 +43,11 @@ function readToken(name: string) {
 
 function HeadingRefractionBackground({
   headingKey,
+  resolution,
   onTextureReady,
 }: {
   headingKey: string
+  resolution: number
   onTextureReady: (texture: CanvasTexture) => void
 }) {
   const { gl, invalidate } = useThree()
@@ -53,7 +56,6 @@ function HeadingRefractionBackground({
     // Owned by this effect, so drawing into them never mutates a hook value.
     const canvas = document.createElement('canvas')
     // Sized and read once: resizing a canvas reallocates it, which scroll redraws can't afford.
-    const resolution = 1024
     canvas.width = resolution
     canvas.height = resolution
     const context = canvas.getContext('2d')
@@ -182,12 +184,12 @@ function HeadingRefractionBackground({
       window.removeEventListener('scroll', scroll)
       texture.dispose()
     }
-  }, [gl, headingKey, invalidate, onTextureReady])
+  }, [gl, headingKey, invalidate, onTextureReady, resolution])
 
   return null
 }
 
-function Mark({ background }: { background: Texture | Color }) {
+function Mark({ background, quality }: { background: Texture | Color; quality: SceneQuality }) {
   const group = useRef<Group>(null)
   const { gl, invalidate } = useThree()
   const { reducedMotion, canHover } = useMotionPreferences()
@@ -286,8 +288,8 @@ function Mark({ background }: { background: Texture | Color }) {
         <extrudeGeometry args={[shapes, EXTRUDE_OPTIONS]} />
         <MeshTransmissionMaterial
           backside
-          resolution={1024}
-          backsideResolution={512}
+          resolution={quality.transmission}
+          backsideResolution={quality.backside}
           samples={6}
           background={background}
           color={glassTint}
@@ -377,14 +379,14 @@ function CompileBeforeFirstFrame({
   return null
 }
 
-function RenderQuality({ onContextLost }: { onContextLost: () => void }) {
+function RenderQuality({ maxDpr, onContextLost }: { maxDpr: number; onContextLost: () => void }) {
   const { gl, size, setDpr, invalidate } = useThree()
   const onContextLostEvent = useEffectEvent(onContextLost)
 
   useEffect(() => {
-    setDpr(Math.min(3, Math.max(1, 1080 / Math.max(1, size.height))))
+    setDpr(Math.min(maxDpr, Math.max(1, 1080 / Math.max(1, size.height))))
     invalidate()
-  }, [invalidate, setDpr, size.height])
+  }, [invalidate, maxDpr, setDpr, size.height])
 
   useEffect(() => {
     const canvas = gl.domElement
@@ -405,6 +407,7 @@ export default function NextStepScene({
   onDrawn: (drawn: boolean) => void
 }) {
   const [attempt, setAttempt] = useState(0)
+  const quality = useSceneQuality()
   const [lost, setLost] = useState(false)
   // Held in state: as a constant prop, every re-render of the Canvas (the refraction texture
   // arriving, the drawn report) set the loop back to 'never', which silently dropped every
@@ -453,6 +456,7 @@ export default function NextStepScene({
       key={attempt}
       camera={{ position: [0, 0, 5], fov: 35 }}
       gl={{ antialias: true, alpha: true }}
+      dpr={quality.dpr}
       // Stays idle until CompileBeforeFirstFrame switches it to on-demand rendering.
       frameloop={frameloop}
       // Pointer tilt reads window coordinates, so the canvas offset is never needed.
@@ -460,9 +464,13 @@ export default function NextStepScene({
       // transmission passes.
       resize={{ scroll: false }}
     >
-      <RenderQuality onContextLost={handleContextLost} />
+      <RenderQuality maxDpr={quality.maxDpr} onContextLost={handleContextLost} />
       <CompileBeforeFirstFrame onCompiled={handleCompiled} onDrawn={handleDrawn} />
-      <HeadingRefractionBackground headingKey={headingKey} onTextureReady={handleTextureReady} />
+      <HeadingRefractionBackground
+        headingKey={headingKey}
+        resolution={quality.refraction}
+        onTextureReady={handleTextureReady}
+      />
       <ambientLight color={warmWhite} intensity={0.3} />
       <Environment resolution={512} frames={1}>
         {/* A light room, so grazing reflections brighten the edges instead of inking them. */}
@@ -474,7 +482,7 @@ export default function NextStepScene({
       </Environment>
       <directionalLight color={warmWhite} position={[-3, 4, 5]} intensity={1.5} />
       <directionalLight color={warmWhite} position={[4, 2, 1]} intensity={1.2} />
-      <Mark background={refractionBackground ?? warmWhiteColor} />
+      <Mark background={refractionBackground ?? warmWhiteColor} quality={quality} />
     </Canvas>
   )
 }

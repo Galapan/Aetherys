@@ -1,7 +1,9 @@
 import { useRef, useState, useSyncExternalStore } from 'react'
 import { m, useScroll, useTransform } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 import type { NextStepContent } from '@/content/nextStep'
 import { testimonyImages } from '@/content/testimonies'
+import { buttonClassName } from '@/components/ui/Button'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 import { NextStepMark } from '@/features/nextstep/NextStepMark'
 
@@ -11,9 +13,6 @@ interface NextStepProps {
   reducedMotion: boolean
   canHover: boolean
 }
-
-const buttonClassName =
-  'bg-burgundy text-warm-white focus-visible:outline-graphite inline-flex min-h-11 items-center justify-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4'
 
 // Scroll-linked convergence: as the composition rises into view the words slide in towards
 // the mark and settle once it reaches the viewport centre. Vertical placement never changes.
@@ -28,7 +27,7 @@ const STATIC_OFFSET = ['0em', '0em']
 // CTA hover from the reference: the portraits fan out and lift on a soft spring, the button
 // dips as if pressed.
 const PHOTO_SPRING = { type: 'spring', stiffness: 160, damping: 22, mass: 0.9 } as const
-const BUTTON_PRESS = { duration: 0.5, ease: [0.22, 1, 0.36, 1] } as const
+const BUTTON_PRESS = { duration: 0.5, ease: REVEAL_EASE } as const
 const BUTTON_SCALE = 0.97
 // The label counter-scales on the same curve so the text keeps its size while the button dips.
 const LABEL_VARIANTS = { rest: { scale: 1 }, active: { scale: 1 / BUTTON_SCALE } }

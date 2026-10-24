@@ -243,6 +243,8 @@ function ShowreelDialog({ content, reducedMotion, origin, returnFrame, onClosed 
           }}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
+          // The reel closes itself once it has played through, with the same shrink back.
+          onEnded={close}
           onLoadedMetadata={(event) => {
             event.currentTarget.currentTime = 0
           }}

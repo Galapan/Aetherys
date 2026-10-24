@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { m, useAnimate, useInView } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 
 export function SectionTitleReveal({
   text,
@@ -20,7 +21,7 @@ export function SectionTitleReveal({
       : visible
         ? animate([
             [cover, { opacity: 1, scaleX: 1 }, { duration: 0 }],
-            [cover, { scaleX: 0 }, { duration: 0.65, delay: 0.12, ease: [0.22, 1, 0.36, 1] }],
+            [cover, { scaleX: 0 }, { duration: 0.65, delay: 0.12, ease: REVEAL_EASE }],
           ])
         : animate(cover, { opacity: 1, scaleX: 1 }, { duration: 0 })
 

@@ -9,6 +9,7 @@ import {
   useTransform,
   type MotionValue,
 } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 import {
   SiAstro,
   SiDocker,
@@ -60,9 +61,8 @@ const icons: Record<(typeof technologies)[number]['id'], IconType> = {
   figma: SiFigma,
   vercel: SiVercel,
 }
-const ease = [0.22, 1, 0.36, 1] as const
-const technologyEnter = { duration: 0.5, ease }
-const technologyLeave = { duration: 0.4, ease }
+const technologyEnter = { duration: 0.5, ease: REVEAL_EASE }
+const technologyLeave = { duration: 0.4, ease: REVEAL_EASE }
 const technologySpring = { type: 'spring', stiffness: 120, damping: 20, mass: 0.85 } as const
 
 function ServiceFeature({
@@ -77,19 +77,58 @@ function ServiceFeature({
   interactive: boolean
 }) {
   const element = useRef<HTMLLIElement>(null)
+  // Page-space geometry, measured on layout changes instead of on every pointer/scroll frame.
+  const geometry = useRef<{
+    center: number
+    height: number
+    listTop: number
+    listBottom: number
+  } | null>(null)
+
+  useEffect(() => {
+    const node = element.current
+    const list = node?.parentElement
+    if (!interactive || !node || !list) {
+      geometry.current = null
+      return
+    }
+    let active = true
+    const measure = () => {
+      if (!active) return
+      const offset = window.scrollY
+      const listBounds = list.getBoundingClientRect()
+      const bounds = node.getBoundingClientRect()
+      geometry.current = {
+        center: bounds.top + offset + bounds.height / 2,
+        height: bounds.height,
+        listTop: listBounds.top + offset,
+        listBottom: listBounds.bottom + offset,
+      }
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    observer.observe(list)
+    window.addEventListener('resize', measure)
+    void document.fonts.ready.then(measure)
+    return () => {
+      active = false
+      observer.disconnect()
+      window.removeEventListener('resize', measure)
+      geometry.current = null
+    }
+  }, [interactive])
+
   const influence = useTransform(() => {
     const y = pointerY.get()
-    // Subscribe before the initial null pointer/ref can short-circuit this calculation.
+    // Subscribe before the initial null pointer/geometry can short-circuit this calculation.
     const scrollOffset = scrollY.get()
-    const node = element.current
-    if (!interactive || y === null || !node) return null
-    const list = node.parentElement!.getBoundingClientRect()
-    const bounds = node.getBoundingClientRect()
+    const bounds = geometry.current
+    if (!interactive || y === null || !bounds || !bounds.height) return null
     const pageY = y + scrollOffset
     // Follow the cursor's height across the page, including the space beside the list.
-    if (pageY < list.top + scrollOffset - 32 || pageY > list.bottom + scrollOffset + 32) return null
-    const distance =
-      Math.abs(pageY - (bounds.top + scrollOffset + bounds.height / 2)) / bounds.height
+    if (pageY < bounds.listTop - 32 || pageY > bounds.listBottom + 32) return null
+    const distance = Math.abs(pageY - bounds.center) / bounds.height
     return Math.exp(-0.5 * (distance / 1.25) ** 2)
   })
   const targetX = useTransform(influence, (value) => (value ?? 0) * 36)

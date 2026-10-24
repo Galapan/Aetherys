@@ -8,6 +8,7 @@ import {
   useTransform,
   type MotionValue,
 } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 import type { ExpertiseContent } from '@/content/expertise'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 import { useMarquee } from '@/hooks/useMarquee'
@@ -51,7 +52,7 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
       [
         '.expertise__copy',
         { transform: 'translateY(0%)' },
-        { duration: 0.75, at: 0.4, ease: [0.22, 1, 0.36, 1] },
+        { duration: 0.75, at: 0.4, ease: REVEAL_EASE },
       ],
     ])
     return () => {
