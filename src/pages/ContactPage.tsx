@@ -1,19 +1,16 @@
 import { useState, type FocusEvent, type FormEvent } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 import type { ContactContent } from '@/content/contact'
 import { menuContact } from '@/content/navigation'
-import { RuleGrid } from '@/components/ui/RuleGrid'
+import { Button } from '@/components/ui/Button'
+import { LightSection } from '@/components/ui/LightSection'
 
 interface ContactPageProps {
   content: ContactContent
   reducedMotion: boolean
   canHover: boolean
 }
-
-const REVEAL_EASE = [0.22, 1, 0.36, 1] as const
-
-const buttonClassName =
-  'bg-burgundy text-warm-white focus-visible:outline-graphite inline-flex min-h-11 items-center justify-center rounded border border-[color-mix(in_srgb,var(--color-warm-white)_35%,transparent)] px-4 py-2 text-[12px] leading-[1.4] tracking-[0.08em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4'
 
 const leadClassName = 'm-0 text-[clamp(1.125rem,1.6vw,1.375rem)] leading-[1.4] font-medium'
 
@@ -59,10 +56,12 @@ function TextField({
   reducedMotion,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false)
-  const errorId = `contacto-${name}-error`
+  const fieldId = `contacto-${name}`
+  const errorId = `${fieldId}-error`
   const transition = { duration: reducedMotion ? 0 : 0.4, ease: REVEAL_EASE }
   const fieldProps = {
     className: multiline ? `${textFieldClassName} min-h-28 resize-y` : textFieldClassName,
+    id: fieldId,
     name,
     placeholder,
     required: Boolean(error),
@@ -81,9 +80,13 @@ function TextField({
     },
   } as const
 
+  // The label points at the field instead of wrapping it, so the error message below is
+  // announced once through aria-describedby rather than also becoming part of the name.
   return (
-    <label className="relative block">
-      <span className="sr-only">{label}</span>
+    <div className="relative">
+      <label htmlFor={fieldId} className="sr-only">
+        {label}
+      </label>
       {multiline ? (
         <m.textarea {...fieldProps} rows={3} />
       ) : (
@@ -111,7 +114,7 @@ function TextField({
           </m.span>
         ) : null}
       </AnimatePresence>
-    </label>
+    </div>
   )
 }
 
@@ -121,8 +124,7 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
   const [invalid, setInvalid] = useState<Record<string, boolean>>({})
   const setFieldInvalid = (name: string, value: boolean) =>
     setInvalid((current) => (current[name] === value ? current : { ...current, [name]: value }))
-  const hover = canHover && !reducedMotion ? { y: -2 } : undefined
-  const hoverTransition = { duration: 0.18, ease: 'easeOut' } as const
+  const lift = canHover && !reducedMotion
 
   function reveal(delay: number) {
     return {
@@ -166,12 +168,11 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
   }
 
   return (
-    <section
+    <LightSection
       id="contacto"
-      className="text-graphite bg-warm-white relative z-1 mt-[calc(var(--header-height)*-1)] min-h-svh pt-[calc(var(--header-height)+24px)] pb-[clamp(64px,10svh,144px)] [--color-secondary:color-mix(in_srgb,var(--color-graphite)_62%,transparent)]"
-      aria-labelledby="contacto-heading"
+      labelledBy="contacto-heading"
+      className="mt-[calc(var(--header-height)*-1)] min-h-svh pt-[calc(var(--header-height)+24px)] pb-[clamp(64px,10svh,144px)]"
     >
-      <RuleGrid className="absolute inset-0" spanClassName="bg-grid-burgundy" />
       <div className="relative container grid grid-cols-1 gap-x-6 lg:grid-cols-12">
         <h1
           id="contacto-heading"
@@ -194,14 +195,9 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
           {...reveal(0.25)}
         >
           <p className={leadClassName}>{content.intro}</p>
-          <m.a
-            className={buttonClassName}
-            href={menuContact.phoneHref}
-            whileHover={hover}
-            transition={hoverTransition}
-          >
+          <Button href={menuContact.phoneHref} lift={lift}>
             {content.call}
-          </m.a>
+          </Button>
         </m.div>
 
         <m.form
@@ -282,14 +278,9 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
             reducedMotion={reducedMotion}
           />
           <div className="mt-4 flex flex-col items-start gap-4">
-            <m.button
-              className={buttonClassName}
-              type="submit"
-              whileHover={hover}
-              transition={hoverTransition}
-            >
+            <Button type="submit" lift={lift}>
               {content.send}
-            </m.button>
+            </Button>
             <p className="m-0 text-[14px] leading-[1.4]" role="status">
               {sent ? content.sent : ''}
             </p>
@@ -317,6 +308,6 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
           </p>
         </m.div>
       </div>
-    </section>
+    </LightSection>
   )
 }

@@ -1,14 +1,14 @@
 import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   m,
-  useInView,
   useMotionValue,
   useScroll,
   useSpring,
   useTransform,
   type MotionValue,
 } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 import {
   SiAstro,
   SiDocker,
@@ -60,36 +60,77 @@ const icons: Record<(typeof technologies)[number]['id'], IconType> = {
   figma: SiFigma,
   vercel: SiVercel,
 }
-const ease = [0.22, 1, 0.36, 1] as const
-const technologyEnter = { duration: 0.5, ease }
-const technologyLeave = { duration: 0.4, ease }
+const technologyEnter = { duration: 0.5, ease: REVEAL_EASE }
+const technologyLeave = { duration: 0.4, ease: REVEAL_EASE }
 const technologySpring = { type: 'spring', stiffness: 120, damping: 20, mass: 0.85 } as const
 
 function ServiceFeature({
   item,
   pointerY,
   scrollY,
+  rowsInView,
   interactive,
 }: {
   item: string
   pointerY: MotionValue<number | null>
   scrollY: MotionValue<number>
+  rowsInView: MotionValue<boolean>
   interactive: boolean
 }) {
   const element = useRef<HTMLLIElement>(null)
+  // Page-space geometry, measured on layout changes instead of on every pointer/scroll frame.
+  const geometry = useRef<{
+    center: number
+    height: number
+    listTop: number
+    listBottom: number
+  } | null>(null)
+
+  useEffect(() => {
+    const node = element.current
+    const list = node?.parentElement
+    if (!interactive || !node || !list) {
+      geometry.current = null
+      return
+    }
+    let active = true
+    const measure = () => {
+      if (!active) return
+      const offset = window.scrollY
+      const listBounds = list.getBoundingClientRect()
+      const bounds = node.getBoundingClientRect()
+      geometry.current = {
+        center: bounds.top + offset + bounds.height / 2,
+        height: bounds.height,
+        listTop: listBounds.top + offset,
+        listBottom: listBounds.bottom + offset,
+      }
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    observer.observe(list)
+    window.addEventListener('resize', measure)
+    void document.fonts.ready.then(measure)
+    return () => {
+      active = false
+      observer.disconnect()
+      window.removeEventListener('resize', measure)
+      geometry.current = null
+    }
+  }, [interactive])
+
   const influence = useTransform(() => {
     const y = pointerY.get()
-    // Subscribe before the initial null pointer/ref can short-circuit this calculation.
+    // Subscribe before the initial null pointer/geometry can short-circuit this calculation.
     const scrollOffset = scrollY.get()
-    const node = element.current
-    if (!interactive || y === null || !node) return null
-    const list = node.parentElement!.getBoundingClientRect()
-    const bounds = node.getBoundingClientRect()
+    const inView = rowsInView.get()
+    const bounds = geometry.current
+    if (!interactive || !inView || y === null || !bounds || !bounds.height) return null
     const pageY = y + scrollOffset
     // Follow the cursor's height across the page, including the space beside the list.
-    if (pageY < list.top + scrollOffset - 32 || pageY > list.bottom + scrollOffset + 32) return null
-    const distance =
-      Math.abs(pageY - (bounds.top + scrollOffset + bounds.height / 2)) / bounds.height
+    if (pageY < bounds.listTop - 32 || pageY > bounds.listBottom + 32) return null
+    const distance = Math.abs(pageY - bounds.center) / bounds.height
     return Math.exp(-0.5 * (distance / 1.25) ** 2)
   })
   const targetX = useTransform(influence, (value) => (value ?? 0) * 36)
@@ -119,6 +160,7 @@ function ServiceRow({
   canHover,
   pointerY,
   scrollY,
+  rowsInView,
 }: {
   service: Service
   index: number
@@ -126,6 +168,7 @@ function ServiceRow({
   canHover: boolean
   pointerY: MotionValue<number | null>
   scrollY: MotionValue<number>
+  rowsInView: MotionValue<boolean>
 }) {
   return (
     <article
@@ -154,6 +197,7 @@ function ServiceRow({
             item={item}
             pointerY={pointerY}
             scrollY={scrollY}
+            rowsInView={rowsInView}
             interactive={canHover && !reducedMotion}
           />
         ))}
@@ -165,17 +209,19 @@ function ServiceRow({
 function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
   const interactive = canHover && !reducedMotion
   const rail = useRef<HTMLDivElement>(null)
-  const visible = useInView(rail)
-  const [hovered, setHovered] = useState(false)
-  const [focused, setFocused] = useState(false)
+  const hovered = useRef(false)
+  const focused = useRef(false)
+  const group = useRef<HTMLUListElement>(null)
   // One item every 4 seconds. The rail is full-bleed, so it covers more ground than the
   // card rail and needs a brisker cadence to feel even.
-  const track = useMarquee<HTMLDivElement>({
+  const marquee = useMarquee({
     enabled: !reducedMotion,
-    visible,
-    halted: (hovered && canHover) || focused,
     duration: technologies.length * 4,
+    group,
+    viewport: rail,
   })
+  const trackX = marquee.x
+  const syncHalted = () => marquee.setHalted((hovered.current && canHover) || focused.current)
 
   return (
     <div className="mx-[calc(50%-50vw)] mt-12 w-screen lg:mt-16">
@@ -185,15 +231,31 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
         role="region"
         aria-label={content.technologyLabel}
         tabIndex={reducedMotion ? undefined : 0}
-        onPointerEnter={() => setHovered(true)}
-        onPointerLeave={() => setHovered(false)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onPointerEnter={() => {
+          hovered.current = true
+          syncHalted()
+        }}
+        onPointerLeave={() => {
+          hovered.current = false
+          syncHalted()
+        }}
+        onFocus={() => {
+          focused.current = true
+          syncHalted()
+        }}
+        onBlur={() => {
+          focused.current = false
+          syncHalted()
+        }}
       >
-        <div ref={track} className={`flex ${reducedMotion ? 'w-full' : 'w-max'}`}>
+        <m.div
+          className={`flex ${reducedMotion ? 'w-full' : 'w-max'}`}
+          style={reducedMotion ? undefined : { x: trackX }}
+        >
           {(reducedMotion ? [false] : [false, true]).map((duplicate) => (
             <ul
               key={String(duplicate)}
+              ref={duplicate ? undefined : group}
               className={`m-0 list-none p-0 ${reducedMotion ? 'grid w-full grid-cols-2 gap-x-0 gap-y-4 md:grid-cols-4 lg:grid-cols-5' : 'flex shrink-0'}`}
               aria-label={duplicate ? undefined : content.technologyLabel}
               aria-hidden={duplicate || undefined}
@@ -273,7 +335,7 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
               })}
             </ul>
           ))}
-        </div>
+        </m.div>
       </div>
     </div>
   )
@@ -284,9 +346,20 @@ export function Services(props: ServicesProps) {
   const pointerY = useMotionValue<number | null>(null)
   const { scrollY } = useScroll()
   const rows = useRef<HTMLDivElement>(null)
-  // The cursor effect only reaches items inside the viewport, so off-screen rows
-  // skip their per-frame layout reads entirely.
-  const rowsVisible = useInView(rows)
+  // The cursor effect only reaches items inside the viewport. Held in a motion value, so
+  // off-screen rows skip their per-frame maths without re-rendering every item on entry.
+  const rowsInView = useMotionValue(false)
+
+  useEffect(() => {
+    const element = rows.current
+    if (!element) return
+    const observer = new IntersectionObserver(([entry]) => rowsInView.set(entry.isIntersecting))
+    observer.observe(element)
+    return () => {
+      observer.disconnect()
+      rowsInView.set(false)
+    }
+  }, [rowsInView])
 
   useEffect(() => {
     pointerY.set(null)
@@ -336,9 +409,10 @@ export function Services(props: ServicesProps) {
               service={service}
               index={index}
               reducedMotion={reducedMotion}
-              canHover={canHover && rowsVisible}
+              canHover={canHover}
               pointerY={pointerY}
               scrollY={scrollY}
+              rowsInView={rowsInView}
             />
           ))}
         </div>

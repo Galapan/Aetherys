@@ -1,5 +1,6 @@
 import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import {
+  memo,
   useEffect,
   useEffectEvent,
   useRef,
@@ -17,10 +18,10 @@ import {
   usePresence,
   type AnimationPlaybackControls,
 } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 import { testimonyImages, type TestimoniesContent, type Testimony } from '@/content/testimonies'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 
-const ease = [0.22, 1, 0.36, 1] as const
 const interval = 10_000
 // Entry start states. Letters and the name rise from below their clip; the portrait wipes up.
 const hiddenRise: CSSProperties = { transform: 'translateY(110%)', opacity: 0 }
@@ -61,7 +62,10 @@ function TestimonyCounter({
               className="block"
               initial={false}
               animate={{ transform: `translateY(${-Number(digit) * 10}%)` }}
-              transition={{ duration: reducedMotion ? 0 : active === 0 ? 0.8 : 0.5, ease }}
+              transition={{
+                duration: reducedMotion ? 0 : active === 0 ? 0.8 : 0.5,
+                ease: REVEAL_EASE,
+              }}
             >
               {Array.from({ length: 10 }, (_, value) => (
                 <span key={value} className="block h-[1.4em]">
@@ -76,6 +80,35 @@ function TestimonyCounter({
     </span>
   )
 }
+
+// Memoized: the carousel re-renders whenever the section enters or leaves the viewport,
+// and the presence context changes with it, so the letter spans are kept out of that pass.
+const Quote = memo(function Quote({ quote, enters }: { quote: string; enters: boolean }) {
+  return (
+    <blockquote className="m-0 max-w-[34ch] text-[clamp(1.75rem,3.2vw,3.5rem)] leading-[1.2] font-normal tracking-[-0.035em]">
+      <span className="sr-only">{quote}</span>
+      <span aria-hidden="true">
+        {quote.split(' ').map((word, wordIndex) => (
+          <span key={wordIndex}>
+            {wordIndex > 0 ? ' ' : null}
+            <span className="mb-[-0.12em] inline-block overflow-clip pb-[0.12em] align-top">
+              {Array.from(word).map((letter, letterIndex) => (
+                <span
+                  key={letterIndex}
+                  data-testimony-letter
+                  className="inline-block"
+                  style={enters ? hiddenRise : undefined}
+                >
+                  {letter}
+                </span>
+              ))}
+            </span>
+          </span>
+        ))}
+      </span>
+    </blockquote>
+  )
+})
 
 function Slide({
   item,
@@ -106,7 +139,7 @@ function Slide({
       const show = (duration: number, delay: number | ReturnType<typeof stagger>) => ({
         duration: reducedMotion ? 0 : duration,
         delay: reducedMotion ? 0 : delay,
-        ease,
+        ease: REVEAL_EASE,
       })
       const controls = [
         animate(
@@ -143,17 +176,17 @@ function Slide({
       animate(
         '[data-testimony-letter]',
         { transform: 'translateY(110%)', opacity: 0 },
-        { duration: 0.4, delay: stagger(0.001), ease },
+        { duration: 0.4, delay: stagger(0.001), ease: REVEAL_EASE },
       ),
       animate(
         '[data-testimony-avatar]',
         { clipPath: 'inset(0 0 100% 0)', opacity: 0 },
-        { duration: 0.4, ease },
+        { duration: 0.4, ease: REVEAL_EASE },
       ),
       animate(
         '[data-testimony-name]',
         { transform: 'translateY(110%)', opacity: 0 },
-        { duration: 0.4, ease },
+        { duration: 0.4, ease: REVEAL_EASE },
       ),
     ]
     void Promise.all(controls.map((control) => control.finished)).then(() => {
@@ -171,28 +204,7 @@ function Slide({
       className="col-start-1 row-start-1 m-0 min-w-0"
       aria-hidden={!isPresent || undefined}
     >
-      <blockquote className="m-0 max-w-[34ch] text-[clamp(1.75rem,3.2vw,3.5rem)] leading-[1.2] font-normal tracking-[-0.035em]">
-        <span className="sr-only">{item.quote}</span>
-        <span aria-hidden="true">
-          {item.quote.split(' ').map((word, wordIndex) => (
-            <span key={wordIndex}>
-              {wordIndex > 0 ? ' ' : null}
-              <span className="mb-[-0.12em] inline-block overflow-clip pb-[0.12em] align-top">
-                {Array.from(word).map((letter, letterIndex) => (
-                  <span
-                    key={letterIndex}
-                    data-testimony-letter
-                    className="inline-block"
-                    style={enters ? hiddenRise : undefined}
-                  >
-                    {letter}
-                  </span>
-                ))}
-              </span>
-            </span>
-          ))}
-        </span>
-      </blockquote>
+      <Quote quote={item.quote} enters={enters} />
       <figcaption className="mt-8 flex min-h-[86.4px] items-center gap-4">
         <div
           data-testimony-avatar

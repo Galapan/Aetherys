@@ -10,10 +10,12 @@ import {
 import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
-import { CanvasTexture, Color, LinearFilter, SRGBColorSpace, type Group, type Texture } from 'three'
-import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
+import { Color, type Group, type Texture } from 'three'
 import { heroMark } from '@/content/hero'
 import { useMotionPreferences } from '@/hooks/useMotionPreferences'
+import { getMarkShapes } from '../markShapes'
+import { createRefractionCanvas } from '../refractionCanvas'
+import { useSceneQuality } from '../sceneQuality'
 
 // The glass lifts the dark page with its reflections, which flattens the faint grid; each
 // line is composited this many times so it reads inside the mark as it does beside it.
@@ -36,30 +38,21 @@ function readToken(name: string) {
 // The transmission pass only sees the WebGL scene, so the DOM grid behind the canvas is
 // redrawn into its background for the glass to refract.
 function GridRefractionBackground({
+  resolution,
   onTextureReady,
 }: {
-  onTextureReady: (texture: CanvasTexture) => void
+  resolution: number
+  onTextureReady: (texture: Texture) => void
 }) {
   const { gl, invalidate } = useThree()
 
   useEffect(() => {
-    // Owned by this effect, so drawing into them never mutates a hook value.
-    const canvas = document.createElement('canvas')
-    // Sized and read once: resizing a canvas reallocates it, which scroll redraws can't afford.
-    const resolution = 1024
-    canvas.width = resolution
-    canvas.height = resolution
-    const context = canvas.getContext('2d')
+    // Owned by this effect, so drawing into it never mutates a hook value.
+    const refraction = createRefractionCanvas(gl, resolution)
+    const { context } = refraction
     const background = readToken('--color-graphite')
-    const texture = new CanvasTexture(canvas)
-    texture.colorSpace = SRGBColorSpace
-    texture.minFilter = LinearFilter
-    texture.magFilter = LinearFilter
-    texture.generateMipmaps = false
     let active = true
-    let visible = true
     let layout = ''
-    let frame = 0
     const draw = () => {
       if (!active) return
       const canvasBounds = gl.domElement.getBoundingClientRect()
@@ -69,7 +62,8 @@ function GridRefractionBackground({
       const lines = [...document.querySelectorAll<HTMLElement>('.hero-rule-grid > span')]
         .map((line) => ({ line, bounds: line.getBoundingClientRect() }))
         .filter(({ bounds }) => bounds.width > 0)
-      // Grid and mark are pinned in the same stage; only their relative layout matters.
+      // Grid and mark are pinned in the same stage and only their horizontal layout matters,
+      // which vertical scrolling never changes: only a resize redraws.
       const nextLayout = [
         canvasBounds.width,
         canvasBounds.height,
@@ -101,8 +95,8 @@ function GridRefractionBackground({
         }
       })
       context.restore()
-      texture.needsUpdate = true
-      onTextureReady(texture)
+      refraction.update()
+      onTextureReady(refraction.texture)
       invalidate()
     }
 
@@ -110,40 +104,24 @@ function GridRefractionBackground({
       layout = ''
       draw()
     }
-    const scroll = () => {
-      if (!visible || frame) return
-      frame = requestAnimationFrame(() => {
-        frame = 0
-        draw()
-      })
-    }
 
     draw()
     const observer = new ResizeObserver(redraw)
     observer.observe(gl.domElement)
-    const visibility = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting
-      if (visible) scroll()
-    })
-    visibility.observe(gl.domElement)
     window.addEventListener('resize', redraw)
-    window.addEventListener('scroll', scroll, { passive: true })
 
     return () => {
       active = false
-      cancelAnimationFrame(frame)
       observer.disconnect()
-      visibility.disconnect()
       window.removeEventListener('resize', redraw)
-      window.removeEventListener('scroll', scroll)
-      texture.dispose()
+      refraction.dispose()
     }
-  }, [gl, invalidate, onTextureReady])
+  }, [gl, invalidate, onTextureReady, resolution])
 
   return null
 }
 
-function Mark({ background }: { background: Texture | Color }) {
+function Mark({ background, resolution }: { background: Texture | Color; resolution: number }) {
   const group = useRef<Group>(null)
   const { gl, invalidate } = useThree()
   const { reducedMotion, canHover } = useMotionPreferences()
@@ -213,12 +191,7 @@ function Mark({ background }: { background: Texture | Color }) {
     }
   }, [canHover, reducedMotion, gl, invalidate, tiltX, tiltY])
 
-  const shapes = useMemo(() => {
-    const svg = new SVGLoader().parse(
-      `<svg xmlns="http://www.w3.org/2000/svg"><path d="${heroMark.path}" /></svg>`,
-    )
-    return svg.paths.flatMap((path) => SVGLoader.createShapes(path))
-  }, [])
+  const shapes = getMarkShapes()
   // Pale glass as in NextStep: warm white with a breath of graphite, so the grid reads through.
   const glassTint = useMemo(
     () =>
@@ -235,7 +208,7 @@ function Mark({ background }: { background: Texture | Color }) {
         <MeshTransmissionMaterial
           // A backside pass renders the far faces against the dark page first, which inks the
           // body to black and hides the grid; the front faces alone keep it see-through.
-          resolution={1024}
+          resolution={resolution}
           samples={6}
           background={background}
           color={glassTint}
@@ -258,15 +231,15 @@ function Mark({ background }: { background: Texture | Color }) {
   )
 }
 
-function RenderQuality({ onContextLost }: { onContextLost: () => void }) {
+function RenderQuality({ maxDpr, onContextLost }: { maxDpr: number; onContextLost: () => void }) {
   const { gl, size, setDpr, invalidate } = useThree()
   const onContextLostEvent = useEffectEvent(onContextLost)
 
   useEffect(() => {
     // Target a 1080px-high drawing buffer, with a bounded cost on small screens.
-    setDpr(Math.min(3, Math.max(1, 1080 / Math.max(1, size.height))))
+    setDpr(Math.min(maxDpr, Math.max(1, 1080 / Math.max(1, size.height))))
     invalidate()
-  }, [invalidate, setDpr, size.height])
+  }, [invalidate, maxDpr, setDpr, size.height])
 
   useEffect(() => {
     const canvas = gl.domElement
@@ -280,9 +253,10 @@ function RenderQuality({ onContextLost }: { onContextLost: () => void }) {
 
 export default function HeroScene({ fallback }: { fallback: ReactNode }) {
   const [lost, setLost] = useState(false)
-  const [refractionBackground, setRefractionBackground] = useState<CanvasTexture | null>(null)
+  const quality = useSceneQuality()
+  const [refractionBackground, setRefractionBackground] = useState<Texture | null>(null)
   const handleContextLost = useCallback(() => setLost(true), [])
-  const handleTextureReady = useCallback((texture: CanvasTexture) => {
+  const handleTextureReady = useCallback((texture: Texture) => {
     setRefractionBackground(texture)
   }, [])
   const white = readToken('--color-warm-white')
@@ -297,6 +271,7 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
     <Canvas
       camera={{ position: [0, 0, 5], fov: 35 }}
       gl={{ antialias: true, alpha: true }}
+      dpr={quality.dpr}
       // Without tone mapping the refracted grid keeps the page's exact graphite and line
       // contrast; ACES would crush both to black inside the glass.
       flat
@@ -307,8 +282,11 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
       resize={{ scroll: false }}
       fallback={fallback}
     >
-      <RenderQuality onContextLost={handleContextLost} />
-      <GridRefractionBackground onTextureReady={handleTextureReady} />
+      <RenderQuality maxDpr={quality.maxDpr} onContextLost={handleContextLost} />
+      <GridRefractionBackground
+        resolution={quality.refraction}
+        onTextureReady={handleTextureReady}
+      />
       <ambientLight color={white} intensity={0.3} />
       <Environment resolution={512} frames={1}>
         {/* Grazing reflections brighten the edges instead of inking them, while the burgundy
@@ -321,7 +299,7 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
       </Environment>
       <directionalLight color={white} position={[-3, 4, 5]} intensity={1.5} />
       <directionalLight color={burgundy} position={[4, 2, 1]} intensity={2.5} />
-      <Mark background={refractionBackground ?? graphiteColor} />
+      <Mark background={refractionBackground ?? graphiteColor} resolution={quality.transmission} />
     </Canvas>
   )
 }

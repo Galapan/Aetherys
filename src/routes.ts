@@ -6,10 +6,15 @@ export const routes = {
   home: '/',
   projects: '/proyectos',
   contact: '/contacto',
+  about: '/nosotros',
 } as const
 
 export type Route =
-  { kind: 'home' } | { kind: 'projects' } | { kind: 'project'; slug: string } | { kind: 'contact' }
+  | { kind: 'home' }
+  | { kind: 'projects' }
+  | { kind: 'project'; slug: string }
+  | { kind: 'contact' }
+  | { kind: 'about' }
 
 export function normalizePath(pathname: string): string {
   const path = pathname.replace(/\/+$/, '')
@@ -28,6 +33,7 @@ export function isPageRoute(path: string): boolean {
 export function parseRoute(path: string): Route {
   if (path === routes.projects) return { kind: 'projects' }
   if (path === routes.contact) return { kind: 'contact' }
+  if (path === routes.about) return { kind: 'about' }
   const match = new RegExp(`^${routes.projects}/([^/]+)$`).exec(path)
   if (match) return { kind: 'project', slug: decodeURIComponent(match[1]) }
   return { kind: 'home' }

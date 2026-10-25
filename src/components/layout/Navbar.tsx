@@ -10,6 +10,7 @@ import { SiteHeader } from './SiteHeader'
 import { useMenuScene } from './useMenuScene'
 import { usePageTransition, type PageDestination } from './usePageTransition'
 import { audioSrc } from '@/components/ui/AudioToggle'
+import { aboutHref } from '@/content/about'
 import type { Locale } from '@/content/hero'
 import { parseRoute, routes, withLocale } from '@/routes'
 
@@ -105,7 +106,7 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
         navigation={{ ...props, canHover }}
         homeHref={isHome ? '#main' : homeHref}
         brandHref={homeHref}
-        aboutHref={isHome ? '#manifiesto' : `${homeHref}#manifiesto`}
+        aboutHref={aboutHref(locale)}
         reducedMotion={reducedMotion}
         canHover={canHover}
         expanded={expanded}

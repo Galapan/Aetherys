@@ -9,6 +9,7 @@ import {
   type ProjectCard,
   type ProjectGalleryBlock,
   type ProjectsContent,
+  type ProjectVideoBackground,
 } from '@/content/projects'
 import { content as nextStepContent } from '@/content/nextStep'
 import { contactHref } from '@/content/contact'
@@ -33,6 +34,14 @@ function reveal(reducedMotion: boolean, delay = 0) {
       delay: reducedMotion ? 0 : delay,
       ease: 'easeOut' as const,
     },
+  }
+}
+
+function fadeIn(reducedMotion: boolean) {
+  return {
+    initial: reducedMotion ? false : { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: reducedMotion ? 0 : 0.8, ease: 'easeOut' as const },
   }
 }
 
@@ -83,6 +92,127 @@ function LoopingVideo({ src, label, autoPlay, className }: LoopingVideoProps) {
   )
 }
 
+type ProjectCoverProps = Omit<ProjectDetailPageProps, 'nextCard'>
+
+// Portada fija: la página inferior asciende y se superpone sobre ella.
+function ProjectCover({ card, content, locale, reducedMotion, canHover }: ProjectCoverProps) {
+  return (
+    <m.div
+      className="sticky top-0 z-0 h-[50svh] min-h-[260px] w-full overflow-hidden"
+      {...fadeIn(reducedMotion)}
+    >
+      <img
+        className="absolute inset-0 h-full w-full object-cover"
+        src={card.image}
+        srcSet={projectImageSrcSet(card)}
+        sizes="100vw"
+        alt={card.imageAlt}
+        width={1200}
+        height={675}
+        loading="eager"
+        decoding="async"
+      />
+      {projectLogoPaths[card.slug] && (
+        <img
+          className="pointer-events-none absolute top-1/2 left-1/2 max-h-[22.5%] max-w-[min(40vw,280px)] -translate-x-1/2 -translate-y-1/2 object-contain"
+          src={projectLogoPaths[card.slug]}
+          alt=""
+          aria-hidden="true"
+          width={560}
+          height={160}
+          loading="eager"
+          decoding="async"
+        />
+      )}
+      <div className="pointer-events-none absolute inset-0 z-2 flex flex-col justify-center">
+        <m.h1
+          id="proyecto-heading"
+          className="text-warm-white container max-w-none text-[clamp(2.5rem,5vw,5rem)] leading-[1.02] font-medium tracking-[-0.04em] uppercase"
+          {...reveal(reducedMotion, 0.05)}
+        >
+          <span aria-hidden="true">/</span>
+          {card.title}
+        </m.h1>
+      </div>
+      <div className="text-warm-white pointer-events-none absolute inset-x-0 top-0 z-3 container max-w-none pt-[calc(var(--header-height)+clamp(12px,2vw,24px))] mix-blend-difference [--page-padding:clamp(20px,1.85vw,32px)]">
+        <m.a
+          href={projectsHref(locale)}
+          className={backLinkClasses}
+          initial={reducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          whileHover={canHover ? { y: -2 } : undefined}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+        >
+          <svg className="mr-2 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M13 8H3m0 0 4-4m-4 4 4 4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span>{content.detail.back}</span>
+        </m.a>
+      </div>
+      <div className="text-warm-white pointer-events-none absolute inset-x-0 bottom-0 z-3 container max-w-none pb-[clamp(16px,2vw,28px)] mix-blend-difference [--page-padding:clamp(20px,1.85vw,32px)]">
+        <m.div
+          className="flex items-baseline justify-between gap-4 text-[12px] leading-[1.4] tracking-[0.08em] uppercase"
+          initial={reducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{
+            duration: reducedMotion ? 0 : 0.6,
+            delay: reducedMotion ? 0 : 0.2,
+            ease: 'easeOut',
+          }}
+        >
+          <span>{card.year}</span>
+          <span>{card.category}</span>
+        </m.div>
+      </div>
+    </m.div>
+  )
+}
+
+interface ProjectVideoProps {
+  media: ProjectVideoBackground
+  reducedMotion: boolean
+}
+
+function ProjectVideo({ media, reducedMotion }: ProjectVideoProps) {
+  return (
+    <m.div
+      className="mt-[clamp(48px,7vw,96px)] px-[clamp(20px,1.85vw,32px)]"
+      {...fadeIn(reducedMotion)}
+    >
+      <div className="relative overflow-hidden">
+        <img
+          className="block h-auto w-full"
+          src={media.src}
+          srcSet={media.srcSet}
+          sizes="100vw"
+          alt={media.alt}
+          width={media.width}
+          height={media.height}
+          loading="lazy"
+          decoding="async"
+        />
+        {media.video && !reducedMotion && (
+          <video
+            className="absolute top-1/2 left-1/2 aspect-video w-[92%] max-w-[1200px] -translate-x-1/2 -translate-y-1/2 object-cover md:w-[68%]"
+            src={media.video}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+          />
+        )}
+      </div>
+    </m.div>
+  )
+}
+
 export function ProjectDetailPage({
   card,
   nextCard,
@@ -99,88 +229,13 @@ export function ProjectDetailPage({
         className="text-graphite bg-warm-white relative z-1 mt-[calc(var(--header-height)*-1)] min-h-svh"
         aria-labelledby="proyecto-heading"
       >
-        {/* Portada fija: la página inferior asciende y se superpone sobre ella. */}
-        <m.div
-          className="sticky top-0 z-0 h-[50svh] min-h-[260px] w-full overflow-hidden"
-          initial={reducedMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: reducedMotion ? 0 : 0.8, ease: 'easeOut' }}
-        >
-          <img
-            className="absolute inset-0 h-full w-full object-cover"
-            src={card.image}
-            srcSet={projectImageSrcSet(card)}
-            sizes="100vw"
-            alt={card.imageAlt}
-            width={1200}
-            height={675}
-            loading="eager"
-            decoding="async"
-          />
-          {projectLogoPaths[card.slug] && (
-            <img
-              className="pointer-events-none absolute top-1/2 left-1/2 max-h-[22.5%] max-w-[min(40vw,280px)] -translate-x-1/2 -translate-y-1/2 object-contain"
-              src={projectLogoPaths[card.slug]}
-              alt=""
-              aria-hidden="true"
-              width={560}
-              height={160}
-              loading="eager"
-              decoding="async"
-            />
-          )}
-          <div className="pointer-events-none absolute inset-0 z-2 flex flex-col justify-center">
-            <m.h1
-              id="proyecto-heading"
-              className="text-warm-white container max-w-none text-[clamp(2.5rem,5vw,5rem)] leading-[1.02] font-medium tracking-[-0.04em] uppercase"
-              {...reveal(reducedMotion, 0.05)}
-            >
-              <span aria-hidden="true">/</span>
-              {card.title}
-            </m.h1>
-          </div>
-          <div className="text-warm-white pointer-events-none absolute inset-x-0 top-0 z-3 container max-w-none pt-[calc(var(--header-height)+clamp(12px,2vw,24px))] mix-blend-difference [--page-padding:clamp(20px,1.85vw,32px)]">
-            <m.a
-              href={projectsHref(locale)}
-              className={backLinkClasses}
-              initial={reducedMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              whileHover={canHover ? { y: -2 } : undefined}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-            >
-              <svg
-                className="mr-2 h-4 w-4 shrink-0"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M13 8H3m0 0 4-4m-4 4 4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>{content.detail.back}</span>
-            </m.a>
-          </div>
-          <div className="text-warm-white pointer-events-none absolute inset-x-0 bottom-0 z-3 container max-w-none pb-[clamp(16px,2vw,28px)] mix-blend-difference [--page-padding:clamp(20px,1.85vw,32px)]">
-            <m.div
-              className="flex items-baseline justify-between gap-4 text-[12px] leading-[1.4] tracking-[0.08em] uppercase"
-              initial={reducedMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{
-                duration: reducedMotion ? 0 : 0.6,
-                delay: reducedMotion ? 0 : 0.2,
-                ease: 'easeOut',
-              }}
-            >
-              <span>{card.year}</span>
-              <span>{card.category}</span>
-            </m.div>
-          </div>
-        </m.div>
+        <ProjectCover
+          card={card}
+          content={content}
+          locale={locale}
+          reducedMotion={reducedMotion}
+          canHover={canHover}
+        />
         {/* Superficie opaca que se superpone sobre la portada al hacer scroll. */}
         <div className="bg-warm-white relative z-1 pb-[clamp(80px,9vw,144px)]">
           <RuleGrid className="absolute inset-x-0 top-0 h-full" spanClassName="bg-grid-burgundy" />
@@ -219,9 +274,7 @@ export function ProjectDetailPage({
               height={card.presentation.height}
               loading="lazy"
               decoding="async"
-              initial={reducedMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: reducedMotion ? 0 : 0.8, ease: 'easeOut' }}
+              {...fadeIn(reducedMotion)}
             />
           )}
           {card.sections && card.sections.length > 0 && (
@@ -245,44 +298,12 @@ export function ProjectDetailPage({
             </div>
           )}
           {card.videoBackground && (
-            <m.div
-              className="mt-[clamp(48px,7vw,96px)] px-[clamp(20px,1.85vw,32px)]"
-              initial={reducedMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: reducedMotion ? 0 : 0.8, ease: 'easeOut' }}
-            >
-              <div className="relative overflow-hidden">
-                <img
-                  className="block h-auto w-full"
-                  src={card.videoBackground.src}
-                  srcSet={card.videoBackground.srcSet}
-                  sizes="100vw"
-                  alt={card.videoBackground.alt}
-                  width={card.videoBackground.width}
-                  height={card.videoBackground.height}
-                  loading="lazy"
-                  decoding="async"
-                />
-                {card.videoBackground.video && !reducedMotion && (
-                  <video
-                    className="absolute top-1/2 left-1/2 aspect-video w-[92%] max-w-[1200px] -translate-x-1/2 -translate-y-1/2 object-cover md:w-[68%]"
-                    src={card.videoBackground.video}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    preload="auto"
-                  />
-                )}
-              </div>
-            </m.div>
+            <ProjectVideo media={card.videoBackground} reducedMotion={reducedMotion} />
           )}
           {card.gallery && card.gallery.length > 0 && (
             <m.div
               className="mt-[clamp(48px,7vw,96px)] grid grid-cols-2 gap-[clamp(16px,2vw,24px)] px-[clamp(20px,1.85vw,32px)] md:grid-cols-12"
-              initial={reducedMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: reducedMotion ? 0 : 0.8, ease: 'easeOut' }}
+              {...fadeIn(reducedMotion)}
             >
               {card.gallery.map((block, index) => {
                 const video = block === 'medium' ? card.galleryVideo : undefined

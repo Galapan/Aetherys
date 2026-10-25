@@ -1,19 +1,23 @@
-import {
-  useCallback,
-  useEffect,
-  useEffectEvent,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
-import { CanvasTexture, Color, LinearFilter, SRGBColorSpace, type Group, type Texture } from 'three'
-import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
+import {
+  BackSide,
+  Color,
+  DoubleSide,
+  Mesh,
+  WebGLRenderTarget,
+  type Group,
+  type Material,
+  type Side,
+  type Texture,
+} from 'three'
 import { heroMark } from '@/content/hero'
 import { useMotionPreferences } from '@/hooks/useMotionPreferences'
+import { getMarkShapes } from '../markShapes'
+import { createRefractionCanvas } from '../refractionCanvas'
+import { useSceneQuality, type SceneQuality } from '../sceneQuality'
 
 // A thick slab, like the reference glass letter: its side faces carry most of the refraction.
 const EXTRUDE_OPTIONS = {
@@ -26,6 +30,10 @@ const EXTRUDE_OPTIONS = {
   curveSegments: 32,
 }
 const PATH_SCALE = 0.012
+// A lost context (GPU memory pressure, mostly on mobile) gets a fresh canvas after a pause,
+// a few times, instead of leaving the static mark for good.
+const CONTEXT_RETRY_MS = 1000
+const MAX_CONTEXT_RETRIES = 3
 
 function readToken(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
@@ -33,31 +41,28 @@ function readToken(name: string) {
 
 function HeadingRefractionBackground({
   headingKey,
+  resolution,
   onTextureReady,
 }: {
   headingKey: string
-  onTextureReady: (texture: CanvasTexture) => void
+  resolution: number
+  onTextureReady: (texture: Texture) => void
 }) {
   const { gl, invalidate } = useThree()
 
   useEffect(() => {
-    // Owned by this effect, so drawing into them never mutates a hook value.
-    const canvas = document.createElement('canvas')
-    // Sized and read once: resizing a canvas reallocates it, which scroll redraws can't afford.
-    const resolution = 1024
-    canvas.width = resolution
-    canvas.height = resolution
-    const context = canvas.getContext('2d')
+    // Owned by this effect, so drawing into it never mutates a hook value.
+    const refraction = createRefractionCanvas(gl, resolution)
+    const { context } = refraction
     const background = readToken('--color-warm-white')
-    const texture = new CanvasTexture(canvas)
-    texture.colorSpace = SRGBColorSpace
-    texture.minFilter = LinearFilter
-    texture.magFilter = LinearFilter
-    texture.generateMipmaps = false
     let active = true
     let visible = true
     let layout = ''
     let frame = 0
+    let published = false
+    // Computed styles only change with a resize, so scroll redraws reuse them instead of
+    // forcing a style recalculation for every word on every frame.
+    let fonts = new Map<HTMLElement, { font: string; letterSpacing: string; color: string }>()
     const draw = () => {
       if (!active) return
       const heading = document.getElementById('next-step-heading')
@@ -98,12 +103,21 @@ function HeadingRefractionBackground({
         const text = word.textContent?.trim()
         if (!text) return
 
-        const style = getComputedStyle(word)
-        context.font = `${style.fontStyle} ${style.fontWeight} ${
-          Number.parseFloat(style.fontSize) * scale
-        }px ${style.fontFamily}`
-        context.letterSpacing = `${(Number.parseFloat(style.letterSpacing) || 0) * scale}px`
-        context.fillStyle = style.color
+        let font = fonts.get(word)
+        if (!font) {
+          const style = getComputedStyle(word)
+          font = {
+            font: `${style.fontStyle} ${style.fontWeight} ${
+              Number.parseFloat(style.fontSize) * scale
+            }px ${style.fontFamily}`,
+            letterSpacing: `${(Number.parseFloat(style.letterSpacing) || 0) * scale}px`,
+            color: style.color,
+          }
+          fonts.set(word, font)
+        }
+        context.font = font.font
+        context.letterSpacing = font.letterSpacing
+        context.fillStyle = font.color
         context.fillText(
           text,
           (bounds.left - canvasBounds.left) * scale,
@@ -112,13 +126,17 @@ function HeadingRefractionBackground({
       })
 
       context.restore()
-      texture.needsUpdate = true
-      onTextureReady(texture)
+      refraction.update()
+      if (!published) {
+        published = true
+        onTextureReady(refraction.texture)
+      }
       invalidate()
     }
 
     const redraw = () => {
       layout = ''
+      fonts = new Map()
       draw()
     }
     // The words converge with scroll. Two frames let Motion apply this frame's transforms
@@ -154,20 +172,20 @@ function HeadingRefractionBackground({
       visibility.disconnect()
       window.removeEventListener('resize', redraw)
       window.removeEventListener('scroll', scroll)
-      texture.dispose()
+      refraction.dispose()
     }
-  }, [gl, headingKey, invalidate, onTextureReady])
+  }, [gl, headingKey, invalidate, onTextureReady, resolution])
 
   return null
 }
 
-function Mark({ background }: { background: Texture | Color }) {
+function Mark({ background, quality }: { background: Texture | Color; quality: SceneQuality }) {
   const group = useRef<Group>(null)
   const { gl, invalidate } = useThree()
   const { reducedMotion, canHover } = useMotionPreferences()
-  // Soft and slightly lagging, like the reference letter easing after the cursor.
-  const tiltX = useSpring(0, { stiffness: 140, damping: 22, mass: 0.9 })
-  const tiltY = useSpring(0, { stiffness: 140, damping: 22, mass: 0.9 })
+  // Same cursor response as the hero mark.
+  const tiltX = useSpring(0, { stiffness: 420, damping: 32, mass: 0.6 })
+  const tiltY = useSpring(0, { stiffness: 420, damping: 32, mass: 0.6 })
 
   useEffect(() => {
     const surface = gl.domElement.closest('section')
@@ -235,12 +253,7 @@ function Mark({ background }: { background: Texture | Color }) {
     }
   }, [canHover, reducedMotion, gl, invalidate, tiltX, tiltY])
 
-  const shapes = useMemo(() => {
-    const svg = new SVGLoader().parse(
-      `<svg xmlns="http://www.w3.org/2000/svg"><path d="${heroMark.path}" /></svg>`,
-    )
-    return svg.paths.flatMap((path) => SVGLoader.createShapes(path))
-  }, [])
+  const shapes = getMarkShapes()
   // Pale glass: warm white with a breath of graphite, so the faces read just below the page.
   const glassTint = useMemo(
     () =>
@@ -260,8 +273,8 @@ function Mark({ background }: { background: Texture | Color }) {
         <extrudeGeometry args={[shapes, EXTRUDE_OPTIONS]} />
         <MeshTransmissionMaterial
           backside
-          resolution={1024}
-          backsideResolution={512}
+          resolution={quality.transmission}
+          backsideResolution={quality.backside}
           samples={6}
           background={background}
           color={glassTint}
@@ -287,33 +300,78 @@ function Mark({ background }: { background: Texture | Color }) {
 // Linking the glass shaders blocks the main thread when the first frame needs them, which
 // froze the page whenever the scene mounted mid-scroll. They compile in parallel first
 // (KHR_parallel_shader_compile where available) and only then is the first frame drawn.
-function CompileBeforeFirstFrame() {
-  const { gl, scene, camera, setFrameloop, invalidate } = useThree()
+// The backside pass renders the glass's far faces into an offscreen buffer, a separate
+// program variant (BackSide, no tone mapping) that a plain compile of the scene misses and
+// that used to link synchronously on the first frame.
+function CompileBeforeFirstFrame({
+  onCompiled,
+  onDrawn,
+}: {
+  onCompiled: () => void
+  onDrawn: () => void
+}) {
+  const { gl, scene, camera, invalidate } = useThree()
+  const onCompiledEvent = useEffectEvent(onCompiled)
+  const onDrawnEvent = useEffectEvent(onDrawn)
 
   useEffect(() => {
     let active = true
+    let frame = 0
     const start = () => {
       if (!active) return
-      setFrameloop('demand')
+      onCompiledEvent()
       invalidate()
+      // R3F draws on the next animation frame; by the one after, it is on screen.
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => {
+          if (active) onDrawnEvent()
+        })
+      })
     }
-    gl.compileAsync(scene, camera).then(start, start)
+
+    const sides = new Map<Material, Side>()
+    scene.traverse((object) => {
+      if (!(object instanceof Mesh)) return
+      for (const material of [object.material as Material | Material[]].flat()) {
+        if (material.side !== DoubleSide) sides.set(material, material.side)
+      }
+    })
+    const target = new WebGLRenderTarget(1, 1)
+    const previousTarget = gl.getRenderTarget()
+    // compileAsync resolves programs synchronously against the renderer's current state,
+    // so the state only has to hold for the call itself.
+    gl.setRenderTarget(target)
+    sides.forEach((_, material) => {
+      material.side = BackSide
+      material.needsUpdate = true
+    })
+    const backside = gl.compileAsync(scene, camera)
+    sides.forEach((side, material) => {
+      material.side = side
+      material.needsUpdate = true
+    })
+    gl.setRenderTarget(previousTarget)
+    const frontside = gl.compileAsync(scene, camera)
+    Promise.all([backside, frontside]).then(start, start)
+
     return () => {
       active = false
+      cancelAnimationFrame(frame)
+      target.dispose()
     }
-  }, [camera, gl, invalidate, scene, setFrameloop])
+  }, [camera, gl, invalidate, scene])
 
   return null
 }
 
-function RenderQuality({ onContextLost }: { onContextLost: () => void }) {
+function RenderQuality({ maxDpr, onContextLost }: { maxDpr: number; onContextLost: () => void }) {
   const { gl, size, setDpr, invalidate } = useThree()
   const onContextLostEvent = useEffectEvent(onContextLost)
 
   useEffect(() => {
-    setDpr(Math.min(3, Math.max(1, 1080 / Math.max(1, size.height))))
+    setDpr(Math.min(maxDpr, Math.max(1, 1080 / Math.max(1, size.height))))
     invalidate()
-  }, [invalidate, setDpr, size.height])
+  }, [invalidate, maxDpr, setDpr, size.height])
 
   useEffect(() => {
     const canvas = gl.domElement
@@ -326,39 +384,78 @@ function RenderQuality({ onContextLost }: { onContextLost: () => void }) {
 }
 
 export default function NextStepScene({
-  fallback,
   heading,
+  onDrawn,
 }: {
-  fallback: ReactNode
   heading: [string, string, string, string]
+  /** Reports whether the glass is on screen, so the static mark covers every gap. */
+  onDrawn: (drawn: boolean) => void
 }) {
+  const [attempt, setAttempt] = useState(0)
+  const quality = useSceneQuality()
   const [lost, setLost] = useState(false)
-  const [refractionBackground, setRefractionBackground] = useState<CanvasTexture | null>(null)
-  const handleContextLost = useCallback(() => setLost(true), [])
-  const handleTextureReady = useCallback((texture: CanvasTexture) => {
+  // Held in state: as a constant prop, every re-render of the Canvas (the refraction texture
+  // arriving, the drawn report) set the loop back to 'never', which silently dropped every
+  // later invalidate, so the glass froze and stopped following the cursor.
+  const [frameloop, setFrameloop] = useState<'never' | 'demand'>('never')
+  const handleCompiled = useCallback(() => setFrameloop('demand'), [])
+  const [refractionBackground, setRefractionBackground] = useState<Texture | null>(null)
+  const handleDrawn = useCallback(() => onDrawn(true), [onDrawn])
+  const handleContextLost = useCallback(() => {
+    onDrawn(false)
+    setRefractionBackground(null)
+    setFrameloop('never')
+    setLost(true)
+  }, [onDrawn])
+  const handleTextureReady = useCallback((texture: Texture) => {
     setRefractionBackground(texture)
   }, [])
   const warmWhite = readToken('--color-warm-white')
   const warmWhiteColor = useMemo(() => new Color(warmWhite), [warmWhite])
   const headingKey = heading.join('\u0000')
 
-  if (lost) return fallback
+  useEffect(() => {
+    if (!lost || attempt >= MAX_CONTEXT_RETRIES) return
+    // A hidden page would lose the new context again, so the retry waits until it shows.
+    const retry = () => {
+      if (document.hidden) return
+      document.removeEventListener('visibilitychange', retry)
+      setAttempt((count) => count + 1)
+      setLost(false)
+    }
+    const timer = window.setTimeout(() => {
+      document.addEventListener('visibilitychange', retry)
+      retry()
+    }, CONTEXT_RETRY_MS)
+    return () => {
+      window.clearTimeout(timer)
+      document.removeEventListener('visibilitychange', retry)
+    }
+  }, [attempt, lost])
+
+  if (lost) return null
 
   return (
     <Canvas
+      // A new key mounts a fresh canvas and context after a loss.
+      key={attempt}
       camera={{ position: [0, 0, 5], fov: 35 }}
       gl={{ antialias: true, alpha: true }}
+      dpr={quality.dpr}
       // Stays idle until CompileBeforeFirstFrame switches it to on-demand rendering.
-      frameloop="never"
+      frameloop={frameloop}
       // Pointer tilt reads window coordinates, so the canvas offset is never needed.
       // Without this, every scroll pause re-measures, reconfigures and re-renders the
       // transmission passes.
       resize={{ scroll: false }}
-      fallback={fallback}
     >
-      <RenderQuality onContextLost={handleContextLost} />
-      <CompileBeforeFirstFrame />
-      <HeadingRefractionBackground headingKey={headingKey} onTextureReady={handleTextureReady} />
+      <RenderQuality maxDpr={quality.maxDpr} onContextLost={handleContextLost} />
+      <CompileBeforeFirstFrame onCompiled={handleCompiled} onDrawn={handleDrawn} />
+      <HeadingRefractionBackground
+        headingKey={headingKey}
+        resolution={quality.refraction}
+        onTextureReady={handleTextureReady}
+      />
       <ambientLight color={warmWhite} intensity={0.3} />
       <Environment resolution={512} frames={1}>
         {/* A light room, so grazing reflections brighten the edges instead of inking them. */}
@@ -370,7 +467,7 @@ export default function NextStepScene({
       </Environment>
       <directionalLight color={warmWhite} position={[-3, 4, 5]} intensity={1.5} />
       <directionalLight color={warmWhite} position={[4, 2, 1]} intensity={1.2} />
-      <Mark background={refractionBackground ?? warmWhiteColor} />
+      <Mark background={refractionBackground ?? warmWhiteColor} quality={quality} />
     </Canvas>
   )
 }

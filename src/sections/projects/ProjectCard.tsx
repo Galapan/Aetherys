@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react'
 import { m } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 import type { Locale } from '@/content/hero'
 import {
   projectHref,
@@ -23,7 +24,7 @@ interface ProjectCardVisualProps {
   active: boolean
   transition: {
     duration: number
-    ease: readonly [0.22, 1, 0.36, 1]
+    ease: typeof REVEAL_EASE
   }
   reducedMotion: boolean
 }
@@ -145,7 +146,7 @@ export function ProjectCard({
   const showCategory = active || !canHover || reducedMotion
   const transition = {
     duration: reducedMotion ? 0 : 0.95,
-    ease: [0.22, 1, 0.36, 1] as const,
+    ease: REVEAL_EASE,
   }
 
   return (

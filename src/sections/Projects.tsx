@@ -1,4 +1,5 @@
 import { m } from 'framer-motion'
+import { REVEAL_EASE } from '@/components/ui/easing'
 import type { Locale } from '@/content/hero'
 import type { ProjectsContent } from '@/content/projects'
 import { ProjectCard } from './projects/ProjectCard'
@@ -36,7 +37,7 @@ function ProjectsHeading({ label, reducedMotion }: { label: string; reducedMotio
           transition={{
             duration: reducedMotion ? 0 : 0.6,
             delay: reducedMotion ? 0 : 0.85,
-            ease: [0.22, 1, 0.36, 1],
+            ease: REVEAL_EASE,
           }}
         />
         <m.span
@@ -48,7 +49,7 @@ function ProjectsHeading({ label, reducedMotion }: { label: string; reducedMotio
           transition={{
             duration: reducedMotion ? 0 : 0.75,
             delay: reducedMotion ? 0 : 0.4,
-            ease: [0.22, 1, 0.36, 1],
+            ease: REVEAL_EASE,
           }}
         />
       </span>
