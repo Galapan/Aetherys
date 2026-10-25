@@ -47,7 +47,37 @@ export interface ProjectSection {
 }
 
 /** Empty graphite frame used to sketch a project gallery layout. */
-export type ProjectGalleryBlock = 'large' | 'small' | 'wide'
+export type ProjectGalleryBlock = 'full' | 'half' | 'large' | 'medium' | 'small' | 'wide'
+
+/** Layout used by every project page that doesn't define its own `gallery`. */
+export const defaultProjectGallery: ProjectGalleryBlock[] = [
+  'medium',
+  'full',
+  'wide',
+  'half',
+  'half',
+]
+
+/** Looping video rendered inside the medium gallery block. */
+export interface ProjectGalleryVideo {
+  src: string
+  label: string
+}
+
+/** Image rendered inside the wide gallery block. */
+export interface ProjectGalleryImage {
+  src: string
+  srcSet?: string
+  alt: string
+  width: number
+  height: number
+}
+
+/** Screenshots shown side by side over a decorative backdrop. */
+export interface ProjectGalleryShowcase {
+  background: ProjectGalleryImage
+  images: ProjectGalleryImage[]
+}
 
 /** Wide backdrop that frames an optional looping video in its centre. */
 export interface ProjectVideoBackground {
@@ -73,6 +103,15 @@ export interface ProjectCard {
   sections?: ProjectSection[]
   presentation?: ProjectPresentation
   videoBackground?: ProjectVideoBackground
+  galleryVideo?: ProjectGalleryVideo
+  galleryWideVideo?: ProjectGalleryVideo
+  galleryImage?: ProjectGalleryImage
+  /** Image that fills the full-bleed gallery block. */
+  galleryFullImage?: ProjectGalleryImage
+  /** Screenshots for the carousel under the gallery; empty slides are shown without it. */
+  galleryCarousel?: ProjectGalleryImage[]
+  /** Content for the half gallery blocks, assigned in order of appearance. */
+  galleryHalves?: ProjectGalleryShowcase[]
   gallery?: ProjectGalleryBlock[]
 }
 
@@ -82,9 +121,13 @@ export interface ProjectsContent {
   cards: ProjectCard[]
   detail: {
     back: string
-    next: string
     /** Small eyebrow above the summary on the project page. */
     context: string
+    carousel: {
+      label: string
+      previous: string
+      next: string
+    }
   }
 }
 
@@ -94,8 +137,12 @@ export const content: Record<Locale, ProjectsContent> = {
     sideLabel: 'WEB',
     detail: {
       back: 'Volver a proyectos',
-      next: 'Siguiente proyecto',
       context: '/CONTEXTO',
+      carousel: {
+        label: 'Galería de capturas',
+        previous: 'Anterior',
+        next: 'Siguiente',
+      },
     },
     cards: [
       {
@@ -109,15 +156,15 @@ export const content: Record<Locale, ProjectsContent> = {
         mark: 'S',
         markVariant: 'grotesque',
         summary:
-          'Sigsor es un proyecto de desarrollo web. Trabajamos de principio a fin: entendimos la necesidad, definimos el alcance y construimos el sitio priorizando la claridad y la facilidad de uso.',
+          'SIGSOR (Sistema Integral de Gestión de Soporte y Red) es una plataforma web para el Departamento de Soporte Técnico y Redes de IT Global Knowledge in System Solutions. Antes, las solicitudes de soporte llegaban por llamadas y mensajes de WhatsApp, lo que impedía priorizar incidencias, medir tiempos de respuesta y conservar un historial de cada atención.',
         sections: [
           {
             label: '/ENFOQUE',
-            body: 'Palomino trabaja con algunos de los mejores atletas de Francia y produce contenido al nivel de los grandes nombres del deporte. Lo que les faltaba era un sitio web que reflejara esa calidad y llevara a su presencia digital el mismo nivel de ambición que ponen en sus producciones.',
+            body: 'SIGSOR reúne en un solo lugar el registro, seguimiento y resolución de las solicitudes. GloBot, un asistente conversacional apoyado por IA, captura cada solicitud, resuelve las consultas sencillas y escala a un técnico las que no puede resolver. El equipo técnico trabaja sobre un tablero Kanban en tiempo real, y un módulo de inventario vincula cada equipo de TI con su historial de incidencias. Se construyó con Scrum en ocho sprints de dos semanas, sobre Next.js, TypeScript, Prisma y PostgreSQL, con acceso por roles para empleados, técnicos y administradores.',
           },
           {
             label: '/RESULTADO',
-            body: 'El sitio web posiciona a Palomino como un actor líder en la producción de foto y video deportivo. Pone su trabajo en primer plano y les da una presencia digital acorde con la talla de los atletas, marcas y federaciones con las que trabajan.',
+            body: 'El departamento pasó de un soporte reactivo a uno estructurado, medible y trazable: cada solicitud tiene folio, historial y tiempos de atención, y un panel administrativo con indicadores permite supervisar el servicio. Se entregaron 30 de los 32 requerimientos funcionales y la totalidad de los no funcionales, y la plataforma quedó lista para operar en producción al cierre del proyecto.',
           },
         ],
         presentation: {
@@ -135,9 +182,118 @@ export const content: Record<Locale, ProjectsContent> = {
           alt: 'Fondo del video de Sigsor',
           width: 2560,
           height: 1440,
-          video: '/media/projects/videos/SigsorReveal.mp4',
+          video: '/media/projects/videos/SigsorReveal-web.mp4',
         },
-        gallery: ['large', 'large', 'small', 'small', 'small', 'small', 'wide'],
+        galleryVideo: {
+          src: '/media/projects/videos/SigsorLogin-web.mp4',
+          label: 'Demostración del inicio de sesión de Sigsor',
+        },
+        galleryWideVideo: {
+          src: '/media/projects/videos/SigsorTablero-web.mp4',
+          label: 'Demostración del tablero de Sigsor',
+        },
+        galleryImage: {
+          src: '/media/projects/MasFondosSigsor/Sigsor2fondo-2560.webp',
+          srcSet:
+            '/media/projects/MasFondosSigsor/Sigsor2fondo-960.webp 960w, /media/projects/MasFondosSigsor/Sigsor2fondo-1600.webp 1600w, /media/projects/MasFondosSigsor/Sigsor2fondo-2560.webp 2560w',
+          alt: '',
+          width: 2944,
+          height: 1472,
+        },
+        galleryFullImage: {
+          src: '/media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/fondoSigsorIphone-2560.webp',
+          srcSet:
+            '/media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/fondoSigsorIphone-960.webp 960w, /media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/fondoSigsorIphone-1600.webp 1600w, /media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/fondoSigsorIphone-2560.webp 2560w',
+          alt: 'Sigsor en un iPhone sostenido en la mano',
+          width: 2560,
+          height: 1440,
+        },
+        galleryCarousel: [
+          {
+            src: '/media/projects/MasFondosSigsor/carrusel/sigsor-inventario-1600.webp',
+            srcSet:
+              '/media/projects/MasFondosSigsor/carrusel/sigsor-inventario-960.webp 960w, /media/projects/MasFondosSigsor/carrusel/sigsor-inventario-1600.webp 1600w',
+            alt: 'Tablero de inventario de Sigsor',
+            width: 1600,
+            height: 900,
+          },
+          {
+            src: '/media/projects/MasFondosSigsor/carrusel/sigsor-importar-1600.webp',
+            srcSet:
+              '/media/projects/MasFondosSigsor/carrusel/sigsor-importar-960.webp 960w, /media/projects/MasFondosSigsor/carrusel/sigsor-importar-1600.webp 1600w',
+            alt: 'Importación masiva de inventario desde CSV en Sigsor',
+            width: 1600,
+            height: 900,
+          },
+          {
+            src: '/media/projects/MasFondosSigsor/carrusel/sigsor-catalogo-1600.webp',
+            srcSet:
+              '/media/projects/MasFondosSigsor/carrusel/sigsor-catalogo-960.webp 960w, /media/projects/MasFondosSigsor/carrusel/sigsor-catalogo-1600.webp 1600w',
+            alt: 'Catálogo de hardware de Sigsor',
+            width: 1600,
+            height: 906,
+          },
+          {
+            src: '/media/projects/MasFondosSigsor/carrusel/sigsor-conciliacion-1600.webp',
+            srcSet:
+              '/media/projects/MasFondosSigsor/carrusel/sigsor-conciliacion-960.webp 960w, /media/projects/MasFondosSigsor/carrusel/sigsor-conciliacion-1600.webp 1600w',
+            alt: 'Conciliación de inventario de Sigsor',
+            width: 1600,
+            height: 900,
+          },
+        ],
+        galleryHalves: [
+          {
+            background: {
+              src: '/media/projects/MasFondosSigsor/SigsorFondotelefonos-1600.webp',
+              srcSet:
+                '/media/projects/MasFondosSigsor/SigsorFondotelefonos-960.webp 960w, /media/projects/MasFondosSigsor/SigsorFondotelefonos-1600.webp 1600w',
+              alt: '',
+              width: 2400,
+              height: 1170,
+            },
+            images: [
+              {
+                src: '/media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/sigsor-movil-1.webp',
+                alt: 'Vista móvil de Sigsor: inicio del chat con GloBot',
+                width: 324,
+                height: 704,
+              },
+              {
+                src: '/media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/sigsor-movil-2.webp',
+                alt: 'Vista móvil de Sigsor: creación de una solicitud en el chat',
+                width: 391,
+                height: 849,
+              },
+              {
+                src: '/media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/sigsor-movil-3.webp',
+                alt: 'Vista móvil de Sigsor: menú con historial y herramientas',
+                width: 324,
+                height: 705,
+              },
+            ],
+          },
+          {
+            background: {
+              src: '/media/projects/MasFondosSigsor/fondoBuscador-1600.webp',
+              srcSet:
+                '/media/projects/MasFondosSigsor/fondoBuscador-960.webp 960w, /media/projects/MasFondosSigsor/fondoBuscador-1600.webp 1600w',
+              alt: '',
+              width: 2400,
+              height: 1350,
+            },
+            images: [
+              {
+                src: '/media/projects/MasFondosSigsor/buscador-1600.webp',
+                srcSet:
+                  '/media/projects/MasFondosSigsor/buscador-960.webp 960w, /media/projects/MasFondosSigsor/buscador-1600.webp 1600w',
+                alt: 'Buscador de Sigsor con accesos y acciones rápidas',
+                width: 2559,
+                height: 1439,
+              },
+            ],
+          },
+        ],
       },
       {
         title: 'Impulso',
@@ -201,8 +357,12 @@ export const content: Record<Locale, ProjectsContent> = {
     sideLabel: 'WEB',
     detail: {
       back: 'Back to projects',
-      next: 'Next project',
       context: '/CONTEXT',
+      carousel: {
+        label: 'Screenshot gallery',
+        previous: 'Previous',
+        next: 'Next',
+      },
     },
     cards: [
       {
@@ -216,15 +376,15 @@ export const content: Record<Locale, ProjectsContent> = {
         mark: 'S',
         markVariant: 'grotesque',
         summary:
-          'Sigsor is a web development project. We work end to end: we understood the need, defined the scope, and built the site with a focus on clarity and ease of use.',
+          'SIGSOR (Comprehensive Support and Network Management System) is a web platform for the Technical Support and Networks Department at IT Global Knowledge in System Solutions. Support requests used to arrive through phone calls and WhatsApp messages, which made it impossible to prioritize incidents, measure response times, or keep a history of each case.',
         sections: [
           {
             label: '/APPROACH',
-            body: "Palomino works with some of France's top athletes and produces content at the level of the biggest names in sports. What they were missing was a website that reflected that quality and brought the same level of ambition to their digital presence as they do to their productions.",
+            body: "SIGSOR brings the registration, tracking, and resolution of requests into one place. GloBot, an AI-assisted conversational assistant, captures each request, solves simple questions, and escalates to a technician the ones it can't resolve. The technical team works on a real-time Kanban board, and an inventory module links every IT asset to its incident history. It was built with Scrum in eight two-week sprints on Next.js, TypeScript, Prisma, and PostgreSQL, with role-based access for employees, technicians, and administrators.",
           },
           {
             label: '/RESULT',
-            body: 'The website positions Palomino as a leading player in sports photo and video production. It puts their work front and center and gives them a digital presence that matches the caliber of the athletes, brands, and federations they work with.',
+            body: 'The department moved from reactive support to a structured, measurable, and traceable process: every request has a tracking number, a history, and response times, and an admin dashboard with metrics lets the team oversee the service. 30 of the 32 functional requirements and all of the non-functional ones were delivered, and the platform was ready to run in production when the project closed.',
           },
         ],
         presentation: {
@@ -242,9 +402,118 @@ export const content: Record<Locale, ProjectsContent> = {
           alt: 'Sigsor video backdrop',
           width: 2560,
           height: 1440,
-          video: '/media/projects/videos/SigsorReveal.mp4',
+          video: '/media/projects/videos/SigsorReveal-web.mp4',
         },
-        gallery: ['large', 'large', 'small', 'small', 'small', 'small', 'wide'],
+        galleryVideo: {
+          src: '/media/projects/videos/SigsorLogin-web.mp4',
+          label: 'Sigsor sign-in demo',
+        },
+        galleryWideVideo: {
+          src: '/media/projects/videos/SigsorTablero-web.mp4',
+          label: 'Sigsor dashboard demo',
+        },
+        galleryImage: {
+          src: '/media/projects/MasFondosSigsor/Sigsor2fondo-2560.webp',
+          srcSet:
+            '/media/projects/MasFondosSigsor/Sigsor2fondo-960.webp 960w, /media/projects/MasFondosSigsor/Sigsor2fondo-1600.webp 1600w, /media/projects/MasFondosSigsor/Sigsor2fondo-2560.webp 2560w',
+          alt: '',
+          width: 2944,
+          height: 1472,
+        },
+        galleryFullImage: {
+          src: '/media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/fondoSigsorIphone-2560.webp',
+          srcSet:
+            '/media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/fondoSigsorIphone-960.webp 960w, /media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/fondoSigsorIphone-1600.webp 1600w, /media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/fondoSigsorIphone-2560.webp 2560w',
+          alt: 'Sigsor on an iPhone held in hand',
+          width: 2560,
+          height: 1440,
+        },
+        galleryCarousel: [
+          {
+            src: '/media/projects/MasFondosSigsor/carrusel/sigsor-inventario-1600.webp',
+            srcSet:
+              '/media/projects/MasFondosSigsor/carrusel/sigsor-inventario-960.webp 960w, /media/projects/MasFondosSigsor/carrusel/sigsor-inventario-1600.webp 1600w',
+            alt: 'Sigsor inventory dashboard',
+            width: 1600,
+            height: 900,
+          },
+          {
+            src: '/media/projects/MasFondosSigsor/carrusel/sigsor-importar-1600.webp',
+            srcSet:
+              '/media/projects/MasFondosSigsor/carrusel/sigsor-importar-960.webp 960w, /media/projects/MasFondosSigsor/carrusel/sigsor-importar-1600.webp 1600w',
+            alt: 'Sigsor bulk inventory import from CSV',
+            width: 1600,
+            height: 900,
+          },
+          {
+            src: '/media/projects/MasFondosSigsor/carrusel/sigsor-catalogo-1600.webp',
+            srcSet:
+              '/media/projects/MasFondosSigsor/carrusel/sigsor-catalogo-960.webp 960w, /media/projects/MasFondosSigsor/carrusel/sigsor-catalogo-1600.webp 1600w',
+            alt: 'Sigsor hardware catalog',
+            width: 1600,
+            height: 906,
+          },
+          {
+            src: '/media/projects/MasFondosSigsor/carrusel/sigsor-conciliacion-1600.webp',
+            srcSet:
+              '/media/projects/MasFondosSigsor/carrusel/sigsor-conciliacion-960.webp 960w, /media/projects/MasFondosSigsor/carrusel/sigsor-conciliacion-1600.webp 1600w',
+            alt: 'Sigsor inventory reconciliation',
+            width: 1600,
+            height: 900,
+          },
+        ],
+        galleryHalves: [
+          {
+            background: {
+              src: '/media/projects/MasFondosSigsor/SigsorFondotelefonos-1600.webp',
+              srcSet:
+                '/media/projects/MasFondosSigsor/SigsorFondotelefonos-960.webp 960w, /media/projects/MasFondosSigsor/SigsorFondotelefonos-1600.webp 1600w',
+              alt: '',
+              width: 2400,
+              height: 1170,
+            },
+            images: [
+              {
+                src: '/media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/sigsor-movil-1.webp',
+                alt: 'Sigsor mobile view: GloBot chat start',
+                width: 324,
+                height: 704,
+              },
+              {
+                src: '/media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/sigsor-movil-2.webp',
+                alt: 'Sigsor mobile view: creating a request in the chat',
+                width: 391,
+                height: 849,
+              },
+              {
+                src: '/media/projects/MasFondosSigsor/imagenesTelefonoSIGSOR/sigsor-movil-3.webp',
+                alt: 'Sigsor mobile view: menu with history and tools',
+                width: 324,
+                height: 705,
+              },
+            ],
+          },
+          {
+            background: {
+              src: '/media/projects/MasFondosSigsor/fondoBuscador-1600.webp',
+              srcSet:
+                '/media/projects/MasFondosSigsor/fondoBuscador-960.webp 960w, /media/projects/MasFondosSigsor/fondoBuscador-1600.webp 1600w',
+              alt: '',
+              width: 2400,
+              height: 1350,
+            },
+            images: [
+              {
+                src: '/media/projects/MasFondosSigsor/buscador-1600.webp',
+                srcSet:
+                  '/media/projects/MasFondosSigsor/buscador-960.webp 960w, /media/projects/MasFondosSigsor/buscador-1600.webp 1600w',
+                alt: 'Sigsor search with quick access and quick actions',
+                width: 2559,
+                height: 1439,
+              },
+            ],
+          },
+        ],
       },
       {
         title: 'Impulso',

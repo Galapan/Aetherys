@@ -1,7 +1,8 @@
-import { m } from 'framer-motion'
+import { m, useInView } from 'framer-motion'
+import { useEffect, useRef, type SyntheticEvent } from 'react'
 import type { Locale } from '@/content/hero'
 import {
-  projectHref,
+  defaultProjectGallery,
   projectsHref,
   projectImageSrcSet,
   projectLogoPaths,
@@ -14,10 +15,10 @@ import { content as nextStepContent } from '@/content/nextStep'
 import { contactHref } from '@/content/contact'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 import { NextStep } from '@/sections/NextStep'
+import { ProjectCarousel } from '@/sections/projects/ProjectCarousel'
 
 interface ProjectDetailPageProps {
   card: ProjectCard
-  nextCard: ProjectCard
   content: ProjectsContent
   locale: Locale
   reducedMotion: boolean
@@ -44,23 +45,80 @@ function fadeIn(reducedMotion: boolean) {
   }
 }
 
-const secondaryGraphite = 'text-[color-mix(in_srgb,var(--color-graphite)_78%,transparent)]'
-
-const navLinkClasses = `inline-flex min-h-11 items-center text-[12px] leading-[1.4] tracking-[0.08em] uppercase text-graphite focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-graphite`
+// Vertical gap shared by the full-width gallery rows.
+const galleryRowSpacing =
+  'mb-[calc(clamp(48px,7vw,96px)+clamp(16px,4vw,40px)-clamp(32px,5vw,48px))] md:mb-[calc(clamp(48px,7vw,96px)+clamp(24px,4vw,56px)-clamp(32px,5vw,48px))]'
 
 const galleryBlockClasses: Record<ProjectGalleryBlock, string> = {
+  // Full-bleed: the negative margin cancels the gallery's side padding.
+  full: `col-span-2 -mx-[clamp(20px,1.85vw,32px)] aspect-[16/9] md:col-span-12 ${galleryRowSpacing}`,
+  // Pairs side by side from md; stacks on mobile.
+  half: 'col-span-2 aspect-[16/9] md:col-span-6',
   large: 'col-span-2 aspect-[4/3] md:col-span-6',
+  medium: `col-span-2 mt-[clamp(16px,4vw,40px)] aspect-[16/9] justify-self-center md:col-span-12 md:mt-[clamp(24px,4vw,56px)] md:w-[57.5%] ${galleryRowSpacing}`,
   small: 'col-span-1 aspect-square md:col-span-3',
-  wide: 'col-span-2 aspect-[16/9] md:col-span-12',
+  wide: `col-span-2 aspect-[16/9] md:col-span-12 ${galleryRowSpacing}`,
 }
 
 // Mirrors the header: blends the label with whatever image sits behind it.
 const backLinkClasses = `pointer-events-auto inline-flex min-h-11 items-center text-[14px] leading-[1.4] tracking-[0.08em] uppercase`
 
-type ProjectCoverProps = Omit<ProjectDetailPageProps, 'nextCard'>
+// Plays only while the video is near the viewport, so offscreen videos neither
+// download nor decode. Paired with preload="none", nothing loads until then.
+function useViewportPlayback(enabled: boolean) {
+  const ref = useRef<HTMLVideoElement>(null)
+  const inView = useInView(ref, { margin: '200px 0px' })
+
+  useEffect(() => {
+    const video = ref.current
+    if (!video) return
+    if (enabled && inView) {
+      // A rejected play() (e.g. data saver) just leaves the video paused.
+      video.play().catch(() => undefined)
+    } else {
+      video.pause()
+    }
+  }, [enabled, inView])
+
+  return ref
+}
+
+interface LoopingVideoProps {
+  src: string
+  label: string
+  autoPlay: boolean
+  className: string
+}
+
+// Restarts slightly before the end so the last frames never flash on loop.
+function LoopingVideo({ src, label, autoPlay, className }: LoopingVideoProps) {
+  const ref = useViewportPlayback(autoPlay)
+
+  const handleTimeUpdate = (event: SyntheticEvent<HTMLVideoElement>) => {
+    const video = event.currentTarget
+    if (video.duration && video.currentTime >= video.duration - 0.5) {
+      video.currentTime = 0
+      void video.play()
+    }
+  }
+
+  return (
+    <video
+      ref={ref}
+      className={className}
+      src={src}
+      aria-label={label}
+      loop
+      muted
+      playsInline
+      preload={autoPlay ? 'none' : 'metadata'}
+      onTimeUpdate={handleTimeUpdate}
+    />
+  )
+}
 
 // Portada fija: la página inferior asciende y se superpone sobre ella.
-function ProjectCover({ card, content, locale, reducedMotion, canHover }: ProjectCoverProps) {
+function ProjectCover({ card, content, locale, reducedMotion, canHover }: ProjectDetailPageProps) {
   return (
     <m.div
       className="sticky top-0 z-0 h-[50svh] min-h-[260px] w-full overflow-hidden"
@@ -144,6 +202,22 @@ interface ProjectVideoProps {
   reducedMotion: boolean
 }
 
+function BackdropVideo({ src }: { src: string }) {
+  const ref = useViewportPlayback(true)
+
+  return (
+    <video
+      ref={ref}
+      className="absolute top-1/2 left-1/2 aspect-video w-[92%] max-w-[1200px] -translate-x-1/2 -translate-y-1/2 object-cover md:w-[68%]"
+      src={src}
+      loop
+      muted
+      playsInline
+      preload="none"
+    />
+  )
+}
+
 function ProjectVideo({ media, reducedMotion }: ProjectVideoProps) {
   return (
     <m.div
@@ -162,17 +236,7 @@ function ProjectVideo({ media, reducedMotion }: ProjectVideoProps) {
           loading="lazy"
           decoding="async"
         />
-        {media.video && !reducedMotion && (
-          <video
-            className="absolute top-1/2 left-1/2 aspect-video w-[92%] max-w-[1200px] -translate-x-1/2 -translate-y-1/2 object-cover md:w-[68%]"
-            src={media.video}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-          />
-        )}
+        {media.video && !reducedMotion && <BackdropVideo src={media.video} />}
       </div>
     </m.div>
   )
@@ -180,12 +244,16 @@ function ProjectVideo({ media, reducedMotion }: ProjectVideoProps) {
 
 export function ProjectDetailPage({
   card,
-  nextCard,
   content,
   locale,
   reducedMotion,
   canHover,
 }: ProjectDetailPageProps) {
+  const gallery = card.gallery ?? defaultProjectGallery
+  // Position of each block among the half blocks, to pair it with `galleryHalves`.
+  let halfCount = 0
+  const halfOrder = gallery.map((block) => (block === 'half' ? halfCount++ : -1))
+
   return (
     <>
       <section
@@ -265,35 +333,102 @@ export function ProjectDetailPage({
           {card.videoBackground && (
             <ProjectVideo media={card.videoBackground} reducedMotion={reducedMotion} />
           )}
-          {card.gallery && card.gallery.length > 0 && (
+          {gallery.length > 0 && (
             <m.div
               className="mt-[clamp(48px,7vw,96px)] grid grid-cols-2 gap-[clamp(16px,2vw,24px)] px-[clamp(20px,1.85vw,32px)] md:grid-cols-12"
               {...fadeIn(reducedMotion)}
             >
-              {card.gallery.map((block, index) => (
-                <div
-                  key={`${block}-${index}`}
-                  className={`bg-graphite ${galleryBlockClasses[block]}`}
-                  aria-hidden="true"
-                />
-              ))}
+              {gallery.map((block, index) => {
+                const video = block === 'medium' ? card.galleryVideo : undefined
+                const wideVideo = block === 'wide' ? card.galleryWideVideo : undefined
+                const image =
+                  block === 'wide'
+                    ? card.galleryImage
+                    : block === 'full'
+                      ? card.galleryFullImage
+                      : undefined
+                const showcase =
+                  block === 'half' ? card.galleryHalves?.[halfOrder[index]] : undefined
+                return (
+                  <div
+                    key={`${block}-${index}`}
+                    className={`bg-graphite relative overflow-hidden ${galleryBlockClasses[block]}`}
+                    aria-hidden={video || wideVideo || showcase || image?.alt ? undefined : 'true'}
+                  >
+                    {showcase && (
+                      <>
+                        {/* Zoom crops the dark/glitchy strips baked into the backdrops' edges. */}
+                        <img
+                          className="absolute inset-0 h-full w-full scale-[1.08] object-cover"
+                          src={showcase.background.src}
+                          srcSet={showcase.background.srcSet}
+                          sizes="(min-width: 768px) 50vw, 100vw"
+                          alt={showcase.background.alt}
+                          width={showcase.background.width}
+                          height={showcase.background.height}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center gap-[clamp(16px,2.5vw,40px)]">
+                          {showcase.images.map((shot) => (
+                            <img
+                              key={shot.src}
+                              className="h-[80%] w-auto rounded-lg object-contain"
+                              src={shot.src}
+                              srcSet={shot.srcSet}
+                              sizes="(min-width: 768px) 40vw, 80vw"
+                              alt={shot.alt}
+                              width={shot.width}
+                              height={shot.height}
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    {video && (
+                      <LoopingVideo
+                        className="absolute inset-0 h-full w-full object-cover"
+                        src={video.src}
+                        label={video.label}
+                        autoPlay={!reducedMotion}
+                      />
+                    )}
+                    {image && (
+                      <img
+                        className="absolute inset-0 h-full w-full object-cover"
+                        src={image.src}
+                        srcSet={image.srcSet}
+                        sizes="100vw"
+                        alt={image.alt}
+                        width={image.width}
+                        height={image.height}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    )}
+                    {wideVideo && (
+                      <LoopingVideo
+                        className="absolute top-1/2 left-1/2 aspect-video w-[92%] max-w-[1200px] -translate-x-1/2 -translate-y-1/2 object-cover md:w-[68%]"
+                        src={wideVideo.src}
+                        label={wideVideo.label}
+                        autoPlay={!reducedMotion}
+                      />
+                    )}
+                  </div>
+                )
+              })}
             </m.div>
           )}
-          <div className="container mt-[clamp(24px,4vw,48px)] flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <m.a
-              href={projectHref(nextCard.slug, locale)}
-              className={`${navLinkClasses} sm:justify-end`}
-              aria-label={`${content.detail.next}: ${nextCard.title}`}
-              whileHover={canHover ? { y: -2 } : undefined}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-            >
-              <span className="text-burgundy" aria-hidden="true">
-                /
-              </span>
-              <span className="ml-1">{content.detail.next}</span>
-              <span className={`${secondaryGraphite} ml-1`}>{nextCard.title}</span>
-            </m.a>
-          </div>
+          <ProjectCarousel
+            // Same rhythm as the full-width rows above: their bottom margin plus the grid gap.
+            className="mt-[calc(clamp(48px,7vw,96px)+clamp(16px,4vw,40px)-clamp(32px,5vw,48px)+clamp(16px,2vw,24px))] md:mt-[calc(clamp(48px,7vw,96px)+clamp(24px,4vw,56px)-clamp(32px,5vw,48px)+clamp(16px,2vw,24px))]"
+            slides={card.galleryCarousel}
+            labels={content.detail.carousel}
+            reducedMotion={reducedMotion}
+            canHover={canHover}
+          />
         </div>
       </section>
       <NextStep

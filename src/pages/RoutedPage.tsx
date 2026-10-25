@@ -32,14 +32,12 @@ export function RoutedPage({ route, path, locale, reducedMotion, canHover }: Rou
 
   switch (route.kind) {
     case 'project': {
-      const { cards } = projectContent
       const index = findProjectIndex(projectContent, route.slug)
       if (index < 0) break
       return (
         <ProjectDetailPage
           key={path}
-          card={cards[index]}
-          nextCard={cards[(index + 1) % cards.length]}
+          card={projectContent.cards[index]}
           content={projectContent}
           locale={locale}
           reducedMotion={reducedMotion}
