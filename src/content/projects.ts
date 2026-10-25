@@ -47,7 +47,21 @@ export interface ProjectSection {
 }
 
 /** Empty graphite frame used to sketch a project gallery layout. */
-export type ProjectGalleryBlock = 'large' | 'small' | 'wide'
+export type ProjectGalleryBlock = 'large' | 'medium' | 'small' | 'wide'
+
+/** Looping video rendered inside the medium gallery block. */
+export interface ProjectGalleryVideo {
+  src: string
+  label: string
+}
+
+/** Image rendered inside the wide gallery block. */
+export interface ProjectGalleryImage {
+  src: string
+  alt: string
+  width: number
+  height: number
+}
 
 /** Wide backdrop that frames an optional looping video in its centre. */
 export interface ProjectVideoBackground {
@@ -73,6 +87,9 @@ export interface ProjectCard {
   sections?: ProjectSection[]
   presentation?: ProjectPresentation
   videoBackground?: ProjectVideoBackground
+  galleryVideo?: ProjectGalleryVideo
+  galleryWideVideo?: ProjectGalleryVideo
+  galleryImage?: ProjectGalleryImage
   gallery?: ProjectGalleryBlock[]
 }
 
@@ -137,7 +154,21 @@ export const content: Record<Locale, ProjectsContent> = {
           height: 1440,
           video: '/media/projects/videos/SigsorReveal.mp4',
         },
-        gallery: ['large', 'large', 'small', 'small', 'small', 'small', 'wide'],
+        galleryVideo: {
+          src: '/media/projects/videos/SigsorLogin.mp4',
+          label: 'Demostración del inicio de sesión de Sigsor',
+        },
+        galleryWideVideo: {
+          src: '/media/projects/videos/SigsorTablero.mp4',
+          label: 'Demostración del tablero de Sigsor',
+        },
+        galleryImage: {
+          src: '/media/projects/MasFondosSigsor/Sigsor2fondo.jpg',
+          alt: '',
+          width: 2944,
+          height: 1472,
+        },
+        gallery: ['medium', 'wide', 'small', 'small', 'small', 'small'],
       },
       {
         title: 'Impulso',
@@ -244,7 +275,21 @@ export const content: Record<Locale, ProjectsContent> = {
           height: 1440,
           video: '/media/projects/videos/SigsorReveal.mp4',
         },
-        gallery: ['large', 'large', 'small', 'small', 'small', 'small', 'wide'],
+        galleryVideo: {
+          src: '/media/projects/videos/SigsorLogin.mp4',
+          label: 'Sigsor sign-in demo',
+        },
+        galleryWideVideo: {
+          src: '/media/projects/videos/SigsorTablero.mp4',
+          label: 'Sigsor dashboard demo',
+        },
+        galleryImage: {
+          src: '/media/projects/MasFondosSigsor/Sigsor2fondo.jpg',
+          alt: '',
+          width: 2944,
+          height: 1472,
+        },
+        gallery: ['medium', 'wide', 'small', 'small', 'small', 'small'],
       },
       {
         title: 'Impulso',

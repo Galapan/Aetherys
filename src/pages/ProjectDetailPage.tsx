@@ -1,4 +1,5 @@
 import { m } from 'framer-motion'
+import type { SyntheticEvent } from 'react'
 import type { Locale } from '@/content/hero'
 import {
   projectHref,
@@ -41,12 +42,46 @@ const navLinkClasses = `inline-flex min-h-11 items-center text-[12px] leading-[1
 
 const galleryBlockClasses: Record<ProjectGalleryBlock, string> = {
   large: 'col-span-2 aspect-[4/3] md:col-span-6',
+  medium:
+    'col-span-2 mt-[clamp(16px,4vw,40px)] mb-[calc(clamp(48px,7vw,96px)+clamp(16px,4vw,40px)-clamp(32px,5vw,48px))] aspect-[16/9] justify-self-center md:col-span-12 md:mt-[clamp(24px,4vw,56px)] md:mb-[calc(clamp(48px,7vw,96px)+clamp(24px,4vw,56px)-clamp(32px,5vw,48px))] md:w-[57.5%]',
   small: 'col-span-1 aspect-square md:col-span-3',
   wide: 'col-span-2 aspect-[16/9] md:col-span-12',
 }
 
 // Mirrors the header: blends the label with whatever image sits behind it.
 const backLinkClasses = `pointer-events-auto inline-flex min-h-11 items-center text-[14px] leading-[1.4] tracking-[0.08em] uppercase`
+
+interface LoopingVideoProps {
+  src: string
+  label: string
+  autoPlay: boolean
+  className: string
+}
+
+// Restarts slightly before the end so the last frames never flash on loop.
+function LoopingVideo({ src, label, autoPlay, className }: LoopingVideoProps) {
+  const handleTimeUpdate = (event: SyntheticEvent<HTMLVideoElement>) => {
+    const video = event.currentTarget
+    if (video.duration && video.currentTime >= video.duration - 0.5) {
+      video.currentTime = 0
+      void video.play()
+    }
+  }
+
+  return (
+    <video
+      className={className}
+      src={src}
+      aria-label={label}
+      autoPlay={autoPlay}
+      loop
+      muted
+      playsInline
+      preload="auto"
+      onTimeUpdate={handleTimeUpdate}
+    />
+  )
+}
 
 export function ProjectDetailPage({
   card,
@@ -249,13 +284,46 @@ export function ProjectDetailPage({
               animate={{ opacity: 1 }}
               transition={{ duration: reducedMotion ? 0 : 0.8, ease: 'easeOut' }}
             >
-              {card.gallery.map((block, index) => (
-                <div
-                  key={`${block}-${index}`}
-                  className={`bg-graphite ${galleryBlockClasses[block]}`}
-                  aria-hidden="true"
-                />
-              ))}
+              {card.gallery.map((block, index) => {
+                const video = block === 'medium' ? card.galleryVideo : undefined
+                const wideVideo = block === 'wide' ? card.galleryWideVideo : undefined
+                const image = block === 'wide' ? card.galleryImage : undefined
+                return (
+                  <div
+                    key={`${block}-${index}`}
+                    className={`bg-graphite relative overflow-hidden ${galleryBlockClasses[block]}`}
+                    aria-hidden={video || wideVideo ? undefined : 'true'}
+                  >
+                    {video && (
+                      <LoopingVideo
+                        className="absolute inset-0 h-full w-full object-cover"
+                        src={video.src}
+                        label={video.label}
+                        autoPlay={!reducedMotion}
+                      />
+                    )}
+                    {image && (
+                      <img
+                        className="absolute inset-0 h-full w-full object-cover"
+                        src={image.src}
+                        alt={image.alt}
+                        width={image.width}
+                        height={image.height}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    )}
+                    {wideVideo && (
+                      <LoopingVideo
+                        className="absolute top-1/2 left-1/2 aspect-video w-[92%] max-w-[1200px] -translate-x-1/2 -translate-y-1/2 object-cover md:w-[68%]"
+                        src={wideVideo.src}
+                        label={wideVideo.label}
+                        autoPlay={!reducedMotion}
+                      />
+                    )}
+                  </div>
+                )
+              })}
             </m.div>
           )}
           <div className="container mt-[clamp(24px,4vw,48px)] flex flex-col gap-3 sm:flex-row sm:justify-end">
