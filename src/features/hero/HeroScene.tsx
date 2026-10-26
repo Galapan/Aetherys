@@ -2,18 +2,20 @@ import {
   useCallback,
   useEffect,
   useEffectEvent,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
+import { Environment, Lightformer } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
-import { Color, type Group, type Texture } from 'three'
+import { Color, Vector3, type Group, type Mesh, type Texture } from 'three'
 import { heroMark } from '@/content/hero'
 import { useMotionPreferences } from '@/hooks/useMotionPreferences'
 import { getMarkShapes } from '../markShapes'
+import { CompileBeforeFirstFrame } from '../CompileBeforeFirstFrame'
+import { createGlassMaterial, type GlassUniforms } from '../glassMaterial'
 import { createRefractionCanvas } from '../refractionCanvas'
 import { useSceneQuality } from '../sceneQuality'
 
@@ -30,6 +32,16 @@ const EXTRUDE_OPTIONS = {
   bevelThickness: 2,
   curveSegments: 32,
 }
+const PATH_SCALE = 0.012
+// Rays cross the whole slab before they reach the grid.
+const GLASS_THICKNESS = EXTRUDE_OPTIONS.depth * PATH_SCALE * heroMark.scale
+// Red, green and blue bend apart as they did with the transmission material's aberration.
+const GLASS_IOR = new Vector3(1.5, 1.635, 1.77)
+// Tinted glass: burgundy covers this share of the grid head-on and more on slanted faces,
+// so the lines still read faintly through it.
+const BODY_DENSITY = 0.5
+// One pass of glass no longer needs the extra pixels a 3x screen would ask for.
+const MAX_DPR = 2
 
 function readToken(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
@@ -121,8 +133,10 @@ function GridRefractionBackground({
   return null
 }
 
-function Mark({ background, resolution }: { background: Texture | Color; resolution: number }) {
+function Mark({ background }: { background: Texture | null }) {
   const group = useRef<Group>(null)
+  const mesh = useRef<Mesh>(null)
+  const glass = useRef<GlassUniforms | null>(null)
   const { gl, invalidate } = useThree()
   const { reducedMotion, canHover } = useMotionPreferences()
   const tiltX = useSpring(0, { stiffness: 420, damping: 32, mass: 0.6 })
@@ -191,41 +205,44 @@ function Mark({ background, resolution }: { background: Texture | Color; resolut
     }
   }, [canHover, reducedMotion, gl, invalidate, tiltX, tiltY])
 
+  // A layout effect runs before every passive one, so CompileBeforeFirstFrame always
+  // compiles the glass rather than the mesh's default material.
+  useLayoutEffect(() => {
+    const target = mesh.current
+    if (!target) return
+    const { material, uniforms } = createGlassMaterial({
+      tint: new Color(readToken('--color-warm-white')),
+      background: new Color(readToken('--color-graphite')),
+      thickness: GLASS_THICKNESS,
+      ior: GLASS_IOR,
+      backdrop: true,
+      body: { color: new Color(readToken('--color-burgundy')), density: BODY_DENSITY },
+    })
+    target.material = material
+    glass.current = uniforms
+    invalidate()
+    return () => {
+      glass.current = null
+      material.dispose()
+    }
+  }, [invalidate])
+
+  useEffect(() => {
+    if (!glass.current) return
+    glass.current.uGlassBackdrop.value = background
+    invalidate()
+  }, [background, invalidate])
+
   const shapes = getMarkShapes()
-  // Pale glass as in NextStep: warm white with a breath of graphite, so the grid reads through.
-  const glassTint = useMemo(
-    () =>
-      new Color(readToken('--color-warm-white')).lerp(
-        new Color(readToken('--color-graphite')),
-        0.05,
-      ),
-    [],
-  )
+
   return (
     <group ref={group} scale={heroMark.scale}>
-      <mesh scale={[0.012, -0.012, 0.012]} position={[-2.91, 2.28, -0.08]}>
+      <mesh
+        ref={mesh}
+        scale={[PATH_SCALE, -PATH_SCALE, PATH_SCALE]}
+        position={[-2.91, 2.28, (-EXTRUDE_OPTIONS.depth / 2) * PATH_SCALE]}
+      >
         <extrudeGeometry args={[shapes, EXTRUDE_OPTIONS]} />
-        <MeshTransmissionMaterial
-          // A backside pass renders the far faces against the dark page first, which inks the
-          // body to black and hides the grid; the front faces alone keep it see-through.
-          resolution={resolution}
-          samples={6}
-          background={background}
-          color={glassTint}
-          metalness={0}
-          roughness={0.02}
-          transmission={1}
-          // Thickness uses the SVG's local units, before the mesh scale.
-          thickness={EXTRUDE_OPTIONS.depth}
-          ior={1.5}
-          chromaticAberration={0.18}
-          anisotropicBlur={0}
-          distortion={0}
-          temporalDistortion={0}
-          clearcoat={1}
-          clearcoatRoughness={0.06}
-          envMapIntensity={1.2}
-        />
       </mesh>
     </group>
   )
@@ -251,11 +268,18 @@ function RenderQuality({ maxDpr, onContextLost }: { maxDpr: number; onContextLos
   return null
 }
 
-export default function HeroScene({ fallback }: { fallback: ReactNode }) {
+export default function HeroScene({ onDrawn }: { onDrawn: (drawn: boolean) => void }) {
   const [lost, setLost] = useState(false)
   const quality = useSceneQuality()
+  // Held in state, as in NextStepScene: a constant prop would reset the loop on re-render.
+  const [frameloop, setFrameloop] = useState<'never' | 'demand'>('never')
+  const handleCompiled = useCallback(() => setFrameloop('demand'), [])
+  const handleDrawn = useCallback(() => onDrawn(true), [onDrawn])
   const [refractionBackground, setRefractionBackground] = useState<Texture | null>(null)
-  const handleContextLost = useCallback(() => setLost(true), [])
+  const handleContextLost = useCallback(() => {
+    onDrawn(false)
+    setLost(true)
+  }, [onDrawn])
   const handleTextureReady = useCallback((texture: Texture) => {
     setRefractionBackground(texture)
   }, [])
@@ -266,7 +290,7 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
   // NextStep's light room, dimmed for the dark page: a full warm-white room would mirror
   // into the faces and fog the glass grey, hiding the grid behind it.
   const room = useMemo(() => new Color(white).lerp(graphiteColor, 0.75), [white, graphiteColor])
-  if (lost) return fallback
+  if (lost) return null
   return (
     <Canvas
       camera={{ position: [0, 0, 5], fov: 35 }}
@@ -275,14 +299,13 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
       // Without tone mapping the refracted grid keeps the page's exact graphite and line
       // contrast; ACES would crush both to black inside the glass.
       flat
-      frameloop="demand"
+      // Stays idle until CompileBeforeFirstFrame switches it to on-demand rendering.
+      frameloop={frameloop}
       // Pointer tilt reads window coordinates, so the canvas offset is never needed.
-      // Without this, every scroll pause re-measures, reconfigures and re-renders the
-      // transmission passes.
+      // Without this, every scroll pause re-measures, reconfigures and re-renders the scene.
       resize={{ scroll: false }}
-      fallback={fallback}
     >
-      <RenderQuality maxDpr={quality.maxDpr} onContextLost={handleContextLost} />
+      <RenderQuality maxDpr={Math.min(quality.maxDpr, MAX_DPR)} onContextLost={handleContextLost} />
       <GridRefractionBackground
         resolution={quality.refraction}
         onTextureReady={handleTextureReady}
@@ -297,9 +320,11 @@ export default function HeroScene({ fallback }: { fallback: ReactNode }) {
         <Lightformer color={burgundy} intensity={5} position={[4, 0, 2]} scale={[2, 7, 1]} />
         <Lightformer color={white} intensity={1} position={[0, 0, -5]} scale={[6, 6, 1]} />
       </Environment>
-      <directionalLight color={white} position={[-3, 4, 5]} intensity={1.5} />
-      <directionalLight color={burgundy} position={[4, 2, 1]} intensity={2.5} />
-      <Mark background={refractionBackground ?? graphiteColor} resolution={quality.transmission} />
+      {/* Dim highlights: they catch the bevels without washing the tinted body out. */}
+      <directionalLight color={white} position={[-3, 4, 5]} intensity={0.5} />
+      <directionalLight color={burgundy} position={[4, 2, 1]} intensity={0.8} />
+      <Mark background={refractionBackground} />
+      <CompileBeforeFirstFrame backside={false} onCompiled={handleCompiled} onDrawn={handleDrawn} />
     </Canvas>
   )
 }

@@ -1,13 +1,4 @@
-import {
-  Component,
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { Component, lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react'
 import { heroMark } from '@/content/hero'
 import type { NextStepContent } from '@/content/nextStep'
 
@@ -21,7 +12,8 @@ const SCENE_VIEW_FRACTION = 0.609
 function Fallback() {
   return (
     <svg
-      className="h-full w-full overflow-visible"
+      // Multiplied like tinted glass, so the words behind stay dark instead of washed out.
+      className="h-full w-full overflow-visible mix-blend-multiply"
       viewBox="140 110 205 160"
       aria-hidden="true"
       focusable="false"
@@ -56,87 +48,60 @@ class SceneBoundary extends Component<
   }
 }
 
-// Past the ~5.4s hero entrance, so the WebGL context and shader compile never
-// compete with the intro.
-const WARM_UP_DELAY_MS = 6000
-// Creating the context and compiling the glass shaders blocks the main thread and cannot be
-// interrupted (browsers without KHR_parallel_shader_compile, such as Firefox, link them
-// synchronously), so it waits for a pause in scrolling instead of landing mid-gesture.
-const SCROLL_QUIET_MS = 1200
-// Shorter pause once the scene nears the viewport, so the glass is usually ready on arrival;
-// until then the static mark covers it.
-const NEAR_QUIET_MS = 400
+// The single-pass glass compiles one small program, in parallel where the browser supports
+// KHR_parallel_shader_compile, and no longer stalls the page. So it mounts at the first idle
+// moment instead of waiting for a pause in scrolling, which left the static mark showing on
+// arrival at the end of a long page.
+const IDLE_TIMEOUT_MS = 1000
 
-/** Mounts the scene at a pause in scrolling, after the intro or once it nears the viewport. */
-function useSceneReady() {
-  const frame = useRef<HTMLDivElement>(null)
+/**
+ * Mounts the scene once its chunk has loaded and the main thread is idle: right after load,
+ * or after the hero intro on the page that plays one, so it never competes with it.
+ */
+function useSceneReady(deferred: boolean) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    const element = frame.current
-    if (!element || ready) return
-    const markReady = () => setReady(true)
+    if (ready || deferred) return
+    let active = true
     let idle = 0
-    let quietMs = SCROLL_QUIET_MS
-    let watching = false
-    let quiet = 0
+    const markReady = () => {
+      if (active) setReady(true)
+    }
     const scheduleIdle = () => {
+      if (!active) return
       if (typeof window.requestIdleCallback === 'function') {
-        idle = window.requestIdleCallback(markReady, { timeout: 2000 })
+        idle = window.requestIdleCallback(markReady, { timeout: IDLE_TIMEOUT_MS })
       } else {
         markReady()
       }
     }
-    // Every scroll restarts the quiet window and drops a pending idle mount.
-    const onScroll = () => {
-      window.clearTimeout(quiet)
-      if (idle) {
-        window.cancelIdleCallback(idle)
-        idle = 0
-      }
-      quiet = window.setTimeout(scheduleIdle, quietMs)
-    }
-    const watchScroll = () => {
-      // Fetch the chunk now, so the mount itself is not delayed into the next scroll.
-      void loadScene()
-      if (!watching) {
-        watching = true
-        window.addEventListener('scroll', onScroll, { passive: true })
-      }
-      onScroll()
-    }
-    // Nearing the viewport no longer mounts mid-scroll: it only shortens the pause awaited.
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return
-        quietMs = NEAR_QUIET_MS
-        watchScroll()
-      },
-      { rootMargin: '150% 0px' },
-    )
-    observer.observe(element)
-    const timer = window.setTimeout(watchScroll, WARM_UP_DELAY_MS)
+    // A failed chunk still mounts, so the boundary reports it and the static mark stays.
+    loadScene().then(scheduleIdle, markReady)
     return () => {
-      observer.disconnect()
-      window.clearTimeout(timer)
-      window.clearTimeout(quiet)
-      window.removeEventListener('scroll', onScroll)
+      active = false
       if (idle) window.cancelIdleCallback(idle)
     }
-  }, [ready])
+  }, [deferred, ready])
 
-  return { frame, ready }
+  return ready
 }
 
-export function NextStepMark({ heading }: { heading: NextStepContent['heading'] }) {
-  const { frame, ready } = useSceneReady()
+interface NextStepMarkProps {
+  heading: NextStepContent['heading']
+  /** Holds the scene back while the hero intro plays. */
+  deferred?: boolean
+}
+
+export function NextStepMark({ heading, deferred = false }: NextStepMarkProps) {
+  const ready = useSceneReady(deferred)
   // The canvas stays blank while the chunk loads and the shaders compile, and again after a
   // lost context; the static mark covers it until the glass has actually been drawn.
   const [drawn, setDrawn] = useState(false)
   const hide = useCallback(() => setDrawn(false), [])
 
   return (
-    <div ref={frame} className="relative aspect-[205/160] w-full" aria-hidden="true">
+    <div className="relative aspect-[205/160] w-full" aria-hidden="true">
       {ready && (
         <SceneBoundary onError={hide}>
           <Suspense fallback={null}>

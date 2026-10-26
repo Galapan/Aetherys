@@ -1,23 +1,29 @@
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { Environment, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
+import { Environment, Lightformer } from '@react-three/drei'
 import { useSpring } from 'framer-motion'
 import {
-  BackSide,
+  CanvasTexture,
   Color,
-  DoubleSide,
-  Mesh,
-  WebGLRenderTarget,
+  LinearFilter,
+  NoColorSpace,
+  SRGBColorSpace,
+  Vector3,
   type Group,
-  type Material,
-  type Side,
-  type Texture,
+  type Mesh,
+  type WebGLRenderer,
 } from 'three'
 import { heroMark } from '@/content/hero'
 import { useMotionPreferences } from '@/hooks/useMotionPreferences'
 import { getMarkShapes } from '../markShapes'
-import { createRefractionCanvas } from '../refractionCanvas'
-import { useSceneQuality, type SceneQuality } from '../sceneQuality'
+import { CompileBeforeFirstFrame } from '../CompileBeforeFirstFrame'
+import { useSceneQuality } from '../sceneQuality'
+import {
+  createGlassMaterial,
+  EMPTY_WORD_RECT,
+  MAX_GLASS_WORDS,
+  type GlassUniforms,
+} from '../glassMaterial'
 
 // A thick slab, like the reference glass letter: its side faces carry most of the refraction.
 const EXTRUDE_OPTIONS = {
@@ -30,6 +36,18 @@ const EXTRUDE_OPTIONS = {
   curveSegments: 32,
 }
 const PATH_SCALE = 0.012
+// Rays cross the whole slab before they reach the words.
+const GLASS_THICKNESS = EXTRUDE_OPTIONS.depth * PATH_SCALE * heroMark.scale
+// Red, green and blue bend apart as they did with the transmission material's aberration.
+const GLASS_IOR = new Vector3(1.5, 1.635, 1.77)
+// One pass of glass no longer needs the extra pixels a 3x screen would ask for.
+const MAX_DPR = 2
+// Room around each word for glyph overhang, as a share of its font size.
+const WORD_PAD = 0.25
+const ATLAS_MAX = 2048
+const ATLAS_GAP = 2
+// UV change below which a word has not moved (about 0.1px on a 1000px canvas).
+const RECT_EPSILON = 1e-4
 // A lost context (GPU memory pressure, mostly on mobile) gets a fresh canvas after a pause,
 // a few times, instead of leaving the static mark for good.
 const CONTEXT_RETRY_MS = 1000
@@ -39,148 +57,199 @@ function readToken(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
 
-function HeadingRefractionBackground({
-  headingKey,
-  resolution,
-  onTextureReady,
-}: {
-  headingKey: string
-  resolution: number
-  onTextureReady: (texture: Texture) => void
-}) {
-  const { gl, invalidate } = useThree()
-
-  useEffect(() => {
-    // Owned by this effect, so drawing into it never mutates a hook value.
-    const refraction = createRefractionCanvas(gl, resolution)
-    const { context } = refraction
-    const background = readToken('--color-warm-white')
-    let active = true
-    let visible = true
-    let layout = ''
-    let frame = 0
-    let published = false
-    // Computed styles only change with a resize, so scroll redraws reuse them instead of
-    // forcing a style recalculation for every word on every frame.
-    let fonts = new Map<HTMLElement, { font: string; letterSpacing: string; color: string }>()
-    const draw = () => {
-      if (!active) return
-      const heading = document.getElementById('next-step-heading')
-      if (!heading) return
-
-      const canvasBounds = gl.domElement.getBoundingClientRect()
-      if (!canvasBounds.width || !canvasBounds.height) return
-
-      const words = [...heading.querySelectorAll<HTMLElement>('[data-heading-word]')].map(
-        (word) => ({ word, bounds: word.getBoundingClientRect() }),
-      )
-      // Scrolling moves canvas and words together; only their relative layout matters.
-      const nextLayout = [
-        canvasBounds.width,
-        canvasBounds.height,
-        ...words.flatMap(({ bounds }) => [
-          bounds.left - canvasBounds.left,
-          bounds.top - canvasBounds.top,
-        ]),
-      ]
-        .map((value) => value.toFixed(1))
-        .join()
-      if (nextLayout === layout) return
-      layout = nextLayout
-
-      if (!context) return
-
-      context.fillStyle = background
-      context.fillRect(0, 0, resolution, resolution)
-
-      const scale = resolution / canvasBounds.height
-      context.save()
-      context.scale(canvasBounds.height / canvasBounds.width, 1)
-      // The em box sits centred in each word's line box, whatever the line-height.
-      context.textBaseline = 'middle'
-
-      words.forEach(({ word, bounds }) => {
-        const text = word.textContent?.trim()
-        if (!text) return
-
-        let font = fonts.get(word)
-        if (!font) {
-          const style = getComputedStyle(word)
-          font = {
-            font: `${style.fontStyle} ${style.fontWeight} ${
-              Number.parseFloat(style.fontSize) * scale
-            }px ${style.fontFamily}`,
-            letterSpacing: `${(Number.parseFloat(style.letterSpacing) || 0) * scale}px`,
-            color: style.color,
-          }
-          fonts.set(word, font)
-        }
-        context.font = font.font
-        context.letterSpacing = font.letterSpacing
-        context.fillStyle = font.color
-        context.fillText(
-          text,
-          (bounds.left - canvasBounds.left) * scale,
-          (bounds.top + bounds.height / 2 - canvasBounds.top) * scale,
-        )
-      })
-
-      context.restore()
-      refraction.update()
-      if (!published) {
-        published = true
-        onTextureReady(refraction.texture)
-      }
-      invalidate()
-    }
-
-    const redraw = () => {
-      layout = ''
-      fonts = new Map()
-      draw()
-    }
-    // The words converge with scroll. Two frames let Motion apply this frame's transforms
-    // before they are measured.
-    const scroll = () => {
-      if (!visible || frame) return
-      frame = requestAnimationFrame(() => {
-        frame = requestAnimationFrame(() => {
-          frame = 0
-          draw()
-        })
-      })
-    }
-
-    draw()
-    const heading = document.getElementById('next-step-heading')
-    const observer = new ResizeObserver(redraw)
-    observer.observe(gl.domElement)
-    if (heading) observer.observe(heading)
-    const visibility = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting
-      if (visible) scroll()
-    })
-    visibility.observe(gl.domElement)
-    window.addEventListener('resize', redraw)
-    window.addEventListener('scroll', scroll, { passive: true })
-    void document.fonts.ready.then(redraw)
-
-    return () => {
-      active = false
-      cancelAnimationFrame(frame)
-      observer.disconnect()
-      visibility.disconnect()
-      window.removeEventListener('resize', redraw)
-      window.removeEventListener('scroll', scroll)
-      refraction.dispose()
-    }
-  }, [gl, headingKey, invalidate, onTextureReady, resolution])
-
-  return null
+/** Any CSS colour (color-mix included) as a linear three colour, via a 1px canvas. */
+function readCssColor(css: string, target: Color) {
+  const probe = document.createElement('canvas')
+  probe.width = 1
+  probe.height = 1
+  const context = probe.getContext('2d', { willReadFrequently: true })
+  if (!context) return target
+  context.fillStyle = css
+  context.fillRect(0, 0, 1, 1)
+  const [red, green, blue] = context.getImageData(0, 0, 1, 1).data
+  return target.setRGB(red / 255, green / 255, blue / 255, SRGBColorSpace)
 }
 
-function Mark({ background, quality }: { background: Texture | Color; quality: SceneQuality }) {
+interface MeasuredWord {
+  word: HTMLElement
+  text: string
+  bounds: DOMRect
+}
+
+/**
+ * Draws the heading words once into an atlas the glass samples, and keeps their boxes on the
+ * canvas current as they converge with scroll. Scrolling only moves four rects: no redraw, no
+ * texture upload.
+ */
+function trackHeadingWords(gl: WebGLRenderer, uniforms: GlassUniforms, invalidate: () => void) {
+  const atlas = document.createElement('canvas')
+  const context = atlas.getContext('2d')
+  const rects = uniforms.uGlassWordRect.value
+  const cells = uniforms.uGlassWordAtlas.value
+  let texture: CanvasTexture | null = null
+  // What the atlas was drawn from, so only a change of size or text redraws it.
+  let drawn: { text: string; width: number; height: number; pad: number }[] = []
+  let active = true
+  let visible = true
+  let frame = 0
+
+  const build = (words: MeasuredWord[]) => {
+    if (!context) return
+    const styles = words.map(({ word }) => getComputedStyle(word))
+    drawn = words.map(({ text, bounds }, index) => ({
+      text,
+      width: bounds.width,
+      height: bounds.height,
+      pad: Number.parseFloat(styles[index].fontSize) * WORD_PAD,
+    }))
+    const sizes = drawn.map(({ width, height, pad }) => ({
+      width: width + pad * 2,
+      height: height + pad * 2,
+    }))
+    const widest = Math.max(...sizes.map(({ width }) => width))
+    const stacked = sizes.reduce((sum, { height }) => sum + height, 0)
+    const scale = Math.min(
+      Math.min(2, Math.max(1, window.devicePixelRatio)),
+      (ATLAS_MAX - ATLAS_GAP * 2) / widest,
+      (ATLAS_MAX - ATLAS_GAP * (sizes.length + 1)) / stacked,
+    )
+    atlas.width = Math.ceil(widest * scale) + ATLAS_GAP * 2
+    atlas.height =
+      sizes.reduce((sum, { height }) => sum + Math.ceil(height * scale), 0) +
+      ATLAS_GAP * (sizes.length + 1)
+
+    context.clearRect(0, 0, atlas.width, atlas.height)
+    context.fillStyle = '#fff'
+    context.textBaseline = 'middle'
+    let top = ATLAS_GAP
+    words.forEach(({ text }, index) => {
+      const style = styles[index]
+      const { height, pad } = drawn[index]
+      const cellWidth = sizes[index].width * scale
+      const cellHeight = Math.ceil(sizes[index].height * scale)
+      context.font = `${style.fontStyle} ${style.fontWeight} ${
+        Number.parseFloat(style.fontSize) * scale
+      }px ${style.fontFamily}`
+      context.letterSpacing = `${(Number.parseFloat(style.letterSpacing) || 0) * scale}px`
+      // The em box sits centred in each word's line box, whatever the line-height.
+      context.fillText(text, ATLAS_GAP + pad * scale, top + (pad + height / 2) * scale)
+      cells[index].set(
+        ATLAS_GAP / atlas.width,
+        1 - (top + cellHeight) / atlas.height,
+        (ATLAS_GAP + cellWidth) / atlas.width,
+        1 - top / atlas.height,
+      )
+      top += cellHeight + ATLAS_GAP
+    })
+
+    // A new texture per atlas size: three allocates immutable storage for the first one.
+    texture?.dispose()
+    texture = new CanvasTexture(atlas)
+    texture.colorSpace = NoColorSpace
+    texture.minFilter = LinearFilter
+    texture.magFilter = LinearFilter
+    texture.generateMipmaps = false
+    uniforms.uGlassWords.value = texture
+    if (styles[0]) readCssColor(styles[0].color, uniforms.uGlassText.value)
+  }
+
+  const update = (rebuild = false) => {
+    if (!active) return
+    const heading = document.getElementById('next-step-heading')
+    if (!heading) return
+    const canvasBounds = gl.domElement.getBoundingClientRect()
+    if (!canvasBounds.width || !canvasBounds.height) return
+
+    const words = [...heading.querySelectorAll<HTMLElement>('[data-heading-word]')]
+      .slice(0, MAX_GLASS_WORDS)
+      .map((word) => ({
+        word,
+        text: word.textContent?.trim() ?? '',
+        bounds: word.getBoundingClientRect(),
+      }))
+    const resized =
+      rebuild ||
+      words.length !== drawn.length ||
+      words.some(
+        ({ text, bounds }, index) =>
+          text !== drawn[index].text ||
+          Math.abs(bounds.width - drawn[index].width) > 0.5 ||
+          Math.abs(bounds.height - drawn[index].height) > 0.5,
+      )
+    if (resized) build(words)
+
+    let moved = resized
+    rects.forEach((rect, index) => {
+      const measured = words[index]
+      if (!measured) {
+        if (!rect.equals(EMPTY_WORD_RECT)) {
+          rect.copy(EMPTY_WORD_RECT)
+          moved = true
+        }
+        return
+      }
+      const { bounds } = measured
+      const { pad } = drawn[index]
+      const minX = (bounds.left - pad - canvasBounds.left) / canvasBounds.width
+      const maxX = (bounds.right + pad - canvasBounds.left) / canvasBounds.width
+      const minY = 1 - (bounds.bottom + pad - canvasBounds.top) / canvasBounds.height
+      const maxY = 1 - (bounds.top - pad - canvasBounds.top) / canvasBounds.height
+      if (
+        Math.abs(rect.x - minX) > RECT_EPSILON ||
+        Math.abs(rect.y - minY) > RECT_EPSILON ||
+        Math.abs(rect.z - maxX) > RECT_EPSILON ||
+        Math.abs(rect.w - maxY) > RECT_EPSILON
+      ) {
+        rect.set(minX, minY, maxX, maxY)
+        moved = true
+      }
+    })
+    if (moved) invalidate()
+  }
+
+  const rebuild = () => update(true)
+  // The words converge with scroll. Two frames let Motion apply this frame's transforms
+  // before they are measured.
+  const scroll = () => {
+    if (!visible || frame) return
+    frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        update()
+      })
+    })
+  }
+
+  update(true)
+  const heading = document.getElementById('next-step-heading')
+  const observer = new ResizeObserver(rebuild)
+  observer.observe(gl.domElement)
+  if (heading) observer.observe(heading)
+  const visibility = new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting
+    if (visible) scroll()
+  })
+  visibility.observe(gl.domElement)
+  window.addEventListener('resize', rebuild)
+  window.addEventListener('scroll', scroll, { passive: true })
+  void document.fonts.ready.then(rebuild)
+
+  return () => {
+    active = false
+    cancelAnimationFrame(frame)
+    observer.disconnect()
+    visibility.disconnect()
+    window.removeEventListener('resize', rebuild)
+    window.removeEventListener('scroll', scroll)
+    uniforms.uGlassWords.value = null
+    texture?.dispose()
+  }
+}
+
+function Mark({ headingKey }: { headingKey: string }) {
   const group = useRef<Group>(null)
+  const mesh = useRef<Mesh>(null)
+  const glass = useRef<GlassUniforms | null>(null)
   const { gl, invalidate } = useThree()
   const { reducedMotion, canHover } = useMotionPreferences()
   // Same cursor response as the hero mark.
@@ -253,115 +322,49 @@ function Mark({ background, quality }: { background: Texture | Color; quality: S
     }
   }, [canHover, reducedMotion, gl, invalidate, tiltX, tiltY])
 
-  const shapes = getMarkShapes()
-  // Pale glass: warm white with a breath of graphite, so the faces read just below the page.
-  const glassTint = useMemo(
-    () =>
-      new Color(readToken('--color-warm-white')).lerp(
+  // A layout effect runs before every passive one, so CompileBeforeFirstFrame always
+  // compiles the glass rather than the mesh's default material.
+  useLayoutEffect(() => {
+    const target = mesh.current
+    if (!target) return
+    const { material, uniforms } = createGlassMaterial({
+      // Pale glass: warm white with a breath of graphite, so the faces read just below the page.
+      tint: new Color(readToken('--color-warm-white')).lerp(
         new Color(readToken('--color-graphite')),
         0.05,
       ),
-    [],
-  )
+      background: new Color(readToken('--color-warm-white')),
+      thickness: GLASS_THICKNESS,
+      ior: GLASS_IOR,
+    })
+    target.material = material
+    glass.current = uniforms
+    invalidate()
+    return () => {
+      glass.current = null
+      material.dispose()
+    }
+  }, [invalidate])
+
+  useEffect(() => {
+    const uniforms = glass.current
+    if (!uniforms) return
+    return trackHeadingWords(gl, uniforms, invalidate)
+  }, [gl, headingKey, invalidate])
+
+  const shapes = getMarkShapes()
 
   return (
     <group ref={group} scale={heroMark.scale}>
       <mesh
+        ref={mesh}
         scale={[PATH_SCALE, -PATH_SCALE, PATH_SCALE]}
         position={[-2.91, 2.28, (-EXTRUDE_OPTIONS.depth / 2) * PATH_SCALE]}
       >
         <extrudeGeometry args={[shapes, EXTRUDE_OPTIONS]} />
-        <MeshTransmissionMaterial
-          backside
-          resolution={quality.transmission}
-          backsideResolution={quality.backside}
-          samples={6}
-          background={background}
-          color={glassTint}
-          metalness={0}
-          roughness={0.02}
-          transmission={1}
-          thickness={EXTRUDE_OPTIONS.depth}
-          backsideThickness={4}
-          ior={1.5}
-          chromaticAberration={0.18}
-          anisotropicBlur={0}
-          distortion={0}
-          temporalDistortion={0}
-          clearcoat={1}
-          clearcoatRoughness={0.06}
-          envMapIntensity={1.2}
-        />
       </mesh>
     </group>
   )
-}
-
-// Linking the glass shaders blocks the main thread when the first frame needs them, which
-// froze the page whenever the scene mounted mid-scroll. They compile in parallel first
-// (KHR_parallel_shader_compile where available) and only then is the first frame drawn.
-// The backside pass renders the glass's far faces into an offscreen buffer, a separate
-// program variant (BackSide, no tone mapping) that a plain compile of the scene misses and
-// that used to link synchronously on the first frame.
-function CompileBeforeFirstFrame({
-  onCompiled,
-  onDrawn,
-}: {
-  onCompiled: () => void
-  onDrawn: () => void
-}) {
-  const { gl, scene, camera, invalidate } = useThree()
-  const onCompiledEvent = useEffectEvent(onCompiled)
-  const onDrawnEvent = useEffectEvent(onDrawn)
-
-  useEffect(() => {
-    let active = true
-    let frame = 0
-    const start = () => {
-      if (!active) return
-      onCompiledEvent()
-      invalidate()
-      // R3F draws on the next animation frame; by the one after, it is on screen.
-      frame = requestAnimationFrame(() => {
-        frame = requestAnimationFrame(() => {
-          if (active) onDrawnEvent()
-        })
-      })
-    }
-
-    const sides = new Map<Material, Side>()
-    scene.traverse((object) => {
-      if (!(object instanceof Mesh)) return
-      for (const material of [object.material as Material | Material[]].flat()) {
-        if (material.side !== DoubleSide) sides.set(material, material.side)
-      }
-    })
-    const target = new WebGLRenderTarget(1, 1)
-    const previousTarget = gl.getRenderTarget()
-    // compileAsync resolves programs synchronously against the renderer's current state,
-    // so the state only has to hold for the call itself.
-    gl.setRenderTarget(target)
-    sides.forEach((_, material) => {
-      material.side = BackSide
-      material.needsUpdate = true
-    })
-    const backside = gl.compileAsync(scene, camera)
-    sides.forEach((side, material) => {
-      material.side = side
-      material.needsUpdate = true
-    })
-    gl.setRenderTarget(previousTarget)
-    const frontside = gl.compileAsync(scene, camera)
-    Promise.all([backside, frontside]).then(start, start)
-
-    return () => {
-      active = false
-      cancelAnimationFrame(frame)
-      target.dispose()
-    }
-  }, [camera, gl, invalidate, scene])
-
-  return null
 }
 
 function RenderQuality({ maxDpr, onContextLost }: { maxDpr: number; onContextLost: () => void }) {
@@ -394,24 +397,18 @@ export default function NextStepScene({
   const [attempt, setAttempt] = useState(0)
   const quality = useSceneQuality()
   const [lost, setLost] = useState(false)
-  // Held in state: as a constant prop, every re-render of the Canvas (the refraction texture
-  // arriving, the drawn report) set the loop back to 'never', which silently dropped every
-  // later invalidate, so the glass froze and stopped following the cursor.
+  // Held in state: as a constant prop, every re-render of the Canvas (the drawn report) set
+  // the loop back to 'never', which silently dropped every later invalidate, so the glass
+  // froze and stopped following the cursor.
   const [frameloop, setFrameloop] = useState<'never' | 'demand'>('never')
   const handleCompiled = useCallback(() => setFrameloop('demand'), [])
-  const [refractionBackground, setRefractionBackground] = useState<Texture | null>(null)
   const handleDrawn = useCallback(() => onDrawn(true), [onDrawn])
   const handleContextLost = useCallback(() => {
     onDrawn(false)
-    setRefractionBackground(null)
     setFrameloop('never')
     setLost(true)
   }, [onDrawn])
-  const handleTextureReady = useCallback((texture: Texture) => {
-    setRefractionBackground(texture)
-  }, [])
   const warmWhite = readToken('--color-warm-white')
-  const warmWhiteColor = useMemo(() => new Color(warmWhite), [warmWhite])
   const headingKey = heading.join('\u0000')
 
   useEffect(() => {
@@ -445,18 +442,10 @@ export default function NextStepScene({
       // Stays idle until CompileBeforeFirstFrame switches it to on-demand rendering.
       frameloop={frameloop}
       // Pointer tilt reads window coordinates, so the canvas offset is never needed.
-      // Without this, every scroll pause re-measures, reconfigures and re-renders the
-      // transmission passes.
+      // Without this, every scroll pause re-measures, reconfigures and re-renders the scene.
       resize={{ scroll: false }}
     >
-      <RenderQuality maxDpr={quality.maxDpr} onContextLost={handleContextLost} />
-      <CompileBeforeFirstFrame onCompiled={handleCompiled} onDrawn={handleDrawn} />
-      <HeadingRefractionBackground
-        headingKey={headingKey}
-        resolution={quality.refraction}
-        onTextureReady={handleTextureReady}
-      />
-      <ambientLight color={warmWhite} intensity={0.3} />
+      <RenderQuality maxDpr={Math.min(quality.maxDpr, MAX_DPR)} onContextLost={handleContextLost} />
       <Environment resolution={512} frames={1}>
         {/* A light room, so grazing reflections brighten the edges instead of inking them. */}
         <color attach="background" args={[warmWhite]} />
@@ -465,9 +454,11 @@ export default function NextStepScene({
         <Lightformer color={warmWhite} intensity={4} position={[4, 0, 2]} scale={[2, 7, 1]} />
         <Lightformer color={warmWhite} intensity={1} position={[0, 0, -5]} scale={[6, 6, 1]} />
       </Environment>
-      <directionalLight color={warmWhite} position={[-3, 4, 5]} intensity={1.5} />
-      <directionalLight color={warmWhite} position={[4, 2, 1]} intensity={1.2} />
-      <Mark background={refractionBackground ?? warmWhiteColor} quality={quality} />
+      {/* Faint highlights: enough to catch the bevels, not to wash the faces out. */}
+      <directionalLight color={warmWhite} position={[-3, 4, 5]} intensity={0.5} />
+      <directionalLight color={warmWhite} position={[4, 2, 1]} intensity={0.4} />
+      <Mark headingKey={headingKey} />
+      <CompileBeforeFirstFrame backside={false} onCompiled={handleCompiled} onDrawn={handleDrawn} />
     </Canvas>
   )
 }

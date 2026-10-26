@@ -17,8 +17,9 @@ const GAP = 0.3125
  * on a quarter turn into the "+", and the "+" spins away by 3.45s — just
  * before the curtain opens at 3.55s.
  *
- * Everything animates transform/opacity only, so it all runs on the same
- * compositor clock as the curtain (a main-thread width tween drifts from it
+ * Everything animates transform/opacity on HTML elements only, so Motion hands
+ * it all to the compositor on the same clock as the curtain (a main-thread
+ * tween — a width, or any value on an SVG element — stalls and drifts from it
  * while the page is still loading).
  */
 export function IntroLockup({ brand }: { brand: string }) {
@@ -50,15 +51,16 @@ export function IntroLockup({ brand }: { brand: string }) {
             animate={{ transform: 'rotate(90deg) scale(0)' }}
             transition={{ delay: 2.1, duration: 0.3, ease: curtainEase }}
           >
-            <m.svg
-              className="block size-full overflow-visible"
-              viewBox="140 110 205 160"
+            <m.span
+              className="block size-full"
               initial={{ transform: 'translateY(110%) rotate(8deg)' }}
               animate={{ transform: 'translateY(0%) rotate(0deg)' }}
               transition={{ delay: 0.15, duration: 0.65, ease: REVEAL_EASE }}
             >
-              <path d={heroMark.path} fill="currentColor" />
-            </m.svg>
+              <svg className="block size-full overflow-visible" viewBox="140 110 205 160">
+                <path d={heroMark.path} fill="currentColor" />
+              </svg>
+            </m.span>
           </m.span>
           <m.span
             className="absolute top-1/2 left-1/2 -mt-1.5 -ml-1.5 size-3"

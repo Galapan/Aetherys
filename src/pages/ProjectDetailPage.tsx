@@ -250,9 +250,14 @@ export function ProjectDetailPage({
   canHover,
 }: ProjectDetailPageProps) {
   const gallery = card.gallery ?? defaultProjectGallery
-  // Position of each block among the half blocks, to pair it with `galleryHalves`.
-  let halfCount = 0
-  const halfOrder = gallery.map((block) => (block === 'half' ? halfCount++ : -1))
+  // Position of each block among blocks of its type: pairs half blocks with `galleryHalves`
+  // and, with the type, names the content a block shows, so its key survives layout edits.
+  const typeCount: Partial<Record<ProjectGalleryBlock, number>> = {}
+  const galleryItems = gallery.map((block) => {
+    const order = typeCount[block] ?? 0
+    typeCount[block] = order + 1
+    return { block, order, id: `${block}-${order}` }
+  })
 
   return (
     <>
@@ -338,7 +343,7 @@ export function ProjectDetailPage({
               className="mt-[clamp(48px,7vw,96px)] grid grid-cols-2 gap-[clamp(16px,2vw,24px)] px-[clamp(20px,1.85vw,32px)] md:grid-cols-12"
               {...fadeIn(reducedMotion)}
             >
-              {gallery.map((block, index) => {
+              {galleryItems.map(({ block, order, id }) => {
                 const video = block === 'medium' ? card.galleryVideo : undefined
                 const wideVideo = block === 'wide' ? card.galleryWideVideo : undefined
                 const image =
@@ -347,11 +352,10 @@ export function ProjectDetailPage({
                     : block === 'full'
                       ? card.galleryFullImage
                       : undefined
-                const showcase =
-                  block === 'half' ? card.galleryHalves?.[halfOrder[index]] : undefined
+                const showcase = block === 'half' ? card.galleryHalves?.[order] : undefined
                 return (
                   <div
-                    key={`${block}-${index}`}
+                    key={id}
                     className={`bg-graphite relative overflow-hidden ${galleryBlockClasses[block]}`}
                     aria-hidden={video || wideVideo || showcase || image?.alt ? undefined : 'true'}
                   >

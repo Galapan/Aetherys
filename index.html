@@ -6,6 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="" />
     <title>Aetherys</title>
+    <script>
+      // Paints the intro's first frame (a closed curtain) before the bundle loads; the hero
+      // intro removes it as it takes over. Lifted anyway if the app never starts.
+      if (
+        location.pathname.replace(/\/+$/, '') === '' &&
+        !matchMedia('(prefers-reduced-motion: reduce)').matches
+      ) {
+        document.documentElement.classList.add('intro-pending')
+        setTimeout(() => document.documentElement.classList.remove('intro-pending'), 8000)
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

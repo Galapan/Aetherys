@@ -32,7 +32,8 @@ interface HomePageProps {
 }
 
 export function HomePage({ locale, reducedMotion, canHover }: HomePageProps) {
-  const entering = useHeroEntrance(reducedMotion)
+  const entrance = useHeroEntrance(reducedMotion)
+  const { entering, playing } = entrance
   const copy = content[locale]
   const projectContent = projectsContent[locale]
   const testimoniesRef = useRef<HTMLElement>(null)
@@ -52,20 +53,24 @@ export function HomePage({ locale, reducedMotion, canHover }: HomePageProps) {
             <m.div
               className="hero-mark-reveal w-[min(100%,480px)]"
               initial={entering ? { opacity: 0 } : false}
-              animate={{ opacity: 1 }}
+              // Held hidden until the intro's clock starts.
+              animate={entering && !playing ? undefined : { opacity: 1 }}
               transition={{
                 duration: entering ? 0.8 : 0,
                 delay: entering ? 3.8 : 0,
                 ease: 'easeOut',
               }}
             >
-              <HeroMark />
+              <HeroMark
+                deferred={entering && entrance.sceneDeferred}
+                onDrawn={entrance.sceneReady}
+              />
             </m.div>
           </div>
           {/* Invisible twin that reserves the foot row, so the mark keeps its centre. */}
           <StageFoot copy={copy} ghost />
         </div>
-        <Hero content={copy} entering={entering} reducedMotion={reducedMotion} />
+        <Hero content={copy} entrance={entrance} reducedMotion={reducedMotion} />
         <Manifesto content={manifestoContent[locale]} />
         {/* Pinned to the bottom after the stage text, so it paints above the hero and manifesto. */}
         <div className="pointer-events-none sticky bottom-0 z-1 -mt-[calc(100svh-var(--header-height))] flex h-[calc(100svh-var(--header-height))] flex-col justify-end">
@@ -116,6 +121,7 @@ export function HomePage({ locale, reducedMotion, canHover }: HomePageProps) {
         contactHref={contactHref(locale)}
         reducedMotion={reducedMotion}
         canHover={canHover}
+        deferScene={entering}
       />
     </>
   )

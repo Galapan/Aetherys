@@ -3,10 +3,11 @@ import { useEffect, useRef } from 'react'
 import { animate, m, useMotionValue, useMotionValueEvent, useScroll } from 'framer-motion'
 import { IntroLockup } from '@/features/hero/IntroLockup'
 import type { HeroContent } from '@/content/hero'
+import type { HeroEntrance } from '@/hooks/useHeroEntrance'
 
 interface HeroProps {
   content: HeroContent
-  entering: boolean
+  entrance: HeroEntrance
   reducedMotion: boolean
 }
 
@@ -16,7 +17,8 @@ const curtainEase = [0.76, 0, 0.24, 1] as const
 // before the disappear animation starts.
 const HIGHLIGHTS_HOLD_PX = 80
 
-export function Hero({ content, entering, reducedMotion }: HeroProps) {
+export function Hero({ content, entrance, reducedMotion }: HeroProps) {
+  const { entering, playing } = entrance
   const { scrollY } = useScroll()
   const highlightsOpacity = useMotionValue(1)
   const highlightsRef = useRef<HTMLUListElement>(null)
@@ -96,7 +98,8 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
   function reveal(delay: number) {
     return {
       initial: entering ? { opacity: 0, transform: 'translateY(24px)' } : (false as const),
-      animate: { opacity: 1, transform: 'translateY(0px)' },
+      // Held hidden until the intro's clock starts.
+      animate: entering && !playing ? undefined : { opacity: 1, transform: 'translateY(0px)' },
       transition: {
         duration: entering ? 0.8 : 0,
         delay: entering ? delay : 0,
@@ -125,17 +128,19 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                   <m.span
                     className="bg-warm-white absolute top-0 left-0 h-[calc(50%+1px)] w-[calc(100%+1px)] border-r border-[color-mix(in_srgb,var(--color-graphite)_14%,transparent)]"
                     initial={{ transform: 'translateY(0%)' }}
-                    animate={{ transform: 'translateY(-101%)' }}
+                    animate={playing ? { transform: 'translateY(-101%)' } : undefined}
                     transition={{
                       duration: 1.35,
                       delay: 3.55 + Math.abs(index - 3.5) * 0.1,
                       ease: curtainEase,
                     }}
+                    // The outer columns open last; their end closes the intro.
+                    onAnimationComplete={index === 0 ? entrance.finish : undefined}
                   />
                   <m.span
                     className="bg-warm-white absolute bottom-0 left-0 h-[calc(50%+1px)] w-[calc(100%+1px)] border-r border-[color-mix(in_srgb,var(--color-graphite)_14%,transparent)]"
                     initial={{ transform: 'translateY(0%)' }}
-                    animate={{ transform: 'translateY(101%)' }}
+                    animate={playing ? { transform: 'translateY(101%)' } : undefined}
                     transition={{
                       duration: 1.35,
                       delay: 3.55 + Math.abs(index - 3.5) * 0.1,
@@ -145,9 +150,12 @@ export function Hero({ content, entering, reducedMotion }: HeroProps) {
                 </div>
               ))}
             </div>
-            <div className="absolute inset-0 grid place-items-center">
-              <IntroLockup brand={content.brand} />
-            </div>
+            {/* Mounts with the clock, so its delays count from the same start as the curtain */}
+            {playing && (
+              <div className="absolute inset-0 grid place-items-center">
+                <IntroLockup brand={content.brand} />
+              </div>
+            )}
           </div>,
           document.body,
         )}

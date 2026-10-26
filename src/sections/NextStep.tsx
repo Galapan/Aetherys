@@ -12,6 +12,8 @@ interface NextStepProps {
   contactHref: string
   reducedMotion: boolean
   canHover: boolean
+  /** Holds the 3D mark back while the hero intro plays (Home only). */
+  deferScene?: boolean
 }
 
 // Scroll-linked convergence: as the composition rises into view the words slide in towards
@@ -52,7 +54,13 @@ function getDesktop() {
   return window.matchMedia(desktopQuery).matches
 }
 
-export function NextStep({ content, contactHref, reducedMotion, canHover }: NextStepProps) {
+export function NextStep({
+  content,
+  contactHref,
+  reducedMotion,
+  canHover,
+  deferScene = false,
+}: NextStepProps) {
   const composition = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
     target: composition,
@@ -139,9 +147,13 @@ export function NextStep({ content, contactHref, reducedMotion, canHover }: Next
               {content.heading[3]}
             </span>
           </h2>
-          {/* The canvas keeps margin around the mark for the pointer tilt. */}
-          <div className="pointer-events-none absolute top-1/2 left-1/2 z-1 w-[12.7em] -translate-x-1/2 -translate-y-1/2 md:w-[7.85em]">
-            <NextStepMark heading={content.heading} />
+          {/* The canvas keeps margin around the mark for the pointer tilt. Centred by flex
+              rather than a transform or z-index, which would isolate it: the static mark
+              multiplies over the words beneath it, as the glass does, instead of veiling them. */}
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="w-[12.7em] shrink-0 md:w-[7.85em]">
+              <NextStepMark heading={content.heading} deferred={deferScene} />
+            </div>
           </div>
         </div>
         <m.div

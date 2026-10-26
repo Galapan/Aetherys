@@ -51,6 +51,14 @@ body {
   margin: 0;
   min-width: 320px;
 }
+/* Pre-bundle intro curtain: see index.html and useHeroEntrance. */
+.intro-pending body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: var(--color-warm-white);
+}
 @layer base {
   button,
   a {
