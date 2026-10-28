@@ -1,7 +1,7 @@
 import { m } from 'framer-motion'
 import { REVEAL_EASE } from '@/components/ui/easing'
 import type { Locale } from '@/content/hero'
-import type { ProjectsContent } from '@/content/projects'
+import { hasProjectPage, type ProjectsContent } from '@/content/projects'
 import { ProjectCard } from './projects/ProjectCard'
 import { reveal } from './projects/reveal'
 
@@ -75,6 +75,9 @@ export function Projects({ content, locale, reducedMotion, canHover }: ProjectsP
             canHover={canHover}
             className={`aspect-[5/3] ${cardAreas[index] ?? ''}`}
             sizes="(min-width: 1024px) 40vw, 100vw"
+            comingSoon={
+              hasProjectPage(card) ? undefined : { label: content.comingSoon, overlay: true }
+            }
           />
         ))}
       </div>

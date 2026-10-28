@@ -11,6 +11,7 @@ import { useMenuScene } from './useMenuScene'
 import { usePageTransition, type PageDestination } from './usePageTransition'
 import { audioSrc } from '@/components/ui/AudioToggle'
 import { aboutHref } from '@/content/about'
+import { contactHref } from '@/content/contact'
 import type { Locale } from '@/content/hero'
 import { parseRoute, routes, withLocale } from '@/routes'
 
@@ -48,7 +49,7 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
     busy: pendingLocale !== null,
     onSamePage: () => onNavigate(null),
   })
-  const { gap, headerInset, padding } = getMenuDimensions(snapshot)
+  const { gap } = getMenuDimensions(snapshot)
   const compact = Boolean(expanded && !reducedMotion && snapshot)
   const sceneTransition = createSceneTransition(
     expanded,
@@ -89,6 +90,7 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
           reducedMotion={reducedMotion}
           mounted={mounted}
           homeHref={homeHref}
+          contactHref={contactHref(locale)}
           onOpen={openMenu}
         />
         {children}
@@ -114,8 +116,6 @@ export function Navbar({ children, reducedMotion, path, onNavigate, ...props }: 
         ref={dialogRef}
         headerLayerRef={headerLayerRef}
         audioRef={audioElement}
-        padding={padding}
-        headerInset={headerInset}
         sceneTransition={sceneTransition}
         hoveredLink={hoveredLink}
         setHoveredLink={setHoveredLink}

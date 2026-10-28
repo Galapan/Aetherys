@@ -2,14 +2,14 @@ import { useEffect } from 'react'
 import { content as aboutContent } from '@/content/about'
 import { content as contactContent } from '@/content/contact'
 import { content, type Locale } from '@/content/hero'
-import { content as projectsContent, findProject } from '@/content/projects'
+import { content as projectsContent, findProject, hasProjectPage } from '@/content/projects'
 import type { Route } from '@/routes'
 
 function documentTitle(route: Route, locale: Locale): string {
   const { brand, title } = content[locale]
   if (route.kind === 'project') {
     const project = findProject(projectsContent[locale], route.slug)
-    if (project) return `${project.title} — ${brand}`
+    if (project && hasProjectPage(project)) return `${project.title} — ${brand}`
   }
   if (route.kind === 'contact') return `${contactContent[locale].title} — ${brand}`
   if (route.kind === 'about') return `${aboutContent[locale].title} — ${brand}`

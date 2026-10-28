@@ -1,8 +1,9 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode, type RefObject } from 'react'
 import { m, useScroll, useTransform, type MotionValue } from 'framer-motion'
 import type { AboutValue } from '@/content/about'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
+import { useDesktopLayout } from '@/hooks/useDesktopLayout'
 
 interface ValuesProps {
   eyebrow: string
@@ -32,11 +33,8 @@ const STAIR_WINDOWS: [number, number][] = [
   [0.27, 0.92],
 ]
 
-interface StairRowProps {
+interface RowProps {
   as?: 'div' | 'li'
-  index: number
-  progress: MotionValue<number>
-  scroll: boolean
   className?: string
   children?: ReactNode
   onHoverStart?: () => void
@@ -44,34 +42,49 @@ interface StairRowProps {
   onTap?: () => void
 }
 
-function StairRow({
+function Row({
   as = 'div',
-  index,
-  progress,
-  scroll,
   className,
+  x,
   children,
   ...events
-}: StairRowProps) {
-  const range = STAIR_WINDOWS[Math.min(index, STAIR_WINDOWS.length - 1)]
-  const x = useTransform(progress, range, ['100%', '0%'], { clamp: true })
-  const Row = as === 'li' ? m.li : m.div
+}: RowProps & { x?: MotionValue<string> }) {
+  const Element = as === 'li' ? m.li : m.div
   return (
-    <Row
+    <Element
       className={`bg-graphite ${rowClassName} ${className ?? ''}`}
-      style={{ x: scroll ? x : 0 }}
+      style={x ? { x } : undefined}
       {...events}
     >
       {children}
-    </Row>
+    </Element>
   )
+}
+
+interface StairRowProps extends RowProps {
+  index: number
+  /** Pinned scroll progress; null leaves the row in place, in the normal page flow. */
+  progress: MotionValue<number> | null
+}
+
+function SlidingRow({
+  index,
+  progress,
+  ...props
+}: RowProps & { index: number; progress: MotionValue<number> }) {
+  const range = STAIR_WINDOWS[Math.min(index, STAIR_WINDOWS.length - 1)]
+  const x = useTransform(progress, range, ['100%', '0%'], { clamp: true })
+  return <Row {...props} x={x} />
+}
+
+function StairRow({ index, progress, ...props }: StairRowProps) {
+  return progress ? <SlidingRow index={index} progress={progress} {...props} /> : <Row {...props} />
 }
 
 interface ValueRowProps {
   value: AboutValue
   index: number
-  progress: MotionValue<number>
-  scroll: boolean
+  progress: MotionValue<number> | null
   canHover: boolean
   dimDescriptions: boolean
   duration: number
@@ -86,7 +99,6 @@ function ValueRow({
   value,
   index,
   progress,
-  scroll,
   canHover,
   dimDescriptions,
   duration,
@@ -100,7 +112,6 @@ function ValueRow({
       as="li"
       index={index + 1}
       progress={progress}
-      scroll={scroll}
       onHoverStart={canHover ? () => setHovered(true) : undefined}
       onHoverEnd={canHover ? () => setHovered(false) : undefined}
       onTap={canHover ? undefined : onTap}
@@ -111,7 +122,8 @@ function ValueRow({
         <span className="text-[20px] leading-none font-light" aria-hidden="true">
           +
         </span>
-        <h3 className="m-0 grid text-[clamp(2rem,5.4vw,5.75rem)] leading-[1] font-normal tracking-[-0.02em] uppercase">
+        {/* Phones scale with the viewport so the longest title fits beside the "+". */}
+        <h3 className="m-0 grid text-[clamp(1.5rem,7.5vw,2rem)] leading-[1] font-normal tracking-[-0.02em] uppercase md:text-[clamp(2rem,5.4vw,5.75rem)]">
           <span className="[grid-area:1/1]">{value.title}</span>
           {/* Only the letters change colour on hover: a burgundy copy fades in over
               the title. */}
@@ -138,28 +150,56 @@ function ValueRow({
   )
 }
 
-export function Values({ eyebrow, values, reducedMotion, canHover }: ValuesProps) {
+// Phones get the reference's mobile layout: the dark panel scrolls in the normal flow and only
+// its label animates. The pinned staircase measured the section and moved every row on each
+// scroll frame, which made the page heavy on phones.
+export function Values(props: ValuesProps) {
+  const desktop = useDesktopLayout()
+  return desktop && !props.reducedMotion ? (
+    <PinnedValues {...props} />
+  ) : (
+    <ValuesPanel {...props} progress={null} />
+  )
+}
+
+function PinnedValues(props: ValuesProps) {
   const section = useRef<HTMLElement>(null)
-  const [tapped, setTapped] = useState<number | null>(null)
   const { scrollYProgress } = useScroll({ target: section, offset: ['start start', 'end end'] })
-  const scroll = !reducedMotion
+  return <ValuesPanel {...props} sectionRef={section} progress={scrollYProgress} />
+}
+
+interface ValuesPanelProps extends ValuesProps {
+  sectionRef?: RefObject<HTMLElement | null>
+  progress: MotionValue<number> | null
+}
+
+function ValuesPanel({
+  eyebrow,
+  values,
+  reducedMotion,
+  canHover,
+  sectionRef,
+  progress,
+}: ValuesPanelProps) {
+  const [tapped, setTapped] = useState<number | null>(null)
+  const pinned = progress !== null
   // Without hover every description stays readable; tapping a row highlights its title.
   const dimDescriptions = canHover && !reducedMotion
   const duration = reducedMotion ? 0 : HOVER_TRANSITION.duration
 
   return (
     <section
-      ref={section}
+      ref={sectionRef}
       // The extra height is the pinned stretch in which the staircase plays.
-      className={`bg-warm-white relative z-1 overflow-x-clip ${scroll ? 'h-[calc(100svh+160svh)]' : ''}`}
+      className={`bg-warm-white relative z-1 overflow-x-clip ${pinned ? 'h-[calc(100svh+160svh)]' : ''}`}
       aria-labelledby="valores-heading"
     >
       {/* Above the panel, so the guide lines stay visible while the rows slide over them. */}
       <RuleGrid className="absolute inset-0 z-1" spanClassName="bg-grid-burgundy" />
       <div
-        className={`text-warm-white ${scroll ? 'sticky top-0 h-svh pt-[var(--header-height)]' : ''}`}
+        className={`text-warm-white ${pinned ? 'sticky top-0 h-svh pt-[var(--header-height)]' : ''}`}
       >
-        <StairRow index={0} progress={scrollYProgress} scroll={scroll} className="border-t-0">
+        <StairRow index={0} progress={progress} className="border-t-0">
           <h2
             id="valores-heading"
             className="text-secondary m-0 flex min-h-[clamp(80px,9vw,156px)] items-center px-[var(--page-padding)] py-6 text-[clamp(12px,1vw,16px)] leading-[1.4] font-normal tracking-[0.08em] uppercase"
@@ -173,8 +213,7 @@ export function Values({ eyebrow, values, reducedMotion, canHover }: ValuesProps
               key={value.id}
               value={value}
               index={index}
-              progress={scrollYProgress}
-              scroll={scroll}
+              progress={progress}
               canHover={canHover}
               dimDescriptions={dimDescriptions}
               duration={duration}
@@ -183,12 +222,14 @@ export function Values({ eyebrow, values, reducedMotion, canHover }: ValuesProps
             />
           ))}
         </ul>
-        <StairRow
-          index={values.length + 1}
-          progress={scrollYProgress}
-          scroll={scroll}
-          className="h-[clamp(64px,9vw,156px)]"
-        />
+        {/* Last step of the staircase; in the flow layout the panel ends with the last value. */}
+        {pinned && (
+          <StairRow
+            index={values.length + 1}
+            progress={progress}
+            className="h-[clamp(64px,9vw,156px)]"
+          />
+        )}
       </div>
     </section>
   )

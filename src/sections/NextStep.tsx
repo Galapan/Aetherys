@@ -1,4 +1,4 @@
-import { useRef, useState, useSyncExternalStore } from 'react'
+import { useRef, useState } from 'react'
 import { m, useScroll, useTransform } from 'framer-motion'
 import { REVEAL_EASE } from '@/components/ui/easing'
 import type { NextStepContent } from '@/content/nextStep'
@@ -6,6 +6,7 @@ import { testimonyImages } from '@/content/testimonies'
 import { buttonClassName } from '@/components/ui/Button'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 import { NextStepMark } from '@/features/nextstep/NextStepMark'
+import { useDesktopLayout } from '@/hooks/useDesktopLayout'
 
 interface NextStepProps {
   content: NextStepContent
@@ -42,18 +43,6 @@ function photoVariants(side: -1 | 1) {
   }
 }
 
-const desktopQuery = '(min-width: 768px)'
-
-function subscribeDesktop(onChange: () => void) {
-  const query = window.matchMedia(desktopQuery)
-  query.addEventListener('change', onChange)
-  return () => query.removeEventListener('change', onChange)
-}
-
-function getDesktop() {
-  return window.matchMedia(desktopQuery).matches
-}
-
 export function NextStep({
   content,
   contactHref,
@@ -66,7 +55,7 @@ export function NextStep({
     target: composition,
     offset: ['start end', 'center center'],
   })
-  const desktop = useSyncExternalStore(subscribeDesktop, getDesktop)
+  const desktop = useDesktopLayout()
   const mobileLeftX = useTransform(scrollYProgress, [0, 1], MOBILE_LEFT_OFFSET)
   const mobileRightX = useTransform(scrollYProgress, [0, 1], MOBILE_RIGHT_OFFSET)
   const desktopLeftX = useTransform(scrollYProgress, [0, 1], DESKTOP_LEFT_OFFSET)

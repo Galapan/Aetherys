@@ -3,6 +3,7 @@ import { m } from 'framer-motion'
 import type { HeroContent } from '@/content/hero'
 import { normalizePath } from '@/routes'
 import { AudioToggle } from '@/components/ui/AudioToggle'
+import { HeaderContactGhost } from './HeaderContact'
 import { MenuCloseButton } from './MenuCloseButton'
 import type { PageSnapshot } from './useMenuScene'
 import type { SceneTransition } from './menuMotion'
@@ -12,6 +13,8 @@ interface MenuMovingHeaderProps {
   snapshot: PageSnapshot
   expanded: boolean
   reducedMotion: boolean
+  /** Inset of the scaled stage on each side. */
+  gap: number
   padding: number
   headerInset: number
   sceneTransition: SceneTransition
@@ -26,6 +29,7 @@ export function MenuMovingHeader({
   snapshot,
   expanded,
   reducedMotion,
+  gap,
   padding,
   headerInset,
   sceneTransition,
@@ -33,6 +37,11 @@ export function MenuMovingHeader({
   homeHref,
   onClose,
 }: MenuMovingHeaderProps) {
+  // The header layer stays unscaled, so the targets are the stage's padding as it appears
+  // once the stage has shrunk around its centre: gap + offset * scale.
+  const scaleX = 1 - (gap * 2) / snapshot.width
+  const scaleY = 1 - (gap * 2) / snapshot.height
+  const inset = gap + padding * scaleX
   return (
     <m.div
       className="pointer-events-auto absolute z-2 flex h-11 items-center justify-between"
@@ -42,7 +51,7 @@ export function MenuMovingHeader({
         right: snapshot.headerRight,
       }}
       initial={reducedMotion ? false : { y: 0 }}
-      animate={{ y: expanded ? headerInset - snapshot.headerTop : 0 }}
+      animate={{ y: expanded ? gap + headerInset * scaleY - snapshot.headerTop : 0 }}
       transition={sceneTransition}
     >
       <m.a
@@ -57,7 +66,7 @@ export function MenuMovingHeader({
           }
         }}
         initial={{ x: 0 }}
-        animate={{ x: expanded ? padding - snapshot.headerLeft : 0 }}
+        animate={{ x: expanded ? inset - snapshot.headerLeft : 0 }}
         transition={sceneTransition}
       >
         {content.brand}
@@ -65,10 +74,15 @@ export function MenuMovingHeader({
       <m.div
         className="flex items-center gap-[clamp(6px,1.8vw,12px)] md:gap-4"
         initial={{ x: 0 }}
-        animate={{ x: expanded ? snapshot.headerRight - padding : 0 }}
+        animate={{ x: expanded ? snapshot.headerRight - inset : 0 }}
         transition={sceneTransition}
       >
         <AudioToggle content={content} reducedMotion={reducedMotion} audioRef={audioRef} />
+        <HeaderContactGhost
+          label={content.contact}
+          expanded={expanded}
+          reducedMotion={reducedMotion}
+        />
         <MenuCloseButton
           content={content}
           expanded={expanded}

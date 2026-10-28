@@ -1,7 +1,7 @@
 import { lazy } from 'react'
 import type { Locale } from '@/content/hero'
 import { content as contactContent } from '@/content/contact'
-import { content as projectsContent, findProjectIndex } from '@/content/projects'
+import { content as projectsContent, findProjectIndex, hasProjectPage } from '@/content/projects'
 import type { Route } from '@/routes'
 import { HomePage } from './HomePage'
 import { pageLoaders } from './pageLoaders'
@@ -26,14 +26,16 @@ interface RoutedPageProps {
   canHover: boolean
 }
 
-/** The page for the current route; an unknown project slug falls back to the projects list. */
+/**
+ * The page for the current route; an unknown project slug, or one without its page yet,
+ * falls back to the projects list. */
 export function RoutedPage({ route, path, locale, reducedMotion, canHover }: RoutedPageProps) {
   const projectContent = projectsContent[locale]
 
   switch (route.kind) {
     case 'project': {
       const index = findProjectIndex(projectContent, route.slug)
-      if (index < 0) break
+      if (index < 0 || !hasProjectPage(projectContent.cards[index])) break
       return (
         <ProjectDetailPage
           key={path}

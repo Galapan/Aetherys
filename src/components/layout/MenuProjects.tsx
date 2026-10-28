@@ -1,6 +1,6 @@
 import { m } from 'framer-motion'
 import type { Locale } from '@/content/hero'
-import { content as projectsContent, projectHref } from '@/content/projects'
+import { content as projectsContent, hasProjectPage, projectHref } from '@/content/projects'
 import { menuContent } from '@/content/navigation'
 import { createReveal } from './menuMotion'
 
@@ -11,14 +11,16 @@ interface MenuProjectsProps {
 }
 
 export function MenuProjects({ locale, expanded, reducedMotion }: MenuProjectsProps) {
-  const projects = projectsContent[locale].cards
+  // Only projects with their own page; the others are coming soon and have nothing to open.
+  const projects = projectsContent[locale].cards.filter(hasProjectPage)
 
   return (
     <section className="min-w-0" aria-labelledby="menu-projects-heading">
-      <div className="overflow-hidden">
+      {/* The margin sits on the mask: inside it, it would leave room for the title to stop in. */}
+      <div className="mb-4 overflow-hidden">
         <m.h2
           id="menu-projects-heading"
-          className="text-burgundy m-0 mb-4 text-sm leading-[1.4] font-medium tracking-[0.02em] uppercase md:text-base"
+          className="text-burgundy m-0 text-sm leading-[1.4] font-medium tracking-[0.02em] uppercase md:text-base"
           {...createReveal(expanded, reducedMotion, 0.42, true)}
         >
           /{menuContent[locale].projects} ({projects.length})

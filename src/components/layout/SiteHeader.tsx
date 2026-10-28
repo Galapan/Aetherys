@@ -1,6 +1,8 @@
 import type { RefObject } from 'react'
 import type { HeroContent } from '@/content/hero'
 import { AudioToggle } from '@/components/ui/AudioToggle'
+import { HeaderContactLink } from './HeaderContact'
+import { MenuLabel } from './MenuLabel'
 
 interface SiteHeaderProps {
   ref: RefObject<HTMLElement | null>
@@ -11,6 +13,7 @@ interface SiteHeaderProps {
   mounted: boolean
   /** Brand link: an anchor on Home, the Home route elsewhere. */
   homeHref: string
+  contactHref: string
   onOpen: () => void
 }
 
@@ -22,6 +25,7 @@ export function SiteHeader({
   reducedMotion,
   mounted,
   homeHref,
+  contactHref,
   onOpen,
 }: SiteHeaderProps) {
   return (
@@ -40,25 +44,17 @@ export function SiteHeader({
       </a>
       <div className="flex items-center gap-[clamp(6px,1.8vw,12px)] md:gap-4">
         <AudioToggle content={content} reducedMotion={reducedMotion} audioRef={audioRef} />
+        <HeaderContactLink href={contactHref} label={content.contact} />
         <button
           ref={triggerRef}
-          className="pointer-events-auto flex min-h-11 items-center gap-4 rounded border-0 bg-transparent px-2 text-[20px] leading-[1.4] tracking-[0.08em] whitespace-nowrap text-inherit uppercase"
+          className="pointer-events-auto flex min-h-11 items-center rounded border-0 bg-transparent px-2 text-[20px] leading-[1.4] tracking-[0.08em] whitespace-nowrap text-inherit uppercase"
           type="button"
           aria-label={content.openMenu}
           aria-expanded={mounted}
           aria-controls="navigation-menu"
           onClick={onOpen}
         >
-          <span
-            className="grid w-[84px] shrink-0 grid-cols-[minmax(0,1fr)] items-center justify-items-end"
-            aria-hidden="true"
-          >
-            <span className="col-start-1 row-start-1 whitespace-nowrap">{content.menu}</span>
-          </span>
-          <span className="grid w-5 gap-[5px]" aria-hidden="true">
-            <i className="block h-px w-5 bg-current" />
-            <i className="block h-px w-5 bg-current" />
-          </span>
+          <MenuLabel content={content} expanded={false} reducedMotion={reducedMotion} />
         </button>
       </div>
     </header>

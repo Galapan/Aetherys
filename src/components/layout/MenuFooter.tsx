@@ -57,8 +57,9 @@ export function MenuFooter({
           {menuContact.location}
         </m.p>
       </div>
-      <div className="col-start-1 -my-2 overflow-hidden py-2 sm:row-start-2 lg:my-0">
-        <m.div {...createReveal(expanded, reducedMotion, 0.9, true)}>
+      {/* The focus-ring room (py-2) moves with the row: on the mask it would keep a sliver in view. */}
+      <div className="col-start-1 -my-2 overflow-hidden sm:row-start-2 lg:my-0">
+        <m.div className="py-2" {...createReveal(expanded, reducedMotion, 0.9, true)}>
           <m.a
             className="inline-flex min-h-8 items-center whitespace-nowrap"
             href={menuContact.phoneHref}
@@ -80,8 +81,8 @@ export function MenuFooter({
           </m.a>
         </m.div>
       </div>
-      <div className="col-start-1 -my-2 overflow-hidden py-2 sm:col-start-2 sm:row-start-2 lg:my-0">
-        <m.div {...createReveal(expanded, reducedMotion, 0.96, true)}>
+      <div className="col-start-1 -my-2 overflow-hidden sm:col-start-2 sm:row-start-2 lg:my-0">
+        <m.div className="py-2" {...createReveal(expanded, reducedMotion, 0.96, true)}>
           <m.a
             className="inline-flex min-h-8 items-center break-all"
             href={menuContact.emailHref}

@@ -96,3 +96,9 @@ body {
     --grid-columns: 12;
   }
 }
+
+/* Focus moved by script after a click or tap (menu, page and anchor transitions); see main.tsx.
+   Unlayered so it also overrides the focus-visible utilities. Text fields keep their ring. */
+[data-input='pointer'] :focus-visible:not(input, textarea, select) {
+  outline: none;
+}

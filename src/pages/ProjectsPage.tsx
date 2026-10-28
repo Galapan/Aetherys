@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, type RefObject } from 'react'
 import { m, useMotionValue, useTransform, type MotionValue } from 'framer-motion'
 import { useLenis } from 'lenis/react'
-import type { ProjectCard as ProjectCardData, ProjectsContent } from '@/content/projects'
+import {
+  hasProjectPage,
+  type ProjectCard as ProjectCardData,
+  type ProjectsContent,
+} from '@/content/projects'
 import type { Locale } from '@/content/hero'
 import { ProjectCard } from '@/sections/projects/ProjectCard'
 import { RuleGrid } from '@/components/ui/RuleGrid'
@@ -45,25 +49,43 @@ const rowGridClasses =
 
 const metaClasses = 'text-[12px] leading-[1.4] tracking-[0.08em] uppercase'
 
+// From the reference: a project without its page yet shows its title faded, with the
+// coming-soon label centred under it instead of the side label and year.
+const comingSoonGridClasses = 'grid justify-items-center gap-y-1 opacity-55'
+
 interface TitleRollRowProps {
   card: ProjectCardData
   label: string
+  comingSoon: string
   index: number
 }
 
-function TitleRollRow({ card, label, index }: TitleRollRowProps) {
+function TitleRollRow({ card, label, comingSoon, index }: TitleRollRowProps) {
   return (
     <div
       className="absolute inset-x-0 flex h-[var(--roll-pitch)] items-center justify-center whitespace-nowrap"
       style={{ top: `calc(var(--roll-pitch) * ${index})` }}
     >
-      <div className={rowGridClasses}>
-        <span className="justify-self-center [grid-area:title]">/{card.title}</span>
-        <span className={`justify-self-start [grid-area:label] ${metaClasses}`}>{label}</span>
-        {card.year && (
-          <span className={`justify-self-end [grid-area:year] ${metaClasses}`}>{card.year}</span>
-        )}
-      </div>
+      {hasProjectPage(card) ? (
+        <TitleRowGrid card={card} label={label} />
+      ) : (
+        <div className={comingSoonGridClasses}>
+          <span>/{card.title}</span>
+          <span className={metaClasses}>{comingSoon}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TitleRowGrid({ card, label }: Pick<TitleRollRowProps, 'card' | 'label'>) {
+  return (
+    <div className={rowGridClasses}>
+      <span className="justify-self-center [grid-area:title]">/{card.title}</span>
+      <span className={`justify-self-start [grid-area:label] ${metaClasses}`}>{label}</span>
+      {card.year && (
+        <span className={`justify-self-end [grid-area:year] ${metaClasses}`}>{card.year}</span>
+      )}
     </div>
   )
 }
@@ -71,6 +93,7 @@ function TitleRollRow({ card, label, index }: TitleRollRowProps) {
 interface TitleRollProps {
   cards: ProjectCardData[]
   label: string
+  comingSoon: string
   progress: MotionValue<number>
   reducedMotion: boolean
 }
@@ -78,7 +101,7 @@ interface TitleRollProps {
 /**
  * Sticky one-row window over every card title. The rows move linearly with the deck's
  * scroll progress, one pitch per card spacing, so the strip glides in step with Lenis. */
-function TitleRoll({ cards, label, progress, reducedMotion }: TitleRollProps) {
+function TitleRoll({ cards, label, comingSoon, progress, reducedMotion }: TitleRollProps) {
   const transform = useTransform(
     progress,
     (value) => `translateY(calc(var(--roll-pitch) * ${-value}))`,
@@ -101,7 +124,13 @@ function TitleRoll({ cards, label, progress, reducedMotion }: TitleRollProps) {
             style={{ transform }}
           >
             {cards.map((card, index) => (
-              <TitleRollRow key={card.id} card={card} label={label} index={index} />
+              <TitleRollRow
+                key={card.id}
+                card={card}
+                label={label}
+                comingSoon={comingSoon}
+                index={index}
+              />
             ))}
           </m.div>
         </div>
@@ -187,6 +216,7 @@ export function ProjectsPage({ content, locale, reducedMotion, canHover }: Proje
         <TitleRoll
           cards={content.cards}
           label={content.sideLabel}
+          comingSoon={content.comingSoon}
           progress={progress}
           reducedMotion={reducedMotion}
         />
@@ -202,6 +232,10 @@ export function ProjectsPage({ content, locale, reducedMotion, canHover }: Proje
               className={cardPlacement(index)}
               sizes="(min-width: 1024px) 46vw, 100vw"
               style={{ zIndex: total - index }}
+              // The title roll shows the name and the label over these cards.
+              comingSoon={
+                hasProjectPage(card) ? undefined : { label: content.comingSoon, overlay: false }
+              }
             />
           ))}
         </div>

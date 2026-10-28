@@ -4,6 +4,7 @@ import { REVEAL_EASE } from '@/components/ui/easing'
 import type { Locale } from '@/content/hero'
 import {
   projectHref,
+  projectImagePreview,
   projectImageSrcSet,
   projectLogoPaths,
   type ProjectCard as ProjectCardData,
@@ -129,9 +130,77 @@ interface ProjectCardProps {
   /** Rendered width hint so the browser picks a small srcset variant. */
   sizes: string
   style?: CSSProperties
+  /**
+   * A project without its page yet: the card is shown blurred, with no link or hover. With
+   * `overlay` off the name and label are only announced, for decks that show them elsewhere.
+   */
+  comingSoon?: { label: string; overlay: boolean }
 }
 
-export function ProjectCard({
+export function ProjectCard({ comingSoon, ...props }: ProjectCardProps) {
+  return comingSoon ? (
+    <ComingSoonCard {...props} {...comingSoon} />
+  ) : (
+    <LinkedProjectCard {...props} />
+  )
+}
+
+const articleClassName =
+  'text-warm-white [container-type:inline-size] relative w-full scroll-mt-[calc(var(--header-height)+24px)]'
+
+/**
+ * From the reference: the shot is blurred past recognition, with no hover or link, and at
+ * most the project's name and the coming-soon label over it.
+ */
+function ComingSoonCard({
+  card,
+  index,
+  className,
+  style,
+  label,
+  overlay,
+}: Omit<ProjectCardProps, 'comingSoon'> & NonNullable<ProjectCardProps['comingSoon']>) {
+  return (
+    <article
+      id={card.id}
+      data-project-index={index}
+      className={`${articleClassName} ${className}`}
+      style={style}
+    >
+      <div className="bg-graphite absolute inset-0 overflow-hidden rounded-lg" aria-hidden="true">
+        {/* Scaled so the blur's soft edges stay outside the clip. The blur hides any detail
+            past the smallest variant, so no srcset. */}
+        <img
+          className="block h-full w-full scale-110 object-cover blur-[clamp(14px,3.5cqw,28px)]"
+          src={projectImagePreview(card)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          width={1200}
+          height={675}
+        />
+        {/* Keeps the label legible over light screenshots. */}
+        {overlay && <div className="bg-graphite/35 absolute inset-0" />}
+      </div>
+      <div
+        className={
+          overlay
+            ? 'relative z-1 grid h-full place-content-center justify-items-center gap-2 px-6 text-center'
+            : 'sr-only'
+        }
+      >
+        <h3 className="text-warm-white/78 m-0 text-[clamp(24px,8cqw,56px)] leading-none font-medium tracking-[-0.03em] uppercase before:content-['/']">
+          {card.title}
+        </h3>
+        <p className="text-warm-white/78 m-0 text-[12px] leading-[1.4] tracking-[0.08em] uppercase">
+          {label}
+        </p>
+      </div>
+    </article>
+  )
+}
+
+function LinkedProjectCard({
   card,
   index,
   locale,
@@ -140,7 +209,7 @@ export function ProjectCard({
   className,
   sizes,
   style,
-}: ProjectCardProps) {
+}: Omit<ProjectCardProps, 'comingSoon'>) {
   const [hovered, setHovered] = useState(false)
   const active = canHover && !reducedMotion && hovered
   const showCategory = active || !canHover || reducedMotion
@@ -154,7 +223,7 @@ export function ProjectCard({
       id={card.id}
       data-project-index={index}
       tabIndex={-1}
-      className={`text-warm-white [container-type:inline-size] relative w-full scroll-mt-[calc(var(--header-height)+24px)] ${className}`}
+      className={`${articleClassName} ${className}`}
       style={style}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}

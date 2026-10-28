@@ -1,4 +1,4 @@
-import { useLayoutEffect, type ReactNode, type RefObject } from 'react'
+import { useLayoutEffect, useState, type ReactNode, type RefObject } from 'react'
 import { m } from 'framer-motion'
 import type { PageSnapshot } from './useMenuScene'
 import type { SceneTransition } from './menuMotion'
@@ -20,6 +20,10 @@ export function PageSurface({
   sceneTransition,
   children,
 }: PageSurfaceProps) {
+  // Whether the open animation finished: the menu panel then covers the page completely, so
+  // it stops painting (videos, marquees) until the menu starts closing.
+  const [covered, setCovered] = useState(false)
+
   useLayoutEffect(() => {
     // Scroll the frozen viewport itself so sticky children retain their viewport position.
     if (pageRef.current) pageRef.current.scrollTop = snapshot?.scrollY ?? 0
@@ -33,7 +37,11 @@ export function PageSurface({
         initial={false}
         animate={createPageAnimation(snapshot, gap, compact)}
         transition={sceneTransition}
-        style={createFixedPageStyle(snapshot)}
+        onAnimationComplete={() => setCovered(compact)}
+        style={{
+          ...createFixedPageStyle(snapshot),
+          visibility: compact && covered ? 'hidden' : undefined,
+        }}
       >
         <div>{children}</div>
       </m.div>
@@ -41,10 +49,13 @@ export function PageSurface({
   )
 }
 
+// No filter on the page: a blur paints past its rounded clip, so it would ring the card with a
+// light halo that vanishes at once when the covered page stops painting.
 function createPageAnimation(snapshot: PageSnapshot | null, gap: number, compact: boolean) {
+  if (!compact || !snapshot) return { scaleX: 1, scaleY: 1 }
   return {
-    scaleX: compact && snapshot ? 1 - (gap * 2) / snapshot.width : 1,
-    scaleY: compact && snapshot ? 1 - (gap * 2) / snapshot.height : 1,
+    scaleX: 1 - (gap * 2) / snapshot.width,
+    scaleY: 1 - (gap * 2) / snapshot.height,
   }
 }
 

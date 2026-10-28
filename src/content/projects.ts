@@ -32,6 +32,13 @@ export function projectImageSrcSet(card: Pick<ProjectCard, 'slug' | 'image'>): s
   )
 }
 
+/** Smallest background variant, for cards that only show the shot blurred. */
+export function projectImagePreview(card: Pick<ProjectCard, 'slug' | 'image'>): string {
+  return fullWidths[card.slug]
+    ? card.image.replace(/\.webp$/, `-${responsiveWidths[0]}.webp`)
+    : card.image
+}
+
 export interface ProjectPresentation {
   src: string
   srcSet?: string
@@ -118,6 +125,8 @@ export interface ProjectCard {
 export interface ProjectsContent {
   eyebrow: string
   sideLabel: string
+  /** Label of the Home cards whose project page is not published yet. */
+  comingSoon: string
   cards: ProjectCard[]
   detail: {
     back: string
@@ -135,6 +144,7 @@ export const content: Record<Locale, ProjectsContent> = {
   es: {
     eyebrow: '/PROYECTOS',
     sideLabel: 'WEB',
+    comingSoon: 'Próximamente',
     detail: {
       back: 'Volver a proyectos',
       context: '/CONTEXTO',
@@ -355,6 +365,7 @@ export const content: Record<Locale, ProjectsContent> = {
   en: {
     eyebrow: '/PROJECTS',
     sideLabel: 'WEB',
+    comingSoon: 'Coming soon',
     detail: {
       back: 'Back to projects',
       context: '/CONTEXT',
@@ -527,10 +538,10 @@ export const content: Record<Locale, ProjectsContent> = {
         markVariant: 'contrast',
       },
       {
-        title: 'Project 03',
+        title: 'SMyT',
         slug: 'smyt',
         year: '2026',
-        category: 'AI integration',
+        category: 'SaaS platform',
         id: 'proyecto-proyecto-03',
         image: '/media/projects/proyecto-smyt-fondo.webp',
         imageAlt: 'Screenshot of SMyT',
@@ -576,6 +587,11 @@ export const content: Record<Locale, ProjectsContent> = {
 
 export function projectHref(slug: string, locale: Locale): string {
   return withLocale(`${routes.projects}/${encodeURIComponent(slug)}`, locale)
+}
+
+/** Whether the project has its own page yet; the others show as coming soon on Home. */
+export function hasProjectPage(card: Pick<ProjectCard, 'sections'>): boolean {
+  return Boolean(card.sections?.length)
 }
 
 export function projectsHref(locale: Locale): string {

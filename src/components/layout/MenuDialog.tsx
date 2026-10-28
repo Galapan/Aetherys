@@ -33,8 +33,6 @@ interface MenuDialogProps {
   expanded: boolean
   snapshot: PageSnapshot | null
   audioRef: RefObject<HTMLAudioElement | null>
-  padding: number
-  headerInset: number
   sceneTransition: SceneTransition
   hoveredLink: number | null
   setHoveredLink: (index: number | null) => void
@@ -42,6 +40,9 @@ interface MenuDialogProps {
   onSelectLocale: (locale: Locale) => void
   onExitComplete: () => void
 }
+
+/** Height of the moving header row (h-11). */
+const HEADER_HEIGHT = 44
 
 export function MenuDialog({
   ref: dialogRef,
@@ -56,8 +57,6 @@ export function MenuDialog({
   expanded,
   snapshot,
   audioRef,
-  padding,
-  headerInset,
   sceneTransition,
   hoveredLink,
   setHoveredLink,
@@ -66,7 +65,7 @@ export function MenuDialog({
   onExitComplete,
 }: MenuDialogProps) {
   const copy = menuContent[navigation.locale]
-  const { gap } = getMenuDimensions(snapshot)
+  const { gap, headerInset, padding } = getMenuDimensions(snapshot)
   // Variant the stage last finished on. The full-screen layer hint stays only while the
   // stage is heading somewhere else, so the open menu does not hold it while idle.
   const [settledStage, setSettledStage] = useState<string | null>(null)
@@ -154,10 +153,10 @@ export function MenuDialog({
                   className="col-start-2 min-w-0 sm:col-span-4 sm:col-start-auto sm:self-end sm:text-right"
                   aria-labelledby="menu-socials-heading"
                 >
-                  <div className="overflow-hidden">
+                  <div className="mb-3 overflow-hidden">
                     <m.h2
                       id="menu-socials-heading"
-                      className="m-0 mb-3 text-sm leading-[1.4] font-normal tracking-[0.02em] uppercase md:text-base"
+                      className="m-0 text-sm leading-[1.4] font-normal tracking-[0.02em] uppercase md:text-base"
                       {...createReveal(expanded, reducedMotion, 0.6, true)}
                     >
                       {copy.socials}
@@ -191,21 +190,30 @@ export function MenuDialog({
           </div>
         </m.div>
       )}
-      {snapshot && stageMotion && (
+      {snapshot && (
         // Same warm-white difference blend as the page header, so the copy keeps adapting to the
         // page and the panel behind it while opening and closing, and hands off without a jump.
-        <m.div
+        // The blended layer only spans the header's track and never scales: a full-screen
+        // blend layer re-composited on every frame of the scene was the costliest part on
+        // phones. The header moves to where the scaled stage places it instead.
+        <div
           ref={headerLayerRef}
           popover="manual"
-          className="text-warm-white pointer-events-none fixed inset-y-0 m-0 h-dvh max-h-none max-w-none origin-center overflow-visible border-0 bg-transparent p-0 mix-blend-difference [--focus-outline:var(--color-warm-white)]"
-          style={{ left: snapshot.pageLeft, right: 'auto', width: snapshot.width }}
-          {...stageMotion}
+          className="text-warm-white pointer-events-none fixed top-0 m-0 max-h-none max-w-none overflow-visible border-0 bg-transparent p-0 mix-blend-difference [--focus-outline:var(--color-warm-white)]"
+          style={{
+            left: snapshot.pageLeft,
+            right: 'auto',
+            bottom: 'auto',
+            width: snapshot.width,
+            height: Math.max(snapshot.headerTop, gap + headerInset) + HEADER_HEIGHT,
+          }}
         >
           <MenuMovingHeader
             content={content}
             snapshot={snapshot}
             expanded={expanded}
             reducedMotion={reducedMotion}
+            gap={gap}
             padding={padding}
             headerInset={headerInset}
             sceneTransition={sceneTransition}
@@ -213,7 +221,7 @@ export function MenuDialog({
             homeHref={brandHref}
             onClose={() => onClose()}
           />
-        </m.div>
+        </div>
       )}
     </dialog>
   )
