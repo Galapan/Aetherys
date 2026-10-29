@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FocusEvent, type FormEvent, type ReactNode } from 'react'
-import { AnimatePresence, m } from 'framer-motion'
+import { AnimatePresence, animate, m, type AnimationPlaybackControls } from 'framer-motion'
 import { REVEAL_EASE } from '@/components/ui/easing'
 import type { ContactContent } from '@/content/contact'
 import { menuContact } from '@/content/navigation'
@@ -29,6 +29,12 @@ const PHONE_PATTERN = '\\+?[0-9 \\(\\)\\-]{8,20}'
 
 // How long the delivery confirmation stays before fading out.
 const SENT_ALERT_MS = 6000
+
+// Fields erased after a successful send, last to first, and the pace of each deletion.
+const ERASE_ORDER = ['message', 'type', 'phone', 'email', 'name'] as const
+const ERASE_PER_CHAR_S = 0.02
+const ERASE_MIN_S = 0.2
+const ERASE_MAX_S = 0.7
 
 type TextFieldElement = HTMLInputElement | HTMLTextAreaElement
 
@@ -203,6 +209,17 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
   const [invalid, setInvalid] = useState<Record<string, boolean>>({})
   // Idempotency key for the current form fill; renewed once a message is delivered.
   const requestId = useRef<string | null>(null)
+  const erasing = useRef(false)
+  const eraseControls = useRef<AnimationPlaybackControls | null>(null)
+  const mounted = useRef(true)
+
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+      eraseControls.current?.stop()
+    }
+  }, [])
 
   // The confirmation leaves on its own; the error stays until the next attempt.
   useEffect(() => {
@@ -225,7 +242,7 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
   // The Vercel Function at /api/contact forwards the request to the Aetherys inbox.
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (status === 'sending') return
+    if (status === 'sending' || erasing.current) return
     const form = event.currentTarget
     // Validation is ours (noValidate) so empty fields show the same animated state as on blur.
     const invalidFields = Array.from(form.elements).filter(
@@ -252,13 +269,46 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
         }),
       })
       if (!response.ok) throw new Error(`Contact request failed: ${response.status}`)
-      form.reset()
-      setType('')
       requestId.current = null
       setStatus('sent')
     } catch {
       setStatus('error')
+      return
     }
+    await eraseForm(form)
+  }
+
+  // Deletes the sent answers as if typed backwards: from the end of the message up to the
+  // first character of the name, one field after another.
+  async function eraseForm(form: HTMLFormElement) {
+    erasing.current = true
+    if (!reducedMotion) {
+      for (const name of ERASE_ORDER) {
+        if (!mounted.current) return
+        if (name === 'type') {
+          setType('')
+          continue
+        }
+        const field = form.elements.namedItem(name)
+        if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) continue
+        const text = field.value
+        if (!text) continue
+        const controls = animate(text.length, 0, {
+          duration: Math.min(ERASE_MAX_S, Math.max(ERASE_MIN_S, text.length * ERASE_PER_CHAR_S)),
+          ease: 'easeIn',
+          onUpdate: (length) => {
+            field.value = text.slice(0, Math.round(length))
+          },
+        })
+        eraseControls.current = controls
+        await controls
+      }
+    }
+    if (!mounted.current) return
+    form.reset()
+    setType('')
+    eraseControls.current = null
+    erasing.current = false
   }
 
   return (
@@ -384,7 +434,24 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
           />
           <div className="mt-4 flex flex-col items-start gap-4">
             <Button type="submit" lift={lift} disabled={status === 'sending'}>
-              {status === 'sending' ? content.sending : content.send}
+              {/* Both labels share one cell so the button keeps its width while they cross. */}
+              <span className="grid">
+                {[content.send, content.sending].map((text, index) => {
+                  const active = (status === 'sending') === (index === 1)
+                  return (
+                    <m.span
+                      key={index}
+                      className="[grid-area:1/1]"
+                      aria-hidden={!active || undefined}
+                      initial={false}
+                      animate={{ opacity: active ? 1 : 0, y: active ? 0 : index === 1 ? 6 : -6 }}
+                      transition={{ duration: reducedMotion ? 0 : 0.3, ease: REVEAL_EASE }}
+                    >
+                      {text}
+                    </m.span>
+                  )
+                })}
+              </span>
             </Button>
             {/* The live region stays mounted so screen readers announce the alert it receives. */}
             <div className="w-full" role="status">
