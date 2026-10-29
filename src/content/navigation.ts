@@ -5,8 +5,8 @@ export const menuContact = {
   location: 'Tlaxcala | México',
   phone: '+52 241 414 7285',
   phoneHref: 'tel:+522414147285',
-  email: 'bastian4le@gmail.com',
-  emailHref: 'mailto:bastian4le@gmail.com',
+  email: 'aetherys.dev@gmail.com',
+  emailHref: 'mailto:aetherys.dev@gmail.com',
 }
 
 export const menuSocials = [

@@ -20,15 +20,18 @@ export interface ContactContent {
   types: string[]
   message: string
   messagePlaceholder: string
-  /** Shown under a required field left empty (or with an invalid email). */
+  /** Shown under a required field left empty (or with an invalid email or phone). */
   nameError: string
   emailError: string
+  phoneError: string
   messageError: string
   send: string
-  /** Subject of the email composed from the form. */
-  subject: string
-  /** Shown once the form hands the message to the visitor's mail app. */
+  /** Shown while the request is on its way. */
+  sending: string
+  /** Shown once the message reached the Aetherys inbox. */
   sent: string
+  /** Shown when sending fails; the contact email follows it as a fallback. */
+  error: string
 }
 
 export const content: Record<Locale, ContactContent> = {
@@ -43,7 +46,7 @@ export const content: Record<Locale, ContactContent> = {
     namePlaceholder: 'Tu nombre',
     email: 'Correo electrónico',
     emailPlaceholder: 'tu@empresa.com',
-    phone: 'Teléfono (opcional)',
+    phone: 'Teléfono',
     phonePlaceholder: '+52 000 000 0000',
     type: 'Tipo de proyecto',
     typePlaceholder: 'Selecciona un tipo',
@@ -58,10 +61,12 @@ export const content: Record<Locale, ContactContent> = {
     messagePlaceholder: '¿Qué te gustaría contarnos?',
     nameError: 'Escribe tu nombre',
     emailError: 'Escribe un correo válido',
+    phoneError: 'Escribe un teléfono válido',
     messageError: 'Escribe tu mensaje',
     send: 'Enviar',
-    subject: 'Nuevo proyecto',
-    sent: 'Abrimos tu aplicación de correo con el mensaje listo para enviar.',
+    sending: 'Enviando…',
+    sent: 'Gracias, recibimos tu mensaje.',
+    error: 'No pudimos enviar tu mensaje. Inténtalo de nuevo o escríbenos a:',
   },
   en: {
     title: 'Contact',
@@ -74,7 +79,7 @@ export const content: Record<Locale, ContactContent> = {
     namePlaceholder: 'Your name',
     email: 'Email',
     emailPlaceholder: 'you@company.com',
-    phone: 'Phone (optional)',
+    phone: 'Phone',
     phonePlaceholder: '+52 000 000 0000',
     type: 'Project type',
     typePlaceholder: 'Select a type',
@@ -89,10 +94,12 @@ export const content: Record<Locale, ContactContent> = {
     messagePlaceholder: 'What would you like to tell us?',
     nameError: 'Please enter your name',
     emailError: 'Please enter a valid email',
+    phoneError: 'Please enter a valid phone number',
     messageError: 'Please enter your message',
     send: 'Send',
-    subject: 'New project',
-    sent: 'We opened your email app with the message ready to send.',
+    sending: 'Sending…',
+    sent: 'Thanks, we received your message.',
+    error: "We couldn't send your message. Please try again or email us at:",
   },
 }
 

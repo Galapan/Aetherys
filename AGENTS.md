@@ -75,7 +75,7 @@ package.json y el lockfile son la autoridad sobre versiones exactas. No actualiz
 - No existe todavía script de tests o formato; no reportarlos como disponibles.
 - vite.config.ts debe importar únicamente los plugins/configuración usados. Framer Motion y R3F pertenecen a src, no a la configuración de Vite.
 - Framer Motion con `LazyMotion` + `m` (`domMax`) para animaciones DOM y layout transitions; Lenis solo para suavizar el scroll; R3F/Three para 3D, con `useSpring` de Motion dentro de la escena. No importar el componente `motion` completo en UI ni añadir otro motor 3D sin solicitud explícita.
-- No se necesitan inicialmente CMS, base de datos, autenticación ni backend propio.
+- No se necesitan inicialmente CMS, base de datos, autenticación ni backend propio. Única excepción: la Vercel Function `api/contact.ts`, que envía el formulario de contacto a `aetherys.dev@gmail.com` mediante la API REST de Resend (variables `RESEND_API_KEY`, y opcionales `CONTACT_TO`/`CONTACT_FROM`). `pnpm dev` no la ejecuta; se prueba con `vercel dev` o un deploy Preview.
 - No instalar router, biblioteca de iconos o traducción por comodidad; cualquier dependencia nueva requiere justificación en el plan y autorización del propietario.
 
 ## 6. Diseño base prescrito

@@ -16,7 +16,7 @@ export function LightSection({ id, labelledBy, className, children }: LightSecti
   return (
     <section
       id={id}
-      className={`bg-warm-white text-graphite relative z-1 [--color-secondary:color-mix(in_srgb,var(--color-graphite)_62%,transparent)] ${className ?? ''}`}
+      className={`bg-warm-white text-graphite relative z-1 [color-scheme:light] [--color-secondary:color-mix(in_srgb,var(--color-graphite)_62%,transparent)] ${className ?? ''}`}
       aria-labelledby={labelledBy}
     >
       <RuleGrid className="absolute inset-0" spanClassName="bg-grid-burgundy" />

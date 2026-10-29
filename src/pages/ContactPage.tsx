@@ -1,4 +1,4 @@
-import { useState, type FocusEvent, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FocusEvent, type FormEvent, type ReactNode } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
 import { REVEAL_EASE } from '@/components/ui/easing'
 import type { ContactContent } from '@/content/contact'
@@ -24,6 +24,12 @@ const fieldClassName =
 const textFieldClassName =
   'placeholder:text-secondary block w-full rounded-none border-0 bg-transparent px-0 py-3 text-[18px] leading-[1.6] text-inherit outline-none'
 
+// Digits with optional leading +, spaces, dashes and parentheses; at least 8 characters.
+const PHONE_PATTERN = '\\+?[0-9 \\(\\)\\-]{8,20}'
+
+// How long the delivery confirmation stays before fading out.
+const SENT_ALERT_MS = 6000
+
 type TextFieldElement = HTMLInputElement | HTMLTextAreaElement
 
 interface TextFieldProps {
@@ -32,6 +38,8 @@ interface TextFieldProps {
   placeholder: string
   type?: string
   autoComplete?: string
+  /** Format the value must match, checked through the native constraint validation. */
+  pattern?: string
   multiline?: boolean
   /** Required fields pass the message shown when they are left empty or invalid. */
   error?: string
@@ -49,6 +57,7 @@ function TextField({
   placeholder,
   type = 'text',
   autoComplete,
+  pattern,
   multiline = false,
   error,
   invalid,
@@ -90,7 +99,7 @@ function TextField({
       {multiline ? (
         <m.textarea {...fieldProps} rows={3} />
       ) : (
-        <m.input {...fieldProps} type={type} autoComplete={autoComplete} />
+        <m.input {...fieldProps} type={type} autoComplete={autoComplete} pattern={pattern} />
       )}
       <span className="bg-graphite pointer-events-none absolute inset-x-0 bottom-0 h-px" />
       <m.span
@@ -118,10 +127,89 @@ function TextField({
   )
 }
 
+interface FormAlertProps {
+  kind: 'sent' | 'error'
+  reducedMotion: boolean
+  children: ReactNode
+}
+
+// Burgundy rule sweeping in like the invalid underline, the icon drawing itself, then the
+// message rising into place.
+function FormAlert({ kind, reducedMotion, children }: FormAlertProps) {
+  const timing = (duration: number, delay = 0) => ({
+    duration: reducedMotion ? 0 : duration,
+    delay: reducedMotion ? 0 : delay,
+    ease: REVEAL_EASE,
+  })
+  const draw = {
+    initial: reducedMotion ? false : { pathLength: 0 },
+    animate: { pathLength: 1 },
+    transition: timing(0.5, 0.25),
+  } as const
+
+  return (
+    <m.div
+      className="relative flex items-start gap-3 pt-4 text-[14px] leading-[1.4]"
+      exit={{ opacity: 0, y: reducedMotion ? 0 : -4, transition: timing(0.25) }}
+    >
+      <m.span
+        className="bg-burgundy pointer-events-none absolute inset-x-0 top-0 h-px origin-left"
+        initial={reducedMotion ? false : { scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={timing(0.6)}
+      />
+      <svg
+        className="text-burgundy mt-px h-4 w-4 shrink-0"
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+        focusable="false"
+      >
+        {kind === 'sent' ? (
+          <m.path
+            d="M3 8.5l3.25 3.25L13 5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            {...draw}
+          />
+        ) : (
+          <>
+            <m.path d="M8 3v6.5" fill="none" stroke="currentColor" strokeWidth="1.5" {...draw} />
+            <m.path
+              d="M8 12.25v.75"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              {...draw}
+            />
+          </>
+        )}
+      </svg>
+      <m.p
+        className="m-0"
+        initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={timing(0.5, 0.15)}
+      >
+        {children}
+      </m.p>
+    </m.div>
+  )
+}
+
 export function ContactPage({ content, reducedMotion, canHover }: ContactPageProps) {
   const [type, setType] = useState('')
-  const [sent, setSent] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [invalid, setInvalid] = useState<Record<string, boolean>>({})
+  // Idempotency key for the current form fill; renewed once a message is delivered.
+  const requestId = useRef<string | null>(null)
+
+  // The confirmation leaves on its own; the error stays until the next attempt.
+  useEffect(() => {
+    if (status !== 'sent') return
+    const timeout = window.setTimeout(() => setStatus('idle'), SENT_ALERT_MS)
+    return () => window.clearTimeout(timeout)
+  }, [status])
   const setFieldInvalid = (name: string, value: boolean) =>
     setInvalid((current) => (current[name] === value ? current : { ...current, [name]: value }))
   const lift = canHover && !reducedMotion
@@ -134,10 +222,10 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
     } as const
   }
 
-  // No backend yet: the form composes the email in the visitor's mail app, addressed to
-  // the verified contact address.
-  function submit(event: FormEvent<HTMLFormElement>) {
+  // The Vercel Function at /api/contact forwards the request to the Aetherys inbox.
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (status === 'sending') return
     const form = event.currentTarget
     // Validation is ours (noValidate) so empty fields show the same animated state as on blur.
     const invalidFields = Array.from(form.elements).filter(
@@ -153,18 +241,24 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
       invalidFields[0].focus()
       return
     }
-    const data = new FormData(form)
-    const read = (key: string) => String(data.get(key) ?? '').trim()
-    const details = [
-      `${content.name}: ${read('name')}`,
-      `${content.email}: ${read('email')}`,
-      read('phone') && `${content.phone}: ${read('phone')}`,
-      read('type') && `${content.type}: ${read('type')}`,
-    ].filter(Boolean)
-    const body = `${details.join('\n')}\n\n${read('message')}`
-    const subject = [content.subject, read('type')].filter(Boolean).join(' — ')
-    window.location.href = `${menuContact.emailHref}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-    setSent(true)
+    setStatus('sending')
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...Object.fromEntries(new FormData(form)),
+          requestId: (requestId.current ??= crypto.randomUUID()),
+        }),
+      })
+      if (!response.ok) throw new Error(`Contact request failed: ${response.status}`)
+      form.reset()
+      setType('')
+      requestId.current = null
+      setStatus('sent')
+    } catch {
+      setStatus('error')
+    }
   }
 
   return (
@@ -210,6 +304,15 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
           <h2 id="contacto-form-heading" className={`${leadClassName} mb-2`}>
             {content.formHeading}
           </h2>
+          {/* Honeypot: hidden from people and assistive tech; bots that fill it are dropped
+              by the function. */}
+          <input
+            className="sr-only"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+          />
           <TextField
             label={content.name}
             name="name"
@@ -236,8 +339,10 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
             name="phone"
             type="tel"
             autoComplete="tel"
+            pattern={PHONE_PATTERN}
             placeholder={content.phonePlaceholder}
-            invalid={false}
+            error={content.phoneError}
+            invalid={Boolean(invalid.phone)}
             onValidityChange={setFieldInvalid}
             reducedMotion={reducedMotion}
           />
@@ -278,12 +383,31 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
             reducedMotion={reducedMotion}
           />
           <div className="mt-4 flex flex-col items-start gap-4">
-            <Button type="submit" lift={lift}>
-              {content.send}
+            <Button type="submit" lift={lift} disabled={status === 'sending'}>
+              {status === 'sending' ? content.sending : content.send}
             </Button>
-            <p className="m-0 text-[14px] leading-[1.4]" role="status">
-              {sent ? content.sent : ''}
-            </p>
+            {/* The live region stays mounted so screen readers announce the alert it receives. */}
+            <div className="w-full" role="status">
+              <AnimatePresence mode="wait" initial={false}>
+                {status === 'sent' || status === 'error' ? (
+                  <FormAlert key={status} kind={status} reducedMotion={reducedMotion}>
+                    {status === 'sent' ? (
+                      content.sent
+                    ) : (
+                      <>
+                        {content.error}{' '}
+                        <a
+                          className="text-burgundy focus-visible:outline-graphite [overflow-wrap:anywhere] hover:underline"
+                          href={menuContact.emailHref}
+                        >
+                          {menuContact.email}
+                        </a>
+                      </>
+                    )}
+                  </FormAlert>
+                ) : null}
+              </AnimatePresence>
+            </div>
           </div>
         </m.form>
 
