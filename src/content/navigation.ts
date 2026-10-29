@@ -16,7 +16,6 @@ export const menuSocials = [
 
 interface MenuContent {
   about: string
-  socials: string
   projects: string
   contact: string
 }
@@ -24,13 +23,11 @@ interface MenuContent {
 export const menuContent: Record<Locale, MenuContent> = {
   es: {
     about: 'Nosotros',
-    socials: 'Redes sociales',
     projects: 'Proyectos',
     contact: 'Datos de contacto',
   },
   en: {
     about: 'About',
-    socials: 'Socials',
     projects: 'Projects',
     contact: 'Contact details',
   },

@@ -1,7 +1,7 @@
 import { useState, type KeyboardEvent, type RefObject } from 'react'
 import { m } from 'framer-motion'
 import type { HeroContent, Locale } from '@/content/hero'
-import { menuContent, menuSocials } from '@/content/navigation'
+import { menuContent } from '@/content/navigation'
 import { projectsHref } from '@/content/projects'
 import { contactHref } from '@/content/contact'
 import type { NavigationProps } from './LanguageSwitch'
@@ -9,12 +9,7 @@ import { MenuFooter } from './MenuFooter'
 import { MenuLink } from './MenuLink'
 import { MenuMovingHeader } from './MenuMovingHeader'
 import { MenuProjects } from './MenuProjects'
-import {
-  createPanelTransition,
-  createReveal,
-  getMenuDimensions,
-  type SceneTransition,
-} from './menuMotion'
+import { createPanelTransition, getMenuDimensions, type SceneTransition } from './menuMotion'
 import type { PageSnapshot } from './useMenuScene'
 
 interface MenuDialogProps {
@@ -149,35 +144,6 @@ export function MenuDialog({
                     reducedMotion={reducedMotion}
                   />
                 </div>
-                <section
-                  className="col-start-2 min-w-0 sm:col-span-4 sm:col-start-auto sm:self-end sm:text-right"
-                  aria-labelledby="menu-socials-heading"
-                >
-                  <div className="mb-3 overflow-hidden">
-                    <m.h2
-                      id="menu-socials-heading"
-                      className="m-0 text-sm leading-[1.4] font-normal tracking-[0.02em] uppercase md:text-base"
-                      {...createReveal(expanded, reducedMotion, 0.6, true)}
-                    >
-                      {copy.socials}
-                    </m.h2>
-                  </div>
-                  <ul className="m-0 flex list-none flex-col items-start gap-1 p-0 sm:items-end">
-                    {menuSocials.map((social, index) => (
-                      <li key={social.label} className="overflow-hidden">
-                        <m.a
-                          href={social.href || undefined}
-                          role={social.href ? undefined : 'link'}
-                          aria-disabled={!social.href || undefined}
-                          className="text-secondary inline-flex min-h-8 items-center text-sm uppercase aria-disabled:cursor-default md:text-base"
-                          {...createReveal(expanded, reducedMotion, 0.66 + index * 0.07, true)}
-                        >
-                          {social.label}
-                        </m.a>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
               </div>
               <MenuFooter
                 navigation={navigation}
