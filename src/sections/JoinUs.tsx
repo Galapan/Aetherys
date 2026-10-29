@@ -2,7 +2,7 @@ import { SectionTitleReveal } from '@/components/ui/SectionTitleReveal'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { stagger, useAnimate, useInView } from 'framer-motion'
 import { REVEAL_EASE } from '@/components/ui/easing'
-import { joinUsAssets, type JoinUsContent } from '@/content/joinUs'
+import { JOIN_US_PHOTO_SIZE, joinUsAssets, type JoinUsContent } from '@/content/joinUs'
 import { Button } from '@/components/ui/Button'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 
@@ -66,6 +66,20 @@ function Words({ text }: { text: string }) {
       </span>
     </span>
   ))
+}
+
+function JoinUsPhoto({ src, alt }: { src: string; alt: string }) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="block h-full w-full object-cover"
+      width={JOIN_US_PHOTO_SIZE}
+      height={JOIN_US_PHOTO_SIZE}
+      loading="lazy"
+      decoding="async"
+    />
+  )
 }
 
 function JoinUsVideo({ label, reducedMotion }: { label: string; reducedMotion: boolean }) {
@@ -137,23 +151,19 @@ export function JoinUs({ content, contactHref, reducedMotion, canHover }: JoinUs
             <div className="mt-12 lg:mt-16">
               <div className="bg-dark-gray aspect-square overflow-clip rounded-lg">
                 {joinUsAssets.photo && (
-                  <img
-                    src={joinUsAssets.photo}
-                    alt={content.photoAlt}
-                    className="block h-full w-full object-cover"
-                    width={800}
-                    height={800}
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  <JoinUsPhoto src={joinUsAssets.photo} alt={content.photoAlt} />
                 )}
               </div>
             </div>
           </div>
           <div className="min-w-0 md:col-span-4 md:pt-6 lg:col-span-5 lg:col-start-8">
             <div className="bg-dark-gray aspect-square overflow-clip rounded-lg">
-              {joinUsAssets.video && (
+              {joinUsAssets.video ? (
                 <JoinUsVideo label={content.videoLabel} reducedMotion={reducedMotion} />
+              ) : (
+                joinUsAssets.secondaryPhoto && (
+                  <JoinUsPhoto src={joinUsAssets.secondaryPhoto} alt={content.secondaryPhotoAlt} />
+                )
               )}
             </div>
             <Reveal kind="heading" className="mt-8 lg:mt-12" reducedMotion={reducedMotion}>
