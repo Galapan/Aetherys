@@ -3,7 +3,7 @@ import { m, useInView, useMotionValue, useScroll, useSpring, useTransform } from
 import { REVEAL_EASE } from '@/components/ui/easing'
 import { heroMark, type HeroContent, type Locale } from '@/content/hero'
 import { content as footerContent } from '@/content/footer'
-import { menuContact, menuContent, menuSocials } from '@/content/navigation'
+import { menuContact, menuContent } from '@/content/navigation'
 import { aboutHref } from '@/content/about'
 import { projectsHref } from '@/content/projects'
 import { RuleGrid } from '@/components/ui/RuleGrid'
@@ -256,12 +256,6 @@ export function SiteFooter({
                 </h2>
                 <FooterLinks links={pages} hover={hoverLink} />
               </nav>
-              <section aria-labelledby="footer-socials">
-                <h2 id="footer-socials" className={headingClassName}>
-                  {copy.socials}
-                </h2>
-                <FooterLinks links={menuSocials} hover={hoverLink} />
-              </section>
               <div className="col-span-2 -ml-3 self-end justify-self-start md:col-span-3 md:col-start-4 md:ml-0 md:justify-self-end">
                 <LanguageSwitch
                   content={content}

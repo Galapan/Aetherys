@@ -4,7 +4,6 @@ export interface FooterContent {
   label: string
   homeLabel: string
   pages: string
-  socials: string
   services: string
   process: string
   backToTop: string
@@ -17,7 +16,6 @@ export const content: Record<Locale, FooterContent> = {
     label: 'Pie de página',
     homeLabel: 'Aetherys, ir al inicio',
     pages: 'Páginas',
-    socials: 'Redes',
     services: 'Servicios',
     process: 'Proceso',
     backToTop: 'Volver arriba',
@@ -27,7 +25,6 @@ export const content: Record<Locale, FooterContent> = {
     label: 'Footer',
     homeLabel: 'Aetherys, go to top',
     pages: 'Pages',
-    socials: 'Socials',
     services: 'Services',
     process: 'Process',
     backToTop: 'Back to top',

@@ -9,11 +9,6 @@ export const menuContact = {
   emailHref: 'mailto:aetherys.dev@gmail.com',
 }
 
-export const menuSocials = [
-  { label: 'Instagram', href: '' },
-  { label: 'LinkedIn', href: '' },
-]
-
 interface MenuContent {
   about: string
   projects: string
