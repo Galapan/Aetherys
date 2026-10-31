@@ -42,12 +42,13 @@ const escapeHtml = (value: string) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 
-const formatDate = (date: Date) =>
-  new Intl.DateTimeFormat('es-MX', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-    timeZone: 'America/Mexico_City',
-  }).format(date)
+const DATE_FORMAT = new Intl.DateTimeFormat('es-MX', {
+  dateStyle: 'full',
+  timeStyle: 'short',
+  timeZone: 'America/Mexico_City',
+})
+
+const formatDate = (date: Date) => DATE_FORMAT.format(date)
 
 const telHref = (phone: string) => `tel:${phone.replace(/[^+\d]/g, '')}`
 
