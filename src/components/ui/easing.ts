@@ -12,6 +12,10 @@ export const SPRING_BOUNCY = { type: 'spring', visualDuration: 0.35, bounce: 0.5
 /** Presses: a quicker, tighter give. */
 export const SPRING_PRESS = { type: 'spring', visualDuration: 0.25, bounce: 0.45 } as const
 
+/** Primary buttons grow on hover and give on press, both on the springs above. */
+export const BUTTON_HOVER_SCALE = 1.05
+export const BUTTON_PRESS_SCALE = 0.95
+
 const KICK_PUSH = { duration: 0.08, ease: [0.16, 1, 0.3, 1] as const }
 
 /**

@@ -1,10 +1,14 @@
 import { useRef, useState } from 'react'
 import { m, useScroll, useTransform } from 'framer-motion'
-import { REVEAL_EASE } from '@/components/ui/easing'
+import {
+  BUTTON_HOVER_SCALE,
+  BUTTON_PRESS_SCALE,
+  SPRING_BOUNCY,
+  SPRING_PRESS,
+} from '@/components/ui/easing'
 import type { NextStepContent } from '@/content/nextStep'
 import { testimonyImages } from '@/content/testimonies'
 import { buttonClassName } from '@/components/ui/Button'
-import { RollingText } from '@/components/ui/RollingText'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 import { NextStepMark } from '@/features/nextstep/NextStepMark'
 import { useDesktopLayout } from '@/hooks/useDesktopLayout'
@@ -28,13 +32,14 @@ const DESKTOP_LEFT_OFFSET = ['-2em', '0em']
 const DESKTOP_RIGHT_OFFSET = ['2em', '0em']
 const STATIC_OFFSET = ['0em', '0em']
 
-// CTA hover from the reference: the portraits fan out and lift on a soft spring, the button
-// dips as if pressed.
+// CTA hover from the reference: the portraits fan out and lift on a soft spring, while the
+// button grows with the same bounce as the shared Button.
 const PHOTO_SPRING = { type: 'spring', stiffness: 160, damping: 22, mass: 0.9 } as const
-const BUTTON_PRESS = { duration: 0.5, ease: REVEAL_EASE } as const
-const BUTTON_SCALE = 0.97
-// The label counter-scales on the same curve so the text keeps its size while the button dips.
-const LABEL_VARIANTS = { rest: { scale: 1 }, active: { scale: 1 / BUTTON_SCALE } }
+const CTA_VARIANTS = {
+  rest: { scale: 1, transition: SPRING_BOUNCY },
+  active: { scale: BUTTON_HOVER_SCALE, transition: SPRING_BOUNCY },
+  tap: { scale: BUTTON_PRESS_SCALE, transition: SPRING_PRESS },
+}
 
 /** side: -1 for the left portrait, 1 for the right one. */
 function photoVariants(side: -1 | 1) {
@@ -69,18 +74,13 @@ export function NextStep({
   const [ctaFocused, setCtaFocused] = useState(false)
   const ctaActive = !reducedMotion && (ctaHovered || ctaFocused)
   const ctaMotion = {
-    variants: { rest: { scale: 1 }, active: { scale: BUTTON_SCALE } },
-    transition: BUTTON_PRESS,
+    variants: CTA_VARIANTS,
+    whileTap: reducedMotion ? undefined : 'tap',
     onHoverStart: canHover ? () => setCtaHovered(true) : undefined,
     onHoverEnd: canHover ? () => setCtaHovered(false) : undefined,
     onFocus: () => setCtaFocused(true),
     onBlur: () => setCtaFocused(false),
   }
-  const ctaLabel = (
-    <m.span className="block" variants={LABEL_VARIANTS} transition={BUTTON_PRESS}>
-      <RollingText text={content.callToAction} />
-    </m.span>
-  )
 
   return (
     <section
@@ -178,7 +178,7 @@ export function NextStep({
             />
           </div>
           <m.a className={`${buttonClassName} relative z-1`} href={contactHref} {...ctaMotion}>
-            {ctaLabel}
+            {content.callToAction}
           </m.a>
         </m.div>
       </div>
