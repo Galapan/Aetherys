@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, type PointerEvent, type RefObject } from 'react'
 import {
   useAnimationFrame,
   useMotionValue,
@@ -23,6 +23,13 @@ interface Marquee {
   x: MotionValue<number>
   /** Hover or focus: ease the resting drift to a stop, or back once it ends. */
   setHalted: (halted: boolean) => void
+  /** Touch drag handlers for the rail, which also needs `touch-action: pan-y`. */
+  swipe: {
+    onPointerDown: (event: PointerEvent) => void
+    onPointerMove: (event: PointerEvent) => void
+    onPointerUp: (event: PointerEvent) => void
+    onPointerCancel: () => void
+  }
 }
 
 // Rail px/s added per px/s of page scroll; scrolling up past the resting speed reverses it.
@@ -32,6 +39,16 @@ const MAX_SPEED = 480
 const VELOCITY_SMOOTHING = 0.5
 // Time constant of the drift easing to a stop on hover and back when it ends.
 const HALT_SMOOTHING = 0.5
+// Cap on a released flick's speed; the velocity easing then settles it back into the drift.
+const FLICK_SPEED = 2000
+// A finger resting longer than this before lifting counts as stopped.
+const STILL_MS = 100
+
+/** Keeps an offset within one period, in (-period, 0]. */
+function wrap(offset: number, period: number): number {
+  const next = offset % period
+  return next > 0 ? next - period : next
+}
 
 /**
  * Endless horizontal rail driven frame by frame. It drifts left at rest; page scroll adds
@@ -46,11 +63,55 @@ export function useMarquee({ enabled, duration, group, viewport }: MarqueeOption
   const drift = useRef(1)
   const visible = useRef(false)
   const halted = useRef(false)
+  const drag = useRef<{ id: number; pointerX: number; time: number; speed: number } | null>(null)
   const { scrollY } = useScroll()
   const scrollVelocity = useVelocity(scrollY)
   const setHalted = useCallback((value: boolean) => {
     halted.current = value
   }, [])
+
+  // Touch only: the finger moves the track directly and its release speed carries on as
+  // the rail's velocity. Mouse and pen keep the hover behaviour.
+  const swipe = useMemo<Marquee['swipe']>(() => {
+    const release = (speed: number) => {
+      if (!drag.current) return
+      drag.current = null
+      velocity.current = Math.max(-FLICK_SPEED, Math.min(FLICK_SPEED, speed))
+    }
+    return {
+      onPointerDown(event) {
+        if (!enabled || event.pointerType !== 'touch' || drag.current) return
+        drag.current = {
+          id: event.pointerId,
+          pointerX: event.clientX,
+          time: event.timeStamp,
+          speed: 0,
+        }
+      },
+      onPointerMove(event) {
+        const current = drag.current
+        const width = period.current
+        if (!current || event.pointerId !== current.id || width <= 0) return
+        const dx = event.clientX - current.pointerX
+        const elapsed = event.timeStamp - current.time
+        x.set(wrap(x.get() + dx, width))
+        // Rail velocity runs opposite to the finger: a leftward swipe is a positive speed.
+        if (elapsed > 0) current.speed = (-dx / elapsed) * 1000
+        current.pointerX = event.clientX
+        current.time = event.timeStamp
+      },
+      onPointerUp(event) {
+        const current = drag.current
+        if (current?.id !== event.pointerId) return
+        // A finger that stopped before lifting releases without a flick.
+        release(event.timeStamp - current.time > STILL_MS ? 0 : current.speed)
+      },
+      // The browser took the gesture as a vertical scroll.
+      onPointerCancel() {
+        release(0)
+      },
+    }
+  }, [enabled, x])
 
   useEffect(() => {
     const element = viewport.current
@@ -79,7 +140,7 @@ export function useMarquee({ enabled, duration, group, viewport }: MarqueeOption
 
   useAnimationFrame((_, delta) => {
     const width = period.current
-    if (!enabled || !visible.current || width <= 0 || duration <= 0) return
+    if (!enabled || !visible.current || drag.current || width <= 0 || duration <= 0) return
     // A long gap (background tab, dropped frames) must not fling the rail.
     const seconds = Math.min(delta, 100) / 1000
     // Halting eases only the resting drift; scrolling still pushes the rail.
@@ -91,9 +152,8 @@ export function useMarquee({ enabled, duration, group, viewport }: MarqueeOption
     )
     velocity.current += (target - velocity.current) * (1 - Math.exp(-seconds / VELOCITY_SMOOTHING))
     // Two identical groups: wrapping by one period is invisible.
-    const next = (x.get() - velocity.current * seconds) % width
-    x.set(next > 0 ? next - width : next)
+    x.set(wrap(x.get() - velocity.current * seconds, width))
   })
 
-  return { x, setHalted }
+  return { x, setHalted, swipe }
 }

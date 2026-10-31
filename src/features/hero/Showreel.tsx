@@ -8,6 +8,8 @@ interface ShowreelProps {
   content: HeroContent
   reducedMotion: boolean
   canHover: boolean
+  /** Holds the preview's download and playback back while the intro runs. */
+  deferPreview: boolean
 }
 
 interface Frame {
@@ -33,13 +35,13 @@ function playerFrame(): Frame {
   }
 }
 
-export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
+export function Showreel({ content, reducedMotion, canHover, deferPreview }: ShowreelProps) {
   const trigger = useRef<HTMLButtonElement>(null)
   const preview = useRef<HTMLVideoElement>(null)
   const previewVisible = useInView(preview)
   const returnFocus = useRef(false)
   const [origin, setOrigin] = useState<Frame | null>(null)
-  const previewPlaying = previewVisible && origin === null
+  const previewPlaying = previewVisible && origin === null && !deferPreview
 
   // Only decode the preview while it can be seen; the dialog plays the full video.
   useEffect(() => {
@@ -87,11 +89,11 @@ export function Showreel({ content, reducedMotion, canHover }: ShowreelProps) {
             ref={preview}
             className="absolute inset-0 h-full w-full scale-[1.04] object-cover blur-[1px]"
             src={content.showreel.preview}
-            autoPlay
+            autoPlay={!deferPreview}
             muted
             loop
             playsInline
-            preload="metadata"
+            preload={deferPreview ? 'none' : 'metadata'}
           />
           <span className="absolute inset-0 bg-[color-mix(in_srgb,var(--color-graphite)_58%,transparent)]" />
           <span className="relative text-xs tracking-[0.08em] text-[var(--color-warm-white)]">

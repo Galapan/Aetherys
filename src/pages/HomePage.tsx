@@ -75,7 +75,12 @@ export function HomePage({ locale, reducedMotion, canHover }: HomePageProps) {
         {/* Pinned to the bottom after the stage text, so it paints above the hero and manifesto. */}
         <div className="pointer-events-none sticky bottom-0 z-1 -mt-[calc(100svh-var(--header-height))] flex h-[calc(100svh-var(--header-height))] flex-col justify-end">
           <StageFoot copy={copy}>
-            <Showreel content={copy} reducedMotion={reducedMotion} canHover={canHover} />
+            <Showreel
+              content={copy}
+              reducedMotion={reducedMotion}
+              canHover={canHover}
+              deferPreview={entering}
+            />
           </StageFoot>
         </div>
       </div>

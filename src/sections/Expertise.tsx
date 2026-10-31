@@ -109,7 +109,8 @@ export function Expertise({ content, reducedMotion, canHover }: ExpertiseProps) 
       </div>
       <div
         ref={rail}
-        className={`relative overflow-hidden ${moving ? '' : 'container'}`}
+        className={`relative overflow-hidden ${moving ? 'touch-pan-y' : 'container'}`}
+        {...marquee.swipe}
         onPointerEnter={() => {
           if (canHover) marquee.setHalted(true)
         }}

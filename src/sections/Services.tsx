@@ -227,10 +227,11 @@ function TechnologyRail({ content, reducedMotion, canHover }: ServicesProps) {
     <div className="mx-[calc(50%-50vw)] mt-12 w-screen lg:mt-16">
       <div
         ref={rail}
-        className="focus-visible:outline-graphite overflow-hidden py-2 focus-visible:outline-2 focus-visible:outline-offset-4"
+        className={`focus-visible:outline-graphite overflow-hidden py-2 focus-visible:outline-2 focus-visible:outline-offset-4 ${reducedMotion ? '' : 'touch-pan-y'}`}
         role="region"
         aria-label={content.technologyLabel}
         tabIndex={reducedMotion ? undefined : 0}
+        {...marquee.swipe}
         onPointerEnter={() => {
           hovered.current = true
           syncHalted()

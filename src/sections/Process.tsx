@@ -170,7 +170,7 @@ function StepCopy({ step, mobile, mobilePinned, scroll, motion }: StepCopyProps)
       </p>
       <p className="m-0 block max-w-[var(--process-copy-measure)] overflow-hidden">
         <m.span
-          className="block text-justify text-[18px] leading-[1.6] hyphens-auto text-[color-mix(in_srgb,var(--color-warm-white)_68%,transparent)] max-md:text-left"
+          className="text-secondary block text-[18px] leading-[1.6]"
           style={{ y: scroll ? motion.copyY : 0 }}
         >
           {step.description}
