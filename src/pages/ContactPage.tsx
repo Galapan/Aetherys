@@ -4,6 +4,7 @@ import { REVEAL_EASE } from '@/components/ui/easing'
 import type { ContactContent } from '@/content/contact'
 import { menuContact } from '@/content/navigation'
 import { Button } from '@/components/ui/Button'
+import { RollingText } from '@/components/ui/RollingText'
 import { LightSection } from '@/components/ui/LightSection'
 
 interface ContactPageProps {
@@ -28,6 +29,20 @@ const textFieldClassName =
 const PHONE_PATTERN = '\\+?[0-9 \\(\\)\\-]{8,20}'
 
 // How long the delivery confirmation stays before fading out.
+// Send / sending labels of the submit button, keyed by the Button's variant labels.
+const SUBMIT_LABEL_VARIANTS = [
+  {
+    rest: { opacity: 1, y: 0 },
+    hover: { opacity: 1, y: 0 },
+    disabled: { opacity: 0, y: -6 },
+  },
+  {
+    rest: { opacity: 0, y: 6 },
+    hover: { opacity: 0, y: 6 },
+    disabled: { opacity: 1, y: 0 },
+  },
+] as const
+
 const SENT_ALERT_MS = 6000
 
 // Fields erased after a successful send, last to first, and the pace of each deletion.
@@ -439,15 +454,16 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
                 {[content.send, content.sending].map((text, index) => {
                   const active = (status === 'sending') === (index === 1)
                   return (
+                    // Variants follow the button's labels (it is disabled only while sending),
+                    // so the send label can still inherit the hover roll.
                     <m.span
                       key={index}
                       className="[grid-area:1/1]"
                       aria-hidden={!active || undefined}
-                      initial={false}
-                      animate={{ opacity: active ? 1 : 0, y: active ? 0 : index === 1 ? 6 : -6 }}
+                      variants={SUBMIT_LABEL_VARIANTS[index]}
                       transition={{ duration: reducedMotion ? 0 : 0.3, ease: REVEAL_EASE }}
                     >
-                      {text}
+                      {index === 0 ? <RollingText text={text} /> : text}
                     </m.span>
                   )
                 })}

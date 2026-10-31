@@ -13,7 +13,8 @@ interface MenuLinkProps {
   onClose: (id?: string) => void
 }
 
-const rollEase = [0.42, 0, 0.58, 1] as const
+// Quick roll that overshoots slightly and settles: a short spring with a light bounce.
+const rollSpring = { type: 'spring', visualDuration: 0.28, bounce: 0.22 } as const
 
 export function MenuLink({
   href,
@@ -56,10 +57,7 @@ export function MenuLink({
             className="flex flex-col"
             initial={{ y: '0%' }}
             animate={{ y: canHover && expanded && hoveredLink === index ? '-50%' : '0%' }}
-            transition={{
-              duration: reducedMotion ? 0 : 0.45,
-              ease: rollEase,
-            }}
+            transition={reducedMotion ? { duration: 0 } : rollSpring}
           >
             <span className="block leading-[1.15]">{label}</span>
             <span className="text-burgundy block leading-[1.15]" aria-hidden="true">

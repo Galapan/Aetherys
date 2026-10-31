@@ -57,7 +57,7 @@ function ProjectCardMedia({
       />
       {logo ? (
         <m.img
-          className="pointer-events-none absolute inset-0 z-1 m-auto max-h-[27.5%] max-w-[min(35cqw,210px)] object-contain"
+          className={`absolute inset-0 z-1 m-auto max-h-[27.5%] ${logoClassName}`}
           src={logo}
           alt=""
           aria-hidden="true"
@@ -145,6 +145,8 @@ export function ProjectCard({ comingSoon, ...props }: ProjectCardProps) {
   )
 }
 
+const logoClassName = 'pointer-events-none block max-w-[min(35cqw,210px)] object-contain'
+
 const articleClassName =
   'text-warm-white [container-type:inline-size] relative w-full scroll-mt-[calc(var(--header-height)+24px)]'
 
@@ -160,6 +162,8 @@ function ComingSoonCard({
   label,
   overlay,
 }: Omit<ProjectCardProps, 'comingSoon'> & NonNullable<ProjectCardProps['comingSoon']>) {
+  const logo = projectLogoPaths[card.slug]
+
   return (
     <article
       id={card.id}
@@ -181,15 +185,47 @@ function ComingSoonCard({
         />
         {/* Keeps the label legible over light screenshots. */}
         {overlay && <div className="bg-graphite/35 absolute inset-0" />}
+        {/* The logo stays sharp over the blur. With the overlay it sits in the stack above
+            the label; without it, centred as on a linked card, under the deck's title roll. */}
+        {logo && !overlay && (
+          <img
+            className={`absolute inset-0 m-auto max-h-[27.5%] ${logoClassName}`}
+            src={logo}
+            alt=""
+            width={420}
+            height={120}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
       </div>
       <div
         className={
           overlay
-            ? 'relative z-1 grid h-full place-content-center justify-items-center gap-2 px-6 text-center'
+            ? 'relative z-1 grid h-full place-content-center justify-items-center gap-3 px-6 text-center'
             : 'sr-only'
         }
       >
-        <h3 className="text-warm-white/78 m-0 text-[clamp(24px,8cqw,56px)] leading-none font-medium tracking-[-0.03em] uppercase before:content-['/']">
+        {logo && overlay && (
+          // 16.5cqw is 27.5% of a 5/3 card's height, the linked cards' logo bound.
+          <img
+            className={`max-h-[16.5cqw] ${logoClassName}`}
+            src={logo}
+            alt=""
+            aria-hidden="true"
+            width={420}
+            height={120}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
+        <h3
+          className={
+            logo
+              ? 'sr-only'
+              : "text-warm-white/78 m-0 text-[clamp(24px,8cqw,56px)] leading-none font-medium tracking-[-0.03em] uppercase before:content-['/']"
+          }
+        >
           {card.title}
         </h3>
         <p className="text-warm-white/78 m-0 text-[12px] leading-[1.4] tracking-[0.08em] uppercase">

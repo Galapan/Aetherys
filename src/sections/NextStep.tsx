@@ -4,6 +4,7 @@ import { REVEAL_EASE } from '@/components/ui/easing'
 import type { NextStepContent } from '@/content/nextStep'
 import { testimonyImages } from '@/content/testimonies'
 import { buttonClassName } from '@/components/ui/Button'
+import { RollingText } from '@/components/ui/RollingText'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 import { NextStepMark } from '@/features/nextstep/NextStepMark'
 import { useDesktopLayout } from '@/hooks/useDesktopLayout'
@@ -77,7 +78,7 @@ export function NextStep({
   }
   const ctaLabel = (
     <m.span className="block" variants={LABEL_VARIANTS} transition={BUTTON_PRESS}>
-      {content.callToAction}
+      <RollingText text={content.callToAction} />
     </m.span>
   )
 
