@@ -166,9 +166,14 @@ export function JoinUs({ content, contactHref, reducedMotion, canHover }: JoinUs
                 )
               )}
             </div>
-            <Reveal kind="heading" className="mt-8 lg:mt-12" reducedMotion={reducedMotion}>
-              <p className="m-0 max-w-[62ch] text-[18px] leading-[1.6] text-[color-mix(in_srgb,var(--color-graphite)_78%,transparent)]">
-                <Words text={content.description} />
+            <Reveal
+              kind="details"
+              className="mt-8 overflow-clip lg:mt-12"
+              reducedMotion={reducedMotion}
+            >
+              {/* animation hook: targeted by useAnimate; the paragraph rises as one block */}
+              <p className="join-us__reveal-content m-0 max-w-[62ch] text-[18px] leading-[1.6] text-[color-mix(in_srgb,var(--color-graphite)_78%,transparent)]">
+                {content.description}
               </p>
             </Reveal>
             <Reveal kind="details" className="mt-6 overflow-clip" reducedMotion={reducedMotion}>

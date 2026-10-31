@@ -13,7 +13,8 @@ export interface JoinUsContent {
   videoLabel: string
 }
 
-// Owner's photos as 736px square WebP (originals in proyectos-originales/joinUs). The second
+// Owner's photos cropped square from proyectos-originales/joinUs (736px wide), upscaled 2x with
+// Lanczos and saved as WebP q95 so they stay sharp on high-DPR screens. The second
 // box shows the video once one is supplied, and the secondary photo until then.
 export const joinUsAssets: {
   photo?: string
@@ -28,7 +29,7 @@ export const joinUsAssets: {
 }
 
 /** Intrinsic size of the photos above, reserved to avoid layout shift. */
-export const JOIN_US_PHOTO_SIZE = 736
+export const JOIN_US_PHOTO_SIZE = 1472
 
 export const content: Record<Locale, JoinUsContent> = {
   es: {
