@@ -1,6 +1,20 @@
-import { useEffect, useRef, useState, type FocusEvent, type FormEvent, type ReactNode } from 'react'
-import { AnimatePresence, animate, m, type AnimationPlaybackControls } from 'framer-motion'
-import { REVEAL_EASE } from '@/components/ui/easing'
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type FocusEvent,
+  type FormEvent,
+  type ReactNode,
+} from 'react'
+import {
+  AnimatePresence,
+  animate,
+  m,
+  useMotionValue,
+  type AnimationPlaybackControls,
+} from 'framer-motion'
+import { REVEAL_EASE, SPRING_BOUNCY } from '@/components/ui/easing'
 import type { ContactContent } from '@/content/contact'
 import { menuContact } from '@/content/navigation'
 import { Button } from '@/components/ui/Button'
@@ -30,20 +44,29 @@ const PHONE_PATTERN = '\\+?[0-9 \\(\\)\\-]{8,20}'
 
 // How long the delivery confirmation stays before fading out.
 // Send / sending labels of the submit button, keyed by the Button's variant labels.
-const SUBMIT_LABEL_VARIANTS = [
+const SUBMIT_LABELS = [
   {
-    rest: { opacity: 1, y: 0 },
-    hover: { opacity: 1, y: 0 },
-    disabled: { opacity: 0, y: -6 },
+    id: 'send',
+    variants: {
+      rest: { opacity: 1, y: 0 },
+      hover: { opacity: 1, y: 0 },
+      disabled: { opacity: 0, y: -6 },
+    },
   },
   {
-    rest: { opacity: 0, y: 6 },
-    hover: { opacity: 0, y: 6 },
-    disabled: { opacity: 1, y: 0 },
+    id: 'sending',
+    variants: {
+      rest: { opacity: 0, y: 6 },
+      hover: { opacity: 0, y: 6 },
+      disabled: { opacity: 1, y: 0 },
+    },
   },
 ] as const
 
 const SENT_ALERT_MS = 6000
+
+// Horizontal shake of a field still invalid on submit, in px.
+const SHAKE_KEYFRAMES = [0, -6, 6, -3, 3, 0]
 
 // Fields erased after a successful send, last to first, and the pace of each deletion.
 const ERASE_ORDER = ['message', 'type', 'phone', 'email', 'name'] as const
@@ -65,6 +88,8 @@ interface TextFieldProps {
   /** Required fields pass the message shown when they are left empty or invalid. */
   error?: string
   invalid: boolean
+  /** Count of submit attempts: each one shakes the field if it is still invalid. */
+  attempt: number
   onValidityChange: (name: string, invalid: boolean) => void
   reducedMotion: boolean
 }
@@ -82,10 +107,20 @@ function TextField({
   multiline = false,
   error,
   invalid,
+  attempt,
   onValidityChange,
   reducedMotion,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false)
+  // A submit that finds the field invalid shakes it, a quick "no" (never on blur).
+  const shakeX = useMotionValue(0)
+  const shake = useEffectEvent(() => {
+    if (!invalid || reducedMotion) return
+    animate(shakeX, SHAKE_KEYFRAMES, { duration: 0.4, ease: 'easeOut' })
+  })
+  useEffect(() => {
+    if (attempt > 0) shake()
+  }, [attempt])
   const fieldId = `contacto-${name}`
   const errorId = `${fieldId}-error`
   const transition = { duration: reducedMotion ? 0 : 0.4, ease: REVEAL_EASE }
@@ -113,7 +148,7 @@ function TextField({
   // The label points at the field instead of wrapping it, so the error message below is
   // announced once through aria-describedby rather than also becoming part of the name.
   return (
-    <div className="relative">
+    <m.div className="relative" style={{ x: shakeX }}>
       <label htmlFor={fieldId} className="sr-only">
         {label}
       </label>
@@ -144,7 +179,7 @@ function TextField({
           </m.span>
         ) : null}
       </AnimatePresence>
-    </div>
+    </m.div>
   )
 }
 
@@ -171,6 +206,10 @@ function FormAlert({ kind, reducedMotion, children }: FormAlertProps) {
   return (
     <m.div
       className="relative flex items-start gap-3 pt-4 text-[14px] leading-[1.4]"
+      // The alert lands with a small bounce.
+      initial={reducedMotion ? false : { y: 8, scale: 0.98 }}
+      animate={{ y: 0, scale: 1 }}
+      transition={SPRING_BOUNCY}
       exit={{ opacity: 0, y: reducedMotion ? 0 : -4, transition: timing(0.25) }}
     >
       <m.span
@@ -222,6 +261,7 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
   const [type, setType] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [invalid, setInvalid] = useState<Record<string, boolean>>({})
+  const [attempts, setAttempts] = useState(0)
   // Idempotency key for the current form fill; renewed once a message is delivered.
   const requestId = useRef<string | null>(null)
   const erasing = useRef(false)
@@ -266,6 +306,7 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
         !element.validity.valid,
     )
     if (invalidFields.length > 0) {
+      setAttempts((count) => count + 1)
       setInvalid((current) => ({
         ...current,
         ...Object.fromEntries(invalidFields.map((element) => [element.name, true])),
@@ -354,7 +395,7 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
           {...reveal(0.25)}
         >
           <p className={leadClassName}>{content.intro}</p>
-          <Button href={menuContact.phoneHref} lift={lift}>
+          <Button href={menuContact.phoneHref} lift={lift} reducedMotion={reducedMotion}>
             {content.call}
           </Button>
         </m.div>
@@ -385,6 +426,7 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
             placeholder={content.namePlaceholder}
             error={content.nameError}
             invalid={Boolean(invalid.name)}
+            attempt={attempts}
             onValidityChange={setFieldInvalid}
             reducedMotion={reducedMotion}
           />
@@ -396,6 +438,7 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
             placeholder={content.emailPlaceholder}
             error={content.emailError}
             invalid={Boolean(invalid.email)}
+            attempt={attempts}
             onValidityChange={setFieldInvalid}
             reducedMotion={reducedMotion}
           />
@@ -408,6 +451,7 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
             placeholder={content.phonePlaceholder}
             error={content.phoneError}
             invalid={Boolean(invalid.phone)}
+            attempt={attempts}
             onValidityChange={setFieldInvalid}
             reducedMotion={reducedMotion}
           />
@@ -444,26 +488,32 @@ export function ContactPage({ content, reducedMotion, canHover }: ContactPagePro
             placeholder={content.messagePlaceholder}
             error={content.messageError}
             invalid={Boolean(invalid.message)}
+            attempt={attempts}
             onValidityChange={setFieldInvalid}
             reducedMotion={reducedMotion}
           />
           <div className="mt-4 flex flex-col items-start gap-4">
-            <Button type="submit" lift={lift} disabled={status === 'sending'}>
+            <Button
+              type="submit"
+              lift={lift}
+              reducedMotion={reducedMotion}
+              disabled={status === 'sending'}
+            >
               {/* Both labels share one cell so the button keeps its width while they cross. */}
               <span className="grid">
-                {[content.send, content.sending].map((text, index) => {
-                  const active = (status === 'sending') === (index === 1)
+                {SUBMIT_LABELS.map(({ id, variants }) => {
+                  const active = (status === 'sending') === (id === 'sending')
                   return (
                     // Variants follow the button's labels (it is disabled only while sending),
                     // so the send label can still inherit the hover roll.
                     <m.span
-                      key={index}
+                      key={id}
                       className="[grid-area:1/1]"
                       aria-hidden={!active || undefined}
-                      variants={SUBMIT_LABEL_VARIANTS[index]}
+                      variants={variants}
                       transition={{ duration: reducedMotion ? 0 : 0.3, ease: REVEAL_EASE }}
                     >
-                      {index === 0 ? <RollingText text={text} /> : text}
+                      {id === 'send' ? <RollingText text={content.send} /> : content.sending}
                     </m.span>
                   )
                 })}

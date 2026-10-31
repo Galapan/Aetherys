@@ -6,9 +6,15 @@ import {
   type AnimationPlaybackControls,
   type PanInfo,
 } from 'framer-motion'
-import { REVEAL_EASE } from '@/components/ui/easing'
+import { REVEAL_EASE, SPRING_BOUNCY } from '@/components/ui/easing'
 
 const CARD_GAP = 16
+// Dragged past either end, the cards follow the finger at this fraction of its pace, up to
+// EDGE_STRETCH px, and bounce back on release.
+const EDGE_RESISTANCE = 0.3
+const EDGE_STRETCH = 48
+// Arrow keys at an end nudge the cards this far before they bounce back.
+const EDGE_NUDGE = 12
 
 /**
  * Drag, keyboard and scrollbar state of the stacking team carousel. `offset` is how far the
@@ -28,7 +34,9 @@ export function useStackCarousel(count: number, reducedMotion: boolean) {
   const scrollable = thumbShare < 1
   const thumbLeft = useTransform(() => {
     const limit = max.get()
-    return `${limit > 0 ? (offset.get() / limit) * (1 - share.get()) * 100 : 0}%`
+    // The thumb stays in its rail while the cards stretch past an end.
+    const position = limit > 0 ? Math.min(Math.max(offset.get() / limit, 0), 1) : 0
+    return `${position * (1 - share.get()) * 100}%`
   })
 
   useLayoutEffect(() => {
@@ -61,15 +69,44 @@ export function useStackCarousel(count: number, reducedMotion: boolean) {
 
   const clamp = (value: number) => Math.min(Math.max(value, 0), max.get())
 
+  /** Past an end, the cards bounce back; within the range they glide. */
   function glideTo(target: number) {
     glide.current?.stop()
-    if (reducedMotion) offset.set(clamp(target))
-    else
-      glide.current = animate(offset, clamp(target), {
-        type: 'tween',
-        duration: 0.7,
-        ease: REVEAL_EASE,
-      })
+    if (reducedMotion) {
+      offset.set(clamp(target))
+      return
+    }
+    const value = offset.get()
+    const stretched = value < 0 || value > max.get()
+    glide.current = animate(
+      offset,
+      clamp(target),
+      stretched ? SPRING_BOUNCY : { type: 'tween', duration: 0.7, ease: REVEAL_EASE },
+    )
+  }
+
+  /** Clamps to the range, letting a drag stretch a little past either end. */
+  function stretch(value: number) {
+    if (reducedMotion) return clamp(value)
+    const limit = max.get()
+    if (value < 0) return -Math.min(-value * EDGE_RESISTANCE, EDGE_STRETCH)
+    if (value > limit) return limit + Math.min((value - limit) * EDGE_RESISTANCE, EDGE_STRETCH)
+    return value
+  }
+
+  /** Arrow key at an end: a short nudge outwards, then the bounce back. */
+  function nudge(direction: number) {
+    glide.current?.stop()
+    const edge = direction > 0 ? max.get() : 0
+    const push = animate(offset, edge + direction * EDGE_NUDGE, {
+      duration: 0.08,
+      ease: [0.16, 1, 0.3, 1],
+    })
+    glide.current = push
+    // Unless a drag or another key took over meanwhile.
+    push.then(() => {
+      if (glide.current === push) glideTo(edge)
+    })
   }
 
   function startPan() {
@@ -79,7 +116,7 @@ export function useStackCarousel(count: number, reducedMotion: boolean) {
   }
 
   function panCards(_: PointerEvent, info: PanInfo) {
-    offset.set(clamp(panStart.current - info.offset.x))
+    offset.set(stretch(panStart.current - info.offset.x))
   }
 
   /** Nearest card boundary, so a released carousel settles with a card on the left edge. */
@@ -114,7 +151,10 @@ export function useStackCarousel(count: number, reducedMotion: boolean) {
     }
     if (!(event.key in targets)) return
     event.preventDefault()
-    glideTo(targets[event.key])
+    const target = targets[event.key]
+    const arrow = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0
+    if (arrow !== 0 && !reducedMotion && (target < 0 || target > max.get())) nudge(arrow)
+    else glideTo(target)
   }
 
   return {

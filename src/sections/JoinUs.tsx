@@ -174,7 +174,11 @@ export function JoinUs({ content, contactHref, reducedMotion, canHover }: JoinUs
             <Reveal kind="details" className="mt-6 overflow-clip" reducedMotion={reducedMotion}>
               {/* animation hook: targeted by useAnimate */}
               <div className="join-us__reveal-content">
-                <Button href={contactHref} lift={canHover && !reducedMotion}>
+                <Button
+                  href={contactHref}
+                  lift={canHover && !reducedMotion}
+                  reducedMotion={reducedMotion}
+                >
                   {content.contact}
                 </Button>
               </div>

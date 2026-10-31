@@ -1,3 +1,5 @@
+import { SPRING_BOUNCY } from '@/components/ui/easing'
+
 const expoOut = [0.16, 1, 0.3, 1] as const
 const easeIn = [0.5, 0, 0.75, 0] as const
 const veilEase = [0.4, 0, 0.2, 1] as const
@@ -22,7 +24,14 @@ export const headerMotion = {
   wordExit: { duration: 0.14, ease: easeIn },
   wordEnter: { duration: 0.32, ease: expoOut },
   fold: { duration: 0.26, delay: 0.1, ease: [0.5, 0, 0.15, 1] as const },
+  // Contact folds and unfolds with a bounce: the dash overshoots its place and settles.
+  foldBounce: { ...SPRING_BOUNCY, delay: 0.1 },
   wordEnterDelay: 0.32,
+  // The trigger's word reacts to Contact with a kick that springs back: opening, Contact
+  // reaches it and knocks it right as it is swallowed; closing, it lunges left as it throws
+  // Contact back out. Offsets in px, delays from the click.
+  absorb: { offset: 10, delay: 0.24 },
+  eject: { offset: -10, delay: 0.1 },
 }
 
 export function createSceneTransition(

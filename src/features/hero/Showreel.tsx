@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { m, useInView } from 'framer-motion'
 import { useLenis } from 'lenis/react'
 import type { HeroContent } from '@/content/hero'
+import { SPRING_PRESS } from '@/components/ui/easing'
 
 interface ShowreelProps {
   content: HeroContent
@@ -74,7 +75,8 @@ export function Showreel({ content, reducedMotion, canHover, deferPreview }: Sho
         aria-expanded={origin !== null}
         style={{ visibility: origin ? 'hidden' : 'visible' }}
         whileHover={canHover && !reducedMotion ? { y: -2 } : undefined}
-        transition={{ duration: 0.18 }}
+        whileTap={reducedMotion ? undefined : { scale: 0.96 }}
+        transition={{ duration: 0.18, scale: SPRING_PRESS }}
         onClick={() => {
           if (!trigger.current) return
           returnFocus.current = true

@@ -192,7 +192,12 @@ export function Team({
             <p className="m-0 max-w-[40ch] text-[16px] leading-[1.6]">
               <LineReveal text={intro} reducedMotion={reducedMotion} />
             </p>
-            <Button className="w-fit" href={contactHref} lift={canHover && !reducedMotion}>
+            <Button
+              className="w-fit"
+              href={contactHref}
+              lift={canHover && !reducedMotion}
+              reducedMotion={reducedMotion}
+            >
               {callToAction}
             </Button>
           </div>

@@ -1,7 +1,7 @@
 import { animate, m, useMotionValue, type PanInfo } from 'framer-motion'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ProjectGalleryImage, ProjectsContent } from '@/content/projects'
-import { REVEAL_EASE } from '@/components/ui/easing'
+import { REVEAL_EASE, SPRING_BOUNCY, SPRING_PRESS } from '@/components/ui/easing'
 
 interface ProjectCarouselProps {
   slides?: ProjectGalleryImage[]
@@ -17,6 +17,8 @@ const PLACEHOLDER_COUNT = 4
 const SWIPE_THRESHOLD = 40
 
 const slideHeight = 'h-[clamp(200px,30vh,600px)]'
+// Hover keeps its short glide; the press springs back.
+const arrowTransition = { duration: 0.18, ease: 'easeOut', scale: SPRING_PRESS } as const
 const pagePadding = 'px-[clamp(20px,1.85vw,32px)]'
 
 const buttonClasses = `inline-flex min-h-11 min-w-11 items-center justify-center text-graphite focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-graphite disabled:opacity-30`
@@ -64,13 +66,18 @@ export function ProjectCarousel({
     x.set(-snaps[current])
   }, [snaps, current, x])
 
-  const goTo = (next: number) => {
+  /** `fromEdge`: the track was dragged past its first or last slide and bounces back. */
+  const goTo = (next: number, fromEdge = false) => {
     const target = Math.max(0, Math.min(next, lastIndex))
     setIndex(target)
     animate(
       x,
       -snaps[target],
-      reducedMotion ? { duration: 0 } : { duration: 0.8, ease: REVEAL_EASE },
+      reducedMotion
+        ? { duration: 0 }
+        : fromEdge
+          ? SPRING_BOUNCY
+          : { duration: 0.8, ease: REVEAL_EASE },
     )
   }
 
@@ -83,10 +90,11 @@ export function ProjectCarousel({
     if (nearest === current && Math.abs(info.offset.x) > SWIPE_THRESHOLD) {
       nearest += info.offset.x < 0 ? 1 : -1
     }
-    goTo(nearest)
+    goTo(nearest, position < 0 || position > snaps[lastIndex])
   }
 
   const hover = (disabled: boolean) => (canHover && !disabled ? { y: -2 } : undefined)
+  const press = (disabled: boolean) => (reducedMotion || disabled ? undefined : { scale: 0.9 })
 
   return (
     <m.section
@@ -113,7 +121,8 @@ export function ProjectCarousel({
             disabled={current === 0}
             onClick={() => goTo(current - 1)}
             whileHover={hover(current === 0)}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            whileTap={press(current === 0)}
+            transition={arrowTransition}
           >
             <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -132,7 +141,8 @@ export function ProjectCarousel({
             disabled={current === lastIndex}
             onClick={() => goTo(current + 1)}
             whileHover={hover(current === lastIndex)}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            whileTap={press(current === lastIndex)}
+            transition={arrowTransition}
           >
             <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -153,7 +163,7 @@ export function ProjectCarousel({
           style={{ x }}
           drag={lastIndex > 0 ? 'x' : false}
           dragConstraints={{ left: -snaps[lastIndex], right: 0 }}
-          dragElastic={0.08}
+          dragElastic={0.2}
           dragMomentum={false}
           onDragEnd={handleDragEnd}
         >

@@ -106,7 +106,12 @@ export function MenuFooter({
       </div>
       <div className="justify-self-end overflow-hidden sm:col-start-3 sm:row-span-2 sm:row-start-1 sm:self-end lg:self-auto">
         <m.div {...createReveal(expanded, reducedMotion, 1.02, true)}>
-          <LanguageSwitch {...navigation} canHover={canHover} onChange={onSelectLocale} />
+          <LanguageSwitch
+            {...navigation}
+            canHover={canHover}
+            reducedMotion={reducedMotion}
+            onChange={onSelectLocale}
+          />
         </m.div>
       </div>
     </footer>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
 import { animate, m, useMotionValue, useTransform } from 'framer-motion'
 import type { HeroContent } from '@/content/hero'
+import { SPRING_BOUNCY, SPRING_PRESS } from './easing'
 
 // Drop the owner's file at public/audio/aetherys.mp3 (see docs/AGENTS notes).
 // Kept as a runtime path instead of an import so the build does not depend on the asset.
@@ -38,15 +39,16 @@ function AudioWave({ playing, reducedMotion }: { playing: boolean; reducedMotion
     }
     // Keep the wave travelling while it flattens, then stop the loop once it is a line.
     const travel =
-      playing || amplitude.get() > 0
+      playing || amplitude.get() !== 0
         ? animate(phase, phase.get() + Math.PI * 2, {
             duration: WAVE_PERIOD,
             ease: 'linear',
             repeat: Infinity,
           })
         : null
+    // Stopping flattens with a boing: the wave swings past flat (upside down) and settles.
     const settle = animate(amplitude, target, {
-      ...WAVE_SETTLE,
+      ...(playing ? WAVE_SETTLE : SPRING_BOUNCY),
       onComplete: () => {
         if (!playing) travel?.stop()
       },
@@ -154,15 +156,17 @@ export function AudioToggle({ content, reducedMotion, audioRef }: AudioTogglePro
 
   return (
     <>
-      <button
+      <m.button
         className="pointer-events-auto grid size-11 place-items-center rounded border-0 bg-transparent p-0 text-inherit"
         type="button"
         aria-label={playing ? content.stopMusic : content.playMusic}
         aria-pressed={playing}
         onClick={toggle}
+        whileTap={reducedMotion ? undefined : { scale: 0.9 }}
+        transition={SPRING_PRESS}
       >
         <AudioWave playing={playing} reducedMotion={reducedMotion} />
-      </button>
+      </m.button>
       {!audioRef && <audio className="hidden" src={audioSrc} ref={localAudio} preload="metadata" />}
     </>
   )

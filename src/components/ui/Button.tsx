@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { m } from 'framer-motion'
-import { REVEAL_EASE } from './easing'
+import { REVEAL_EASE, SPRING_PRESS } from './easing'
 import { RollingText } from './RollingText'
 
 /** Primary button look; exported for buttons that drive their own motion (see NextStep). */
@@ -9,16 +9,20 @@ export const buttonClassName =
 
 // Variant labels, not plain targets, so a RollingText label follows the button's hover.
 const VARIANTS = {
-  rest: { y: 0, opacity: 1 },
-  hover: { y: -2, opacity: 1 },
-  disabled: { y: 0, opacity: 0.6 },
+  rest: { y: 0, scale: 1, opacity: 1 },
+  hover: { y: -2, scale: 1, opacity: 1 },
+  tap: { scale: 0.96 },
+  disabled: { y: 0, scale: 1, opacity: 0.6 },
 }
-// Long enough, on the site's reveal curve, that the lift and its return read as one glide.
-const LIFT_TRANSITION = { duration: 0.35, ease: REVEAL_EASE } as const
+// Long enough, on the site's reveal curve, that the lift and its return read as one glide. The
+// press springs instead, so the button gives under the finger and bounces back on release.
+const LIFT_TRANSITION = { duration: 0.35, ease: REVEAL_EASE, scale: SPRING_PRESS } as const
 
 type ButtonProps = {
   /** Hover lift and label roll; pass false without fine hover or with reduced motion. */
   lift: boolean
+  /** No press bounce with reduced motion. */
+  reducedMotion: boolean
   className?: string
   children: ReactNode
 } & (
@@ -27,12 +31,22 @@ type ButtonProps = {
 )
 
 /** Primary button: a link when given `href`, otherwise a native button. */
-export function Button({ lift, className, children, href, type, disabled }: ButtonProps) {
+export function Button({
+  lift,
+  reducedMotion,
+  className,
+  children,
+  href,
+  type,
+  disabled,
+}: ButtonProps) {
   const props = {
     className: className ? `${buttonClassName} ${className}` : buttonClassName,
     variants: VARIANTS,
     // The hover stays declared while disabled so the button eases back instead of snapping.
     whileHover: lift ? (disabled ? 'disabled' : 'hover') : undefined,
+    // Touch too: the press does not depend on hover.
+    whileTap: reducedMotion || disabled ? undefined : 'tap',
     animate: disabled ? 'disabled' : 'rest',
     initial: false,
     transition: LIFT_TRANSITION,

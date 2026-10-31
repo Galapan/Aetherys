@@ -261,6 +261,7 @@ export function SiteFooter({
                   content={content}
                   locale={locale}
                   canHover={interactive}
+                  reducedMotion={reducedMotion}
                   onChange={onSelectLocale}
                 />
               </div>
