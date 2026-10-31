@@ -15,10 +15,11 @@ import {
   stagger,
   useAnimate,
   useInView,
+  useMotionValue,
   usePresence,
   type AnimationPlaybackControls,
 } from 'framer-motion'
-import { REVEAL_EASE } from '@/components/ui/easing'
+import { kick, REVEAL_EASE, SPRING_PRESS } from '@/components/ui/easing'
 import { testimonyImages, type TestimoniesContent, type Testimony } from '@/content/testimonies'
 import { RuleGrid } from '@/components/ui/RuleGrid'
 
@@ -78,6 +79,45 @@ function TestimonyCounter({
       </span>
       <span>/ {String(count).padStart(3, '0')}</span>
     </span>
+  )
+}
+
+// Prev/next arrow: the button gives under the press and the arrow kicks the way it points,
+// then both spring back.
+function ArrowButton({
+  direction,
+  label,
+  reducedMotion,
+  onClick,
+}: {
+  direction: -1 | 1
+  label: string
+  reducedMotion: boolean
+  onClick: () => void
+}) {
+  const x = useMotionValue(0)
+  const nudge = useRef<ReturnType<typeof kick> | null>(null)
+  useEffect(() => () => nudge.current?.stop(), [])
+
+  return (
+    <m.button
+      className="grid size-11 cursor-pointer place-items-center border-0 bg-transparent p-0 text-inherit"
+      type="button"
+      aria-label={label}
+      whileTap={reducedMotion ? undefined : { scale: 0.9 }}
+      transition={SPRING_PRESS}
+      onClick={() => {
+        if (!reducedMotion) {
+          nudge.current?.stop()
+          nudge.current = kick(x, direction * 6)
+        }
+        onClick()
+      }}
+    >
+      <m.span aria-hidden="true" style={{ x }}>
+        {direction < 0 ? '←' : '→'}
+      </m.span>
+    </m.button>
   )
 }
 
@@ -328,23 +368,19 @@ export function Testimonies({
             {count > 1 ? (
               <>
                 <div className="flex items-center gap-1 max-[479px]:justify-self-end">
-                  <button
-                    className="grid size-11 cursor-pointer place-items-center border-0 bg-transparent p-0 text-inherit"
-                    type="button"
-                    aria-label={content.previous}
+                  <ArrowButton
+                    direction={-1}
+                    label={content.previous}
+                    reducedMotion={reducedMotion}
                     onClick={() => change(-1)}
-                  >
-                    <span aria-hidden="true">←</span>
-                  </button>
+                  />
                   <TestimonyCounter active={active} count={count} reducedMotion={reducedMotion} />
-                  <button
-                    className="grid size-11 cursor-pointer place-items-center border-0 bg-transparent p-0 text-inherit"
-                    type="button"
-                    aria-label={content.next}
+                  <ArrowButton
+                    direction={1}
+                    label={content.next}
+                    reducedMotion={reducedMotion}
                     onClick={() => change(1)}
-                  >
-                    <span aria-hidden="true">→</span>
-                  </button>
+                  />
                 </div>
                 <div
                   className="bg-border col-span-full h-[2px] overflow-clip md:col-auto"
