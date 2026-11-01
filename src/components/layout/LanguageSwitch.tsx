@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { m } from 'framer-motion'
 import type { HeroContent, Locale } from '@/content/hero'
 import { SPRING_BOUNCY, SPRING_PRESS } from '@/components/ui/easing'
@@ -18,6 +18,14 @@ const buttonClassName =
 // Hover keeps its short glide; the press springs back.
 const buttonTransition = { duration: 0.18, ease: 'easeOut', scale: SPRING_PRESS } as const
 
+// The underline spans the label: the button minus its 16px of side room.
+const UNDERLINE_INSET = 16
+
+interface Span {
+  x: number
+  width: number
+}
+
 export function LanguageSwitch({
   content,
   locale,
@@ -29,16 +37,40 @@ export function LanguageSwitch({
   // the click instead, where it can be seen. A choice made for an older locale is dropped.
   const [choice, setChoice] = useState<{ from: Locale; to: Locale } | null>(null)
   const underlined = choice?.from === locale ? choice.to : locale
-  const underlineId = useId()
+  const buttons = useRef<Partial<Record<Locale, HTMLButtonElement | null>>>({})
+  const [spans, setSpans] = useState<Partial<Record<Locale, Span>>>({})
+  const span = spans[underlined]
 
   const languages = [
     { value: 'es', label: content.es, name: content.spanish },
     { value: 'en', label: content.en, name: content.english },
   ] as const
 
+  // A single underline slides between measured offsets. A shared layoutId measured its old box
+  // through the menu's transformed stage and sent the underline up and down on the way.
+  // Offsets ignore transforms, so the hover lift and the menu's scene do not skew them; the
+  // observer re-measures once the menu's panel gets its size.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const next: Partial<Record<Locale, Span>> = {}
+      for (const [value, button] of Object.entries(buttons.current) as [Locale, HTMLElement][]) {
+        if (!button?.offsetWidth) continue
+        next[value] = {
+          x: button.offsetLeft + UNDERLINE_INSET,
+          width: button.offsetWidth - UNDERLINE_INSET * 2,
+        }
+      }
+      setSpans(next)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    for (const button of Object.values(buttons.current)) if (button) observer.observe(button)
+    return () => observer.disconnect()
+  }, [content])
+
   return (
     <div
-      className="flex items-center text-sm tracking-[0.08em] md:text-base"
+      className="relative flex items-center text-sm tracking-[0.08em] md:text-base"
       role="group"
       aria-label={content.language}
     >
@@ -50,6 +82,9 @@ export function LanguageSwitch({
             </span>
           )}
           <m.button
+            ref={(element) => {
+              buttons.current[value] = element
+            }}
             className={buttonClassName}
             whileHover={canHover ? { y: -2 } : undefined}
             whileTap={reducedMotion ? undefined : { scale: 0.9 }}
@@ -64,18 +99,19 @@ export function LanguageSwitch({
             }}
           >
             {label}
-            {underlined === value && (
-              // Shared between both buttons: it slides to the chosen language and bounces.
-              <m.span
-                layoutId={underlineId}
-                className="absolute right-4 bottom-[7px] left-4 h-[2px] bg-[var(--switch-pressed,var(--color-warm-white))]"
-                transition={reducedMotion ? { duration: 0 } : SPRING_BOUNCY}
-                aria-hidden="true"
-              />
-            )}
           </m.button>
         </span>
       ))}
+      {span && (
+        // Slides to the chosen language and bounces.
+        <m.span
+          className="pointer-events-none absolute bottom-[7px] left-0 h-[2px] bg-[var(--switch-pressed,var(--color-warm-white))]"
+          initial={false}
+          animate={{ x: span.x, width: span.width }}
+          transition={reducedMotion ? { duration: 0 } : SPRING_BOUNCY}
+          aria-hidden="true"
+        />
+      )}
     </div>
   )
 }
